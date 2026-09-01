@@ -76,10 +76,19 @@
   .winner-row .wn{font-size:11px;color:var(--muted);margin-top:2px;}
   .pool-card{background:rgba(243,233,210,0.06);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;}
   .pool-mini{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin:6px 0;}
-  .pool-mini div{aspect-ratio:1;border-radius:3px;background:rgba(243,233,210,0.1);}
-  .pool-mini div.has{background:var(--gold-soft);}
+  .pool-mini div{aspect-ratio:1;border-radius:3px;background:rgba(243,233,210,0.06);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--muted);}
+  .pool-mini div.has{background:var(--gold-soft);color:#241f0a;}
   .req-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
   .pending-note{font-size:12px;color:var(--gold-soft);background:rgba(232,179,76,0.1);border:1px solid rgba(232,179,76,0.3);border-radius:10px;padding:8px 10px;margin-top:10px;}
+  .row-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(0,0,0,0.15);border:1px solid var(--line);border-radius:14px;padding:10px 12px;flex-wrap:wrap;}
+  .toggle-wrap{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .switch{width:40px;height:22px;border-radius:20px;background:#3a366e;position:relative;cursor:pointer;transition:background .2s;flex:none;}
+  .switch.on{background:var(--teal);}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--cream);transition:left .2s;}
+  .switch.on::after{left:20px;}
+  .speed-wrap{display:flex;align-items:center;gap:8px;flex:1;min-width:160px;}
+  .speed-wrap label{font-size:12px;color:var(--muted);white-space:nowrap;}
+  .speed-wrap input[type=range]{flex:1;accent-color:var(--gold-soft);height:4px;}
   .footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:22px;line-height:1.6;padding:0 10px;}
 </style>
 </head>
@@ -178,7 +187,22 @@
       <div id="ownerControls" class="hidden" style="margin-top:14px;">
         <button class="btn btn-primary" id="startGameBtn">▶ Start Game</button>
         <button class="btn btn-primary hidden" id="callBtn">▶ Call Next Number</button>
+        <div id="autoPlayRow" class="row-controls hidden" style="margin-top:10px;">
+          <div class="toggle-wrap">
+            <span>Auto-call</span>
+            <div class="switch" id="autoSwitch"></div>
+          </div>
+          <div class="speed-wrap">
+            <label for="speedRange">Pace</label>
+            <input type="range" id="speedRange" min="1" max="5" value="3">
+            <label id="speedLabel">Medium</label>
+          </div>
+        </div>
         <button class="btn btn-ghost" id="addPoolBtn">+ Add 5 Tickets to Pool</button>
+        <div class="row" style="margin-top:8px;">
+          <button class="btn btn-ghost btn-sm" id="addPool10Btn">+10 more</button>
+          <button class="btn btn-ghost btn-sm" id="addPool20Btn">+20 more</button>
+        </div>
       </div>
       <div id="playerHint" class="hint hidden" style="margin-top:10px;">Waiting for the room owner to call numbers.</div>
       <div id="waitingStartHint" class="hint hidden" style="margin-top:10px;">Waiting for the room owner to start the game. You can request tickets now.</div>
@@ -416,6 +440,7 @@
   });
 
   el('leaveRoomBtn').addEventListener('click', ()=>{
+    if(typeof stopAuto === 'function') stopAuto();
     if(roomCode) db.ref(`rooms/${roomCode}/players/${myId}`).remove();
     detachListeners();
     roomCode=null;
@@ -501,15 +526,35 @@
   }
 
   // ---------- owner: call numbers ----------
-  el('callBtn').addEventListener('click', ()=>{
+  function callNext(){
     if(roomStatus!=='approved' || !gameStarted) return;
-    if(calledOrder.length>=90) return;
+    if(calledOrder.length>=90){ stopAuto(); return; }
     const pool=[]; for(let i=1;i<=90;i++) if(!calledOrder.includes(i)) pool.push(i);
     const num = pool[Math.floor(Math.random()*pool.length)];
     const next = calledOrder.concat(num);
     db.ref(`rooms/${roomCode}`).update({ calledOrder: next, currentNumber: num });
     speak(num);
-  });
+    if(next.length>=90) stopAuto();
+  }
+  el('callBtn').addEventListener('click', callNext);
+
+  let voices = [];
+  function loadVoices(){
+    if(!('speechSynthesis' in window)) return;
+    voices = window.speechSynthesis.getVoices();
+  }
+  if('speechSynthesis' in window){
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+  function pickFemaleVoice(){
+    if(!voices.length) return null;
+    const englishVoices = voices.filter(v=>v.lang && v.lang.startsWith('en'));
+    const pool = englishVoices.length ? englishVoices : voices;
+    const femaleHints = ['female','woman','girl','samantha','zira','susan','victoria','karen','moira','tessa','fiona','google us english','google uk english female','heera','veena'];
+    let match = pool.find(v => femaleHints.some(h => v.name.toLowerCase().includes(h)));
+    return match || pool[0] || voices[0];
+  }
 
   function speak(num){
     if(!NICK_TTS || !('speechSynthesis' in window)) return;
@@ -517,9 +562,37 @@
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(String(num));
       u.pitch=1.15; u.rate=0.9; u.lang='en-US';
+      const v = pickFemaleVoice();
+      if(v) u.voice = v;
       window.speechSynthesis.speak(u);
     }catch(e){}
   }
+
+  // ---------- auto-call with adjustable speed ----------
+  let autoTimer = null, autoOn = false;
+  const speedMap = {1:6000,2:4200,3:2800,4:1800,5:1000};
+  const speedLabels = {1:"Very Slow",2:"Slow",3:"Medium",4:"Fast",5:"Very Fast"};
+
+  function startAuto(){
+    autoOn = true;
+    el('autoSwitch').classList.add('on');
+    clearInterval(autoTimer);
+    autoTimer = setInterval(callNext, speedMap[el('speedRange').value]);
+  }
+  function stopAuto(){
+    autoOn = false;
+    el('autoSwitch').classList.remove('on');
+    clearInterval(autoTimer);
+  }
+  el('autoSwitch').addEventListener('click', ()=>{
+    if(!gameStarted || roomStatus!=='approved') return;
+    if(autoOn) stopAuto(); else startAuto();
+  });
+  el('speedRange').addEventListener('input', ()=>{
+    el('speedLabel').textContent = speedLabels[el('speedRange').value];
+    if(autoOn) startAuto();
+  });
+  el('speedLabel').textContent = speedLabels[el('speedRange').value];
 
   // ---------- ticket issuing ----------
   function generateTicketGrid(){
@@ -559,6 +632,12 @@
   el('addPoolBtn').addEventListener('click', ()=>{
     for(let i=0;i<5;i++) issueTicket();
   });
+  el('addPool10Btn').addEventListener('click', ()=>{
+    for(let i=0;i<10;i++) issueTicket();
+  });
+  el('addPool20Btn').addEventListener('click', ()=>{
+    for(let i=0;i<20;i++) issueTicket();
+  });
 
   // auto-restock: whenever available tickets run low, the owner's client tops the pool back up
   let autoStockInFlight = false;
@@ -591,7 +670,7 @@
       const card=document.createElement('div');
       card.className='pool-card';
       const mini=document.createElement('div'); mini.className='pool-mini';
-      t.grid.forEach(n=>{ const d=document.createElement('div'); if(n!==0) d.className='has'; mini.appendChild(d); });
+      t.grid.forEach(n=>{ const d=document.createElement('div'); if(n!==0){ d.className='has'; d.textContent=n; } mini.appendChild(d); });
       card.appendChild(mini);
       const btn=document.createElement('button');
       btn.className='btn btn-primary btn-sm';
@@ -763,6 +842,8 @@
     if(amOwner){
       el('startGameBtn').classList.toggle('hidden', !approved || gameStarted);
       el('callBtn').classList.toggle('hidden', !approved || !gameStarted);
+      el('autoPlayRow').classList.toggle('hidden', !approved || !gameStarted);
+      if((!approved || !gameStarted) && typeof stopAuto === 'function') stopAuto();
     }
     el('playerHint').classList.add('hidden'); // superseded by waitingStartHint below
     el('waitingStartHint').classList.toggle('hidden', amOwner || !approved || gameStarted);
