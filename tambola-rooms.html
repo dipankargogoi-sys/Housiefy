@@ -111,8 +111,8 @@
   </div>
 
   <div id="loadError" class="card hidden" style="text-align:center;">
-    <div style="font-size:15px;margin-bottom:14px;">Couldn't load — check your internet connection.</div>
-    <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+    <div id="loadErrorMsg" style="font-size:15px;margin-bottom:14px;">Loading… (this can take a bit on a slow connection)</div>
+    <button class="btn btn-primary" id="loadRetryBtn" onclick="location.reload()" style="display:none;">Retry</button>
   </div>
 
   <!-- HOME: create/join -->
@@ -243,12 +243,17 @@
   function boot(attemptsLeft){
     if(typeof firebase === 'undefined'){
       if(attemptsLeft > 0){
+        if(attemptsLeft <= 65){ // show the "still loading" panel once a couple seconds have passed
+          document.getElementById('loadError').classList.remove('hidden');
+        }
         setTimeout(()=>boot(attemptsLeft-1), 400);
         return;
       }
-      document.getElementById('loadError').classList.remove('hidden');
+      document.getElementById('loadErrorMsg').textContent = "Couldn't load — check your internet connection.";
+      document.getElementById('loadRetryBtn').style.display = 'block';
       return;
     }
+    document.getElementById('loadError').classList.add('hidden');
     try{
       initFirebase(FIREBASE_CONFIG);
       show(viewHome);
@@ -256,10 +261,12 @@
         el('adminLoginLink').classList.remove('hidden');
       }
     }catch(e){
+      document.getElementById('loadErrorMsg').textContent = "Couldn't load — check your internet connection.";
+      document.getElementById('loadRetryBtn').style.display = 'block';
       document.getElementById('loadError').classList.remove('hidden');
     }
   }
-  boot(15); // retries for up to ~6 seconds on a slow connection before giving up
+  boot(75); // retries for up to ~30 seconds on a slow connection before giving up
 
   function initFirebase(cfg){
     firebase.initializeApp(cfg);
