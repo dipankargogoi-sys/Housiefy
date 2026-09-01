@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Housiefy — Play Tambola with Friends</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icons/icon-192.png">
+<link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#181735">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -668,6 +668,8 @@
       wrap.appendChild(row);
     });
   }
+
+  function toast(msg){
     const el2 = el('winnerToast');
     el2.textContent = msg;
     el2.style.display='block';
