@@ -802,16 +802,29 @@
         if(!done) return;
         const claimRef = db.ref(`rooms/${roomCode}/tickets/${tid}/claimed/${label.replace(/\s+/g,'_')}`);
         claimRef.transaction(cur => cur===true ? undefined : true, (err,committed)=>{
-          if(!err && committed){
-            db.ref(`rooms/${roomCode}/winners`).push({
-              playerName: t.playerName, label, ticketId: tid,
-              numbers: flatNums.join(', '), time: Date.now()
+          if(err || !committed) return;
+          if(label === 'Full House'){
+            db.ref(`rooms/${roomCode}/fullHouseCount`).transaction(cur => (cur||0)+1, (err2, committed2, snap2)=>{
+              if(err2 || !committed2) return;
+              const position = snap2.val();
+              db.ref(`rooms/${roomCode}/winners`).push({
+                playerName: t.playerName, ticketId: tid,
+                numbers: flatNums.join(', '), time: Date.now(), position
+              });
+              stopAuto();
+              toast(`🏆 FULL HOUSE! ${t.playerName} — ${ordinal(position)} place!`, 5500);
             });
+          } else {
             if(t.playerId===myId || amOwner) toast(`🎉 ${label} — ${t.playerName}!`);
           }
         });
       });
     });
+  }
+
+  function ordinal(n){
+    const s=['th','st','nd','rd'], v=n%100;
+    return n + (s[(v-20)%10] || s[v] || s[0]);
   }
 
   function renderApprovalBanner(){
@@ -952,7 +965,8 @@
     });
   }
 
-  function toast(msg){
+  function toast(msg, duration){
+    duration = duration || 3200;
     const el2 = el('winnerToast');
     el2.textContent = msg;
     el2.style.display='block';
@@ -961,17 +975,17 @@
     el2._t = setTimeout(()=>{
       el2.style.opacity='0'; el2.style.transform='translateX(-50%) translateY(-20px)';
       setTimeout(()=>{ el2.style.display='none'; }, 300);
-    }, 3200);
+    }, duration);
     if('speechSynthesis' in window){
-      try{ const u=new SpeechSynthesisUtterance(msg.replace('🎉','')); u.pitch=1.15; u.lang='en-US'; window.speechSynthesis.speak(u); }catch(e){}
+      try{ const u=new SpeechSynthesisUtterance(msg.replace('🎉','').replace('🏆','')); u.pitch=1.15; u.lang='en-US'; window.speechSynthesis.speak(u); }catch(e){}
     }
   }
 
   function renderWinners(){
     const wrap = el('winnersWrap');
-    const list = Object.values(winners).sort((a,b)=>b.time-a.time);
+    const list = Object.values(winners).sort((a,b)=>(a.position||0)-(b.position||0));
     if(list.length===0){ wrap.innerHTML='No winners yet.'; return; }
-    wrap.innerHTML = list.map(w=>`<div class="winner-row"><b>${escapeHtml(w.playerName)}</b> — ${escapeHtml(w.label)}<div class="wn">Ticket: ${escapeHtml(w.numbers)}</div></div>`).join('');
+    wrap.innerHTML = list.map(w=>`<div class="winner-row">🏆 <b>${ordinal(w.position)} place</b> — ${escapeHtml(w.playerName)} (Full House)<div class="wn">Ticket: ${escapeHtml(w.numbers)}</div></div>`).join('');
   }
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
