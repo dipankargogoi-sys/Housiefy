@@ -128,7 +128,7 @@
     </div>
     <button class="btn btn-ghost" id="joinRoomBtn">Join Room</button>
     <div style="text-align:center;margin-top:14px;">
-      <span id="adminLoginLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">Admin login</span>
+      <span id="adminLoginLink" class="hidden" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">Admin login</span>
     </div>
   </div>
 
@@ -224,24 +224,23 @@
     view.classList.remove('hidden');
   }
 
-  // ---------- firebase config bootstrap ----------
-  const savedConfig = localStorage.getItem('tb_fbconfig');
-  if(savedConfig){
-    try{ initFirebase(JSON.parse(savedConfig)); show(viewHome); }
-    catch(e){ show(viewSetup); }
-  } else {
-    show(viewSetup);
-  }
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
+    authDomain: "house-game-cf352.firebaseapp.com",
+    databaseURL: "https://house-game-cf352-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "house-game-cf352",
+    storageBucket: "house-game-cf352.firebasestorage.app",
+    messagingSenderId: "506291667873",
+    appId: "1:506291667873:web:8db87a488dfb57862901e0",
+    measurementId: "G-D5WVG0CMHW"
+  };
+  initFirebase(FIREBASE_CONFIG);
+  show(viewHome);
 
-  el('saveConfigBtn').addEventListener('click', ()=>{
-    let cfg;
-    try{ cfg = JSON.parse(el('configInput').value); }
-    catch(e){ alert('That doesn\'t look like valid config JSON. Copy the exact object from Firebase console.'); return; }
-    if(!cfg.databaseURL){ alert('Missing databaseURL — make sure Realtime Database is created and you copied the web app config.'); return; }
-    localStorage.setItem('tb_fbconfig', JSON.stringify(cfg));
-    initFirebase(cfg);
-    show(viewHome);
-  });
+  // show the admin link only when opened with ?admin=1 in the URL
+  if(new URLSearchParams(window.location.search).get('admin') === '1'){
+    el('adminLoginLink').classList.remove('hidden');
+  }
 
   function initFirebase(cfg){
     firebase.initializeApp(cfg);
