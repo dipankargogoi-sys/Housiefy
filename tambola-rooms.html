@@ -7,9 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#181735">
-<script src="firebase-app-compat.js"></script>
-<script src="firebase-database-compat.js"></script>
-<script src="firebase-auth-compat.js"></script>
+<!-- Firebase SDK is loaded dynamically below, with retry logic for slow/flaky connections -->
 <style>
   :root{
     --bg-deep:#181735; --bg-panel:#232049; --bg-panel-2:#2b2760;
@@ -240,33 +238,53 @@
     measurementId: "G-D5WVG0CMHW"
   };
 
-  function boot(attemptsLeft){
-    if(typeof firebase === 'undefined'){
-      if(attemptsLeft > 0){
-        if(attemptsLeft <= 65){ // show the "still loading" panel once a couple seconds have passed
-          document.getElementById('loadError').classList.remove('hidden');
+  function loadScript(src, retriesLeft){
+    return new Promise((resolve, reject)=>{
+      const attempt = (n)=>{
+        const tag = document.createElement('script');
+        tag.src = src + '?r=' + n; // cache-bust each retry
+        tag.onload = ()=>resolve();
+        tag.onerror = ()=>{
+          if(n < retriesLeft){
+            setTimeout(()=>attempt(n+1), 500);
+          } else {
+            reject(new Error('Failed to load ' + src));
+          }
+        };
+        document.head.appendChild(tag);
+      };
+      attempt(0);
+    });
+  }
+
+  function boot(){
+    Promise.all([
+      loadScript('firebase-app-compat.js', 6),
+      loadScript('firebase-database-compat.js', 6),
+      loadScript('firebase-auth-compat.js', 6)
+    ]).then(()=>{
+      document.getElementById('loadError').classList.add('hidden');
+      try{
+        initFirebase(FIREBASE_CONFIG);
+        show(viewHome);
+        if(new URLSearchParams(window.location.search).get('admin') === '1'){
+          el('adminLoginLink').classList.remove('hidden');
         }
-        setTimeout(()=>boot(attemptsLeft-1), 400);
-        return;
+      }catch(e){
+        document.getElementById('loadErrorMsg').textContent = "Something went wrong loading the app.";
+        document.getElementById('loadRetryBtn').style.display = 'block';
+        document.getElementById('loadError').classList.remove('hidden');
       }
-      document.getElementById('loadErrorMsg').textContent = "Couldn't load — check your internet connection.";
-      document.getElementById('loadRetryBtn').style.display = 'block';
-      return;
-    }
-    document.getElementById('loadError').classList.add('hidden');
-    try{
-      initFirebase(FIREBASE_CONFIG);
-      show(viewHome);
-      if(new URLSearchParams(window.location.search).get('admin') === '1'){
-        el('adminLoginLink').classList.remove('hidden');
-      }
-    }catch(e){
+    }).catch(()=>{
       document.getElementById('loadErrorMsg').textContent = "Couldn't load — check your internet connection.";
       document.getElementById('loadRetryBtn').style.display = 'block';
       document.getElementById('loadError').classList.remove('hidden');
-    }
+    });
   }
-  boot(75); // retries for up to ~30 seconds on a slow connection before giving up
+
+  document.getElementById('loadErrorMsg').textContent = "Loading… (this can take a bit on a slow connection)";
+  document.getElementById('loadError').classList.remove('hidden');
+  boot();
 
   function initFirebase(cfg){
     firebase.initializeApp(cfg);
