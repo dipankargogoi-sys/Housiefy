@@ -247,7 +247,6 @@
     firebase.initializeApp(cfg);
     db = firebase.database();
     auth = firebase.auth();
-    auth.getRedirectResult().catch(e=>{ if(e && e.message) console.log('redirect result:', e.message); });
     auth.onAuthStateChanged(user=>{
       googleUser = user;
       if(user){
@@ -268,8 +267,12 @@
 
   el('googleSignInBtn').addEventListener('click', ()=>{
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithRedirect(provider).catch(e=>{
-      alert('Sign-in failed: ' + e.message + '\nMake sure Google sign-in is enabled in your Firebase console, and this domain is in the authorized domains list.');
+    auth.signInWithPopup(provider).catch(e=>{
+      if(e.code === 'auth/popup-blocked'){
+        alert('Your browser blocked the sign-in popup. Please allow popups for this site and try again.');
+      } else if(e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request'){
+        alert('Sign-in failed: ' + e.message + '\nMake sure Google sign-in is enabled in your Firebase console, and this domain is in the authorized domains list.');
+      }
     });
   });
 
