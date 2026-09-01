@@ -135,6 +135,11 @@
     </div>
   </div>
 
+  <div id="myRoomsCard" class="card hidden">
+    <div style="font-size:13px;font-weight:700;color:var(--gold-soft);margin-bottom:8px;">My Rooms</div>
+    <div id="myRoomsWrap"></div>
+  </div>
+
   <!-- ADMIN -->
   <div id="viewAdmin" class="hidden">
     <div class="card">
@@ -171,10 +176,12 @@
         <div class="call-remaining" id="remaining">90 numbers remaining</div>
       </div>
       <div id="ownerControls" class="hidden" style="margin-top:14px;">
-        <button class="btn btn-primary" id="callBtn">▶ Call Next Number</button>
+        <button class="btn btn-primary" id="startGameBtn">▶ Start Game</button>
+        <button class="btn btn-primary hidden" id="callBtn">▶ Call Next Number</button>
         <button class="btn btn-ghost" id="addPoolBtn">+ Add 5 Tickets to Pool</button>
       </div>
       <div id="playerHint" class="hint hidden" style="margin-top:10px;">Waiting for the room owner to call numbers.</div>
+      <div id="waitingStartHint" class="hint hidden" style="margin-top:10px;">Waiting for the room owner to start the game. You can request tickets now.</div>
       <div class="board" id="board"></div>
     </div>
 
@@ -212,7 +219,7 @@
   const NICK_TTS = true;
   const ADMIN_CODE = "HOUSE2026"; // change this to your own secret passcode
   let db=null, roomCode=null, myId=null, myName=null, amOwner=false;
-  let players={}, tickets={}, calledOrder=[], currentNumber=null, winners={}, roomStatus='pending';
+  let players={}, tickets={}, calledOrder=[], currentNumber=null, winners={}, roomStatus='pending', gameStarted=false;
   let activeTab='mine';
 
   // ---------- persisted identity ----------
@@ -267,6 +274,7 @@
       try{
         initFirebase(FIREBASE_CONFIG);
         show(viewHome);
+        renderMyRooms();
         if(new URLSearchParams(window.location.search).get('admin') === '1'){
           el('adminLoginLink').classList.remove('hidden');
         }
@@ -325,6 +333,50 @@
     myId = localStorage.getItem('tb_playerId');
   });
 
+  // ---------- local "my rooms" tracking ----------
+  function saveMyRoom(code, name){
+    let list = [];
+    try{ list = JSON.parse(localStorage.getItem('tb_myRooms') || '[]'); }catch(e){}
+    list = list.filter(r=>r.code!==code);
+    list.unshift({code, name, savedAt: Date.now()});
+    list = list.slice(0, 8);
+    localStorage.setItem('tb_myRooms', JSON.stringify(list));
+  }
+
+  function renderMyRooms(){
+    let list = [];
+    try{ list = JSON.parse(localStorage.getItem('tb_myRooms') || '[]'); }catch(e){}
+    const card = el('myRoomsCard');
+    if(list.length===0){ card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+    const wrap = el('myRoomsWrap');
+    wrap.innerHTML='';
+    list.forEach(r=>{
+      const row=document.createElement('div');
+      row.className='req-row';
+      row.innerHTML = `<span><strong style="color:var(--gold-soft);">${escapeHtml(r.code)}</strong></span>`;
+      const btn=document.createElement('button');
+      btn.className='btn btn-primary btn-sm'; btn.textContent='Rejoin';
+      btn.addEventListener('click', ()=>rejoinRoom(r.code));
+      row.appendChild(btn);
+      wrap.appendChild(row);
+    });
+  }
+
+  function rejoinRoom(code){
+    db.ref('rooms/'+code).get().then(snap=>{
+      if(!snap.exists()){ alert('That room no longer exists.'); return; }
+      const room = snap.val();
+      const isOwner = room.ownerId === myId;
+      const nameToUse = el('nameInput').value.trim() || myName || (googleUser && googleUser.displayName) || 'Player';
+      myName = nameToUse;
+      db.ref(`rooms/${code}/players/${myId}`).set({ name: nameToUse, isOwner, joinedAt: Date.now() }).then(()=>{
+        saveMyRoom(code, nameToUse);
+        enterRoom(code, isOwner);
+      });
+    }).catch(e=>alert('Could not rejoin: '+e.message));
+  }
+
   // ---------- home: create / join ----------
   function genRoomCode(){
     const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -339,10 +391,11 @@
     const code = genRoomCode();
     db.ref('rooms/'+code).set({
       ownerId: myId, ownerName: name, createdAt: Date.now(),
-      status: 'pending', calledOrder: [], currentNumber: null
+      status: 'pending', started: false, calledOrder: [], currentNumber: null
     }).then(()=>{
       return db.ref(`rooms/${code}/players/${myId}`).set({name, isOwner:true, joinedAt:Date.now()});
     }).then(()=>{
+      saveMyRoom(code, name);
       enterRoom(code, true);
     }).catch(e=>alert('Could not create room: '+e.message));
   });
@@ -356,6 +409,7 @@
     db.ref('rooms/'+code).get().then(snap=>{
       if(!snap.exists()){ alert('Room not found. Check the code.'); return; }
       db.ref(`rooms/${code}/players/${myId}`).set({name, isOwner:false, joinedAt:Date.now()}).then(()=>{
+        saveMyRoom(code, name);
         enterRoom(code, false);
       });
     }).catch(e=>alert('Could not join room: '+e.message));
@@ -366,6 +420,7 @@
     detachListeners();
     roomCode=null;
     show(viewHome);
+    renderMyRooms();
   });
 
   // ---------- room ----------
@@ -407,6 +462,10 @@
     const fnS = snap => { roomStatus = snap.val() || 'pending'; renderApprovalBanner(); autoStockPool(); };
     statusRef.on('value', fnS); refsAttached.push({ref:statusRef, fn:fnS});
 
+    const startedRef = db.ref(`rooms/${code}/started`);
+    const fnStarted = snap => { gameStarted = !!snap.val(); updateGameStartUI(); };
+    startedRef.on('value', fnStarted); refsAttached.push({ref:startedRef, fn:fnStarted});
+
     const winRef = db.ref(`rooms/${code}/winners`);
     const fnW = snap => { winners = snap.val()||{}; renderWinners(); };
     winRef.on('value', fnW); refsAttached.push({ref:winRef, fn:fnW});
@@ -443,7 +502,7 @@
 
   // ---------- owner: call numbers ----------
   el('callBtn').addEventListener('click', ()=>{
-    if(roomStatus!=='approved') return;
+    if(roomStatus!=='approved' || !gameStarted) return;
     if(calledOrder.length>=90) return;
     const pool=[]; for(let i=1;i<=90;i++) if(!calledOrder.includes(i)) pool.push(i);
     const num = pool[Math.floor(Math.random()*pool.length)];
@@ -696,7 +755,23 @@
       banner.classList.add('hidden');
       banner.innerHTML='';
     }
+    updateGameStartUI();
   }
+
+  function updateGameStartUI(){
+    const approved = roomStatus==='approved';
+    if(amOwner){
+      el('startGameBtn').classList.toggle('hidden', !approved || gameStarted);
+      el('callBtn').classList.toggle('hidden', !approved || !gameStarted);
+    }
+    el('playerHint').classList.add('hidden'); // superseded by waitingStartHint below
+    el('waitingStartHint').classList.toggle('hidden', amOwner || !approved || gameStarted);
+  }
+
+  el('startGameBtn').addEventListener('click', ()=>{
+    if(!roomCode) return;
+    db.ref(`rooms/${roomCode}`).update({ started: true });
+  });
 
   // ---------- admin panel ----------
   // hidden admin entry: tap the "Housiefy" title 5 times within 2 seconds
@@ -724,6 +799,7 @@
   el('adminBackBtn').addEventListener('click', ()=>{
     if(adminRoomsRef) adminRoomsRef.off('value', adminRoomsFn);
     show(viewHome);
+    renderMyRooms();
   });
 
   let adminRoomsRef=null, adminRoomsFn=null;
