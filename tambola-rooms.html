@@ -110,6 +110,11 @@
     <button class="btn btn-primary" id="saveConfigBtn">Save & Continue</button>
   </div>
 
+  <div id="loadError" class="card hidden" style="text-align:center;">
+    <div style="font-size:15px;margin-bottom:14px;">Couldn't load — check your internet connection.</div>
+    <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+  </div>
+
   <!-- HOME: create/join -->
   <div id="viewHome" class="card hidden">
     <div id="googleSignedOut">
@@ -234,13 +239,27 @@
     appId: "1:506291667873:web:8db87a488dfb57862901e0",
     measurementId: "G-D5WVG0CMHW"
   };
-  initFirebase(FIREBASE_CONFIG);
-  show(viewHome);
 
-  // show the admin link only when opened with ?admin=1 in the URL
-  if(new URLSearchParams(window.location.search).get('admin') === '1'){
-    el('adminLoginLink').classList.remove('hidden');
+  function boot(attemptsLeft){
+    if(typeof firebase === 'undefined'){
+      if(attemptsLeft > 0){
+        setTimeout(()=>boot(attemptsLeft-1), 400);
+        return;
+      }
+      document.getElementById('loadError').classList.remove('hidden');
+      return;
+    }
+    try{
+      initFirebase(FIREBASE_CONFIG);
+      show(viewHome);
+      if(new URLSearchParams(window.location.search).get('admin') === '1'){
+        el('adminLoginLink').classList.remove('hidden');
+      }
+    }catch(e){
+      document.getElementById('loadError').classList.remove('hidden');
+    }
   }
+  boot(15); // retries for up to ~6 seconds on a slow connection before giving up
 
   function initFirebase(cfg){
     firebase.initializeApp(cfg);
