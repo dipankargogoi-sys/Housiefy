@@ -177,6 +177,7 @@
     </div>
 
     <div id="approvalBanner" class="card hidden" style="text-align:center;"></div>
+    <div id="gameOverBanner" class="card hidden" style="text-align:center;"></div>
 
     <div class="card">
       <div class="call-stage">
@@ -243,7 +244,7 @@
   const NICK_TTS = true;
   const ADMIN_CODE = "HOUSE2026"; // change this to your own secret passcode
   let db=null, roomCode=null, myId=null, myName=null, amOwner=false;
-  let players={}, tickets={}, calledOrder=[], currentNumber=null, winners={}, roomStatus='pending', gameStarted=false;
+  let players={}, tickets={}, calledOrder=[], currentNumber=null, winner=null, roomStatus='pending', gameStarted=false, gameOver=false;
   let activeTab='mine';
 
   // ---------- persisted identity ----------
@@ -491,8 +492,12 @@
     const fnStarted = snap => { gameStarted = !!snap.val(); updateGameStartUI(); };
     startedRef.on('value', fnStarted); refsAttached.push({ref:startedRef, fn:fnStarted});
 
-    const winRef = db.ref(`rooms/${code}/winners`);
-    const fnW = snap => { winners = snap.val()||{}; renderWinners(); };
+    const gameOverRef = db.ref(`rooms/${code}/gameOver`);
+    const fnGameOver = snap => { gameOver = !!snap.val(); updateGameStartUI(); renderGameOverBanner(); };
+    gameOverRef.on('value', fnGameOver); refsAttached.push({ref:gameOverRef, fn:fnGameOver});
+
+    const winRef = db.ref(`rooms/${code}/winner`);
+    const fnW = snap => { winner = snap.val()||null; renderWinners(); };
     winRef.on('value', fnW); refsAttached.push({ref:winRef, fn:fnW});
   }
 
@@ -527,7 +532,7 @@
 
   // ---------- owner: call numbers ----------
   function callNext(){
-    if(roomStatus!=='approved' || !gameStarted) return;
+    if(roomStatus!=='approved' || !gameStarted || gameOver) return;
     if(calledOrder.length>=90){ stopAuto(); return; }
     const pool=[]; for(let i=1;i<=90;i++) if(!calledOrder.includes(i)) pool.push(i);
     const num = pool[Math.floor(Math.random()*pool.length)];
@@ -585,7 +590,7 @@
     clearInterval(autoTimer);
   }
   el('autoSwitch').addEventListener('click', ()=>{
-    if(!gameStarted || roomStatus!=='approved') return;
+    if(!gameStarted || roomStatus!=='approved' || gameOver) return;
     if(autoOn) stopAuto(); else startAuto();
   });
   el('speedRange').addEventListener('input', ()=>{
@@ -804,15 +809,17 @@
         claimRef.transaction(cur => cur===true ? undefined : true, (err,committed)=>{
           if(err || !committed) return;
           if(label === 'Full House'){
+            if(gameOver) return; // game already decided
             db.ref(`rooms/${roomCode}/fullHouseCount`).transaction(cur => (cur||0)+1, (err2, committed2, snap2)=>{
               if(err2 || !committed2) return;
               const position = snap2.val();
-              db.ref(`rooms/${roomCode}/winners`).push({
-                playerName: t.playerName, ticketId: tid,
-                numbers: flatNums.join(', '), time: Date.now(), position
+              if(position !== 1) return; // only the first Full House counts as the winner
+              db.ref(`rooms/${roomCode}`).update({
+                gameOver: true,
+                winner: { playerName: t.playerName, ticketId: tid, numbers: flatNums.join(', '), time: Date.now() }
               });
               stopAuto();
-              toast(`🏆 FULL HOUSE! ${t.playerName} — ${ordinal(position)} place!`, 5500);
+              toast(`🏆 FULL HOUSE! ${t.playerName} wins! Game over.`, 6000);
             });
           } else {
             if(t.playerId===myId || amOwner) toast(`🎉 ${label} — ${t.playerName}!`);
@@ -852,14 +859,22 @@
 
   function updateGameStartUI(){
     const approved = roomStatus==='approved';
+    const active = approved && gameStarted && !gameOver;
     if(amOwner){
-      el('startGameBtn').classList.toggle('hidden', !approved || gameStarted);
-      el('callBtn').classList.toggle('hidden', !approved || !gameStarted);
-      el('autoPlayRow').classList.toggle('hidden', !approved || !gameStarted);
-      if((!approved || !gameStarted) && typeof stopAuto === 'function') stopAuto();
+      el('startGameBtn').classList.toggle('hidden', !approved || gameStarted || gameOver);
+      el('callBtn').classList.toggle('hidden', !active);
+      el('autoPlayRow').classList.toggle('hidden', !active);
+      if(!active && typeof stopAuto === 'function') stopAuto();
     }
     el('playerHint').classList.add('hidden'); // superseded by waitingStartHint below
-    el('waitingStartHint').classList.toggle('hidden', amOwner || !approved || gameStarted);
+    el('waitingStartHint').classList.toggle('hidden', amOwner || gameOver || !approved || gameStarted);
+  }
+
+  function renderGameOverBanner(){
+    const banner = el('gameOverBanner');
+    if(!gameOver){ banner.classList.add('hidden'); banner.innerHTML=''; return; }
+    banner.classList.remove('hidden');
+    banner.innerHTML = `<div class="pending-note" style="margin:0;font-size:15px;">🏆 Game over — see the Winner below.</div>`;
   }
 
   el('startGameBtn').addEventListener('click', ()=>{
@@ -983,9 +998,8 @@
 
   function renderWinners(){
     const wrap = el('winnersWrap');
-    const list = Object.values(winners).sort((a,b)=>(a.position||0)-(b.position||0));
-    if(list.length===0){ wrap.innerHTML='No winners yet.'; return; }
-    wrap.innerHTML = list.map(w=>`<div class="winner-row">🏆 <b>${ordinal(w.position)} place</b> — ${escapeHtml(w.playerName)} (Full House)<div class="wn">Ticket: ${escapeHtml(w.numbers)}</div></div>`).join('');
+    if(!winner){ wrap.innerHTML='No winner yet.'; return; }
+    wrap.innerHTML = `<div class="winner-row">🏆 <b>${escapeHtml(winner.playerName)}</b> — Full House! Game over.<div class="wn">Ticket: ${escapeHtml(winner.numbers)}</div></div>`;
   }
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
