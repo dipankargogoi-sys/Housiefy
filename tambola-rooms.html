@@ -364,13 +364,14 @@
     try{ list = JSON.parse(localStorage.getItem('tb_myRooms') || '[]'); }catch(e){}
     list = list.filter(r=>r.code!==code);
     list.unshift({code, name, savedAt: Date.now()});
-    list = list.slice(0, 8);
+    list = list.slice(0, 2); // keep only the 2 most recent games
     localStorage.setItem('tb_myRooms', JSON.stringify(list));
   }
 
   function renderMyRooms(){
     let list = [];
     try{ list = JSON.parse(localStorage.getItem('tb_myRooms') || '[]'); }catch(e){}
+    list = list.slice(0, 2); // keep only the 2 most recent games
     const card = el('myRoomsCard');
     if(list.length===0){ card.classList.add('hidden'); return; }
     card.classList.remove('hidden');
@@ -379,12 +380,25 @@
     list.forEach(r=>{
       const row=document.createElement('div');
       row.className='req-row';
-      row.innerHTML = `<span><strong style="color:var(--gold-soft);">${escapeHtml(r.code)}</strong></span>`;
+      row.innerHTML = `<span><strong style="color:var(--gold-soft);">${escapeHtml(r.code)}</strong> <span class="room-status-label" style="color:var(--muted);font-size:12px;">checking…</span></span>`;
       const btn=document.createElement('button');
-      btn.className='btn btn-primary btn-sm'; btn.textContent='Rejoin';
+      btn.className='btn btn-primary btn-sm'; btn.textContent='Open';
       btn.addEventListener('click', ()=>rejoinRoom(r.code));
       row.appendChild(btn);
       wrap.appendChild(row);
+
+      // check whether this game already finished, to label it clearly
+      db.ref(`rooms/${r.code}/gameOver`).get().then(snap=>{
+        const label = row.querySelector('.room-status-label');
+        if(!label) return;
+        if(snap.val()){
+          label.textContent = '— finished';
+          btn.textContent = 'View Result';
+        } else {
+          label.textContent = '— in progress';
+          btn.textContent = 'Rejoin';
+        }
+      }).catch(()=>{});
     });
   }
 
