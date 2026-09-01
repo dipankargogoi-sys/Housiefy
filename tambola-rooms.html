@@ -86,7 +86,7 @@
 <body>
 <div id="winnerToast"></div>
 <main>
-  <h1>Housiefy</h1>
+  <h1 id="appTitle">Housiefy</h1>
   <div class="sub">Play with friends · free tickets · no cash prizes</div>
 
   <!-- SETUP: Firebase config -->
@@ -386,7 +386,7 @@
     playersRef.on('value', fnP); refsAttached.push({ref:playersRef, fn:fnP});
 
     const poolRef = db.ref(`rooms/${code}/pool`);
-    const fnT = snap => { tickets = snap.val()||{}; renderTickets(); renderPool(); renderPendingRequests(); renderMyPending(); checkClaims(); };
+    const fnT = snap => { tickets = snap.val()||{}; renderTickets(); renderPool(); renderPendingRequests(); renderMyPending(); checkClaims(); autoStockPool(); };
     poolRef.on('value', fnT); refsAttached.push({ref:poolRef, fn:fnT});
 
     const calledRef = db.ref(`rooms/${code}/calledOrder`);
@@ -404,7 +404,7 @@
     curRef.on('value', fnN); refsAttached.push({ref:curRef, fn:fnN});
 
     const statusRef = db.ref(`rooms/${code}/status`);
-    const fnS = snap => { roomStatus = snap.val() || 'pending'; renderApprovalBanner(); };
+    const fnS = snap => { roomStatus = snap.val() || 'pending'; renderApprovalBanner(); autoStockPool(); };
     statusRef.on('value', fnS); refsAttached.push({ref:statusRef, fn:fnS});
 
     const winRef = db.ref(`rooms/${code}/winners`);
@@ -501,6 +501,18 @@
     for(let i=0;i<5;i++) issueTicket();
   });
 
+  // auto-restock: whenever available tickets run low, the owner's client tops the pool back up
+  let autoStockInFlight = false;
+  function autoStockPool(){
+    if(!amOwner || roomStatus!=='approved' || autoStockInFlight) return;
+    const availableCount = Object.values(tickets).filter(t=>t.status==='available').length;
+    if(availableCount < 3){
+      autoStockInFlight = true;
+      for(let i=0;i<5;i++) issueTicket();
+      setTimeout(()=>{ autoStockInFlight = false; }, 1500);
+    }
+  }
+
   // ---------- browse & request tickets ----------
   el('toggleGetTicketsBtn').addEventListener('click', ()=>{
     const w = el('poolWrap');
@@ -512,7 +524,7 @@
     const wrap = el('poolWrap');
     const available = Object.entries(tickets).filter(([tid,t])=>t.status==='available');
     if(available.length===0){
-      wrap.innerHTML = `<div class="hint">No tickets available right now.${amOwner ? ' Tap "Add 5 Tickets to Pool" above.' : ' Ask the room owner to add more.'}</div>`;
+      wrap.innerHTML = `<div class="hint">${amOwner ? 'Restocking tickets…' : 'Tickets are being restocked — check back in a moment.'}</div>`;
       return;
     }
     wrap.innerHTML='';
@@ -687,6 +699,18 @@
   }
 
   // ---------- admin panel ----------
+  // hidden admin entry: tap the "Housiefy" title 5 times within 2 seconds
+  let titleTapCount = 0, titleTapTimer = null;
+  document.getElementById('appTitle').addEventListener('click', ()=>{
+    titleTapCount++;
+    clearTimeout(titleTapTimer);
+    titleTapTimer = setTimeout(()=>{ titleTapCount = 0; }, 2000);
+    if(titleTapCount >= 5){
+      titleTapCount = 0;
+      el('adminLoginLink').classList.remove('hidden');
+    }
+  });
+
   el('adminLoginLink').addEventListener('click', ()=>{
     const code = prompt('Enter admin passcode:');
     if(code === ADMIN_CODE){
@@ -710,6 +734,16 @@
     adminRoomsRef.on('value', adminRoomsFn);
   }
 
+  function joinAsAdmin(code, room){
+    const isOwner = room.ownerId === myId;
+    const nameToUse = myName || (googleUser && googleUser.displayName) || 'Admin';
+    myName = nameToUse;
+    if(adminRoomsRef){ adminRoomsRef.off('value', adminRoomsFn); }
+    db.ref(`rooms/${code}/players/${myId}`).set({ name: nameToUse, isOwner, joinedAt: Date.now() }).then(()=>{
+      enterRoom(code, isOwner);
+    });
+  }
+
   function renderAdminRooms(allRooms){
     const wrap = el('adminRoomsWrap');
     const entries = Object.entries(allRooms);
@@ -731,7 +765,13 @@
           <div class="claim ${status==='approved'?'done':''}" style="text-transform:uppercase;">${escapeHtml(status)}</div>
         </div>`;
       const btns=document.createElement('div');
-      btns.style.cssText='display:flex;gap:6px;margin-top:8px;';
+      btns.style.cssText='display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;';
+      if(status==='approved'){
+        const join=document.createElement('button');
+        join.className='btn btn-primary btn-sm'; join.textContent='Join Room';
+        join.addEventListener('click', ()=> joinAsAdmin(code, room));
+        btns.appendChild(join);
+      }
       if(status!=='approved'){
         const approve=document.createElement('button');
         approve.className='btn btn-primary btn-sm'; approve.textContent='Approve';
