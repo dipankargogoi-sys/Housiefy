@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Housiefy — Play Tambola with Friends</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#181735">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --bg-deep:#181735; --bg-panel:#232049; --bg-panel-2:#2b2760;
+    --gold:#e8b34c; --gold-soft:#f2c66b; --cage:#c1443c; --cream:#f3e9d2;
+    --muted:#9a95c2; --teal:#3fa796; --line:rgba(243,233,210,0.12);
+    --font-display: ui-rounded, "SF Pro Rounded", "Segoe UI Rounded", "Nunito", "Trebuchet MS", sans-serif;
+    --font-body: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:radial-gradient(ellipse at 20% -10%, rgba(232,179,76,0.10), transparent 55%),radial-gradient(ellipse at 90% 0%, rgba(63,167,150,0.10), transparent 50%),var(--bg-deep);color:var(--cream);font-family:var(--font-body);min-height:100vh;padding-bottom:40px;}
+  main{max-width:640px;margin:0 auto;padding:18px 16px 0;}
+  h1{font-family:var(--font-display);font-weight:800;font-size:clamp(24px,7vw,34px);letter-spacing:1px;margin:0 0 4px;color:var(--gold-soft);text-align:center;}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:18px;}
+  .card{background:linear-gradient(180deg,var(--bg-panel-2),var(--bg-panel));border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:14px;box-shadow:0 10px 30px rgba(0,0,0,0.3);}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase;}
+  input,textarea{width:100%;background:rgba(243,233,210,0.08);border:1px solid var(--line);border-radius:10px;padding:12px;color:var(--cream);font-size:15px;font-family:inherit;margin-bottom:14px;}
+  textarea{min-height:110px;font-family:monospace;font-size:12px;}
+  .btn{font-family:var(--font-display);font-weight:700;border:none;border-radius:12px;padding:13px 16px;cursor:pointer;font-size:15px;width:100%;transition:transform .1s;}
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:linear-gradient(180deg,var(--cage),#9c332c);color:var(--cream);box-shadow:0 5px 0 #7a281f;margin-bottom:10px;}
+  .btn-ghost{background:rgba(243,233,210,0.08);color:var(--cream);border:1px solid var(--line);}
+  .btn-sm{width:auto;padding:9px 14px;font-size:13px;}
+  .row{display:flex;gap:10px;}
+  .row>*{flex:1;}
+  .hidden{display:none !important;}
+  .hint{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;}
+  .hint b{color:var(--gold-soft);}
+  .hint a{color:var(--teal);}
+
+  /* room header */
+  .room-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .room-code{font-family:var(--font-display);font-size:22px;letter-spacing:3px;color:var(--gold-soft);font-weight:800;}
+  .players{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .avatar{display:flex;align-items:center;gap:6px;background:rgba(243,233,210,0.06);border:1px solid var(--line);border-radius:20px;padding:5px 10px 5px 5px;font-size:12px;}
+  .avatar .dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#241f0a;}
+  .avatar.you{border-color:var(--gold-soft);}
+  .owner-tag{font-size:9px;color:var(--gold-soft);margin-left:2px;}
+
+  /* call panel */
+  .call-stage{text-align:center;padding:6px 0 4px;}
+  .call-number{font-family:var(--font-display);font-weight:800;font-size:clamp(56px,18vw,80px);line-height:1;color:var(--cream);}
+  .call-remaining{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  .board{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;background:rgba(0,0,0,0.15);border:1px solid var(--line);border-radius:14px;padding:8px;margin-top:12px;}
+  .cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(10px,2.8vw,13px);font-weight:600;color:var(--muted);background:rgba(243,233,210,0.04);border-radius:7px;}
+  .cell.called{background:var(--gold-soft);color:#241f0a;}
+  .cell.current{background:var(--cage);color:var(--cream);box-shadow:0 0 0 3px rgba(193,68,60,0.4);}
+
+  .tabs{display:flex;gap:8px;margin:16px 0 10px;}
+  .tab{flex:1;text-align:center;padding:10px;border-radius:10px;background:rgba(243,233,210,0.06);border:1px solid var(--line);font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);}
+  .tab.active{background:var(--gold-soft);color:#241f0a;border-color:var(--gold-soft);}
+
+  .ticket{background:var(--cream);color:#241f0a;border-radius:12px;padding:10px;margin-bottom:12px;position:relative;box-shadow:0 8px 20px rgba(0,0,0,0.25);}
+  .ticket .tname{position:absolute;top:-9px;left:10px;background:var(--teal);color:var(--cream);font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+  .ticket-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-top:8px;}
+  .tcell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,2.4vw,12px);font-weight:700;border-radius:5px;background:#e9dfc4;}
+  .tcell.blank{background:transparent;}
+  .tcell.marked{background:var(--cage);color:var(--cream);text-decoration:line-through;text-decoration-color:rgba(243,233,210,0.6);}
+  .claims{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+  .claim{font-size:9px;font-weight:700;padding:3px 7px;border-radius:7px;background:rgba(36,31,10,0.08);color:#6a6248;}
+  .claim.done{background:var(--gold-soft);color:#241f0a;}
+
+  #winnerToast{display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:50;background:var(--gold-soft);color:#241f0a;font-family:var(--font-display);font-weight:800;padding:14px 22px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.4);text-align:center;font-size:14px;max-width:90vw;transition:transform .3s ease, opacity .3s ease;opacity:0;}
+  .winner-row{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .winner-row b{color:var(--gold-soft);}
+  .winner-row .wn{font-size:11px;color:var(--muted);margin-top:2px;}
+  .pool-card{background:rgba(243,233,210,0.06);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;}
+  .pool-mini{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin:6px 0;}
+  .pool-mini div{aspect-ratio:1;border-radius:3px;background:rgba(243,233,210,0.1);}
+  .pool-mini div.has{background:var(--gold-soft);}
+  .req-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .pending-note{font-size:12px;color:var(--gold-soft);background:rgba(232,179,76,0.1);border:1px solid rgba(232,179,76,0.3);border-radius:10px;padding:8px 10px;margin-top:10px;}
+  .footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:22px;line-height:1.6;padding:0 10px;}
+</style>
+</head>
+<body>
+<div id="winnerToast"></div>
+<main>
+  <h1>Housiefy</h1>
+  <div class="sub">Play with friends · free tickets · no cash prizes</div>
+
+  <!-- SETUP: Firebase config -->
+  <div id="viewSetup" class="card hidden">
+    <div class="hint">
+      To sync rooms across everyone's phones this app needs a free database. One-time setup:<br><br>
+      1. Go to <b>console.firebase.google.com</b> → Create project (any name).<br>
+      2. In the project, open <b>Build → Realtime Database</b> → Create database → start in <b>test mode</b>.<br>
+      3. Click the gear icon → Project settings → under "Your apps" click the <b>&lt;/&gt; (web)</b> icon → register app.<br>
+      4. Copy the whole <b>firebaseConfig</b> object shown and paste it below.
+    </div>
+    <label>Paste your firebaseConfig here</label>
+    <textarea id="configInput" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "databaseURL": "...",
+  "projectId": "..."
+}'></textarea>
+    <button class="btn btn-primary" id="saveConfigBtn">Save & Continue</button>
+  </div>
+
+  <!-- HOME: create/join -->
+  <div id="viewHome" class="card hidden">
+    <label>Your name</label>
+    <input id="nameInput" type="text" placeholder="e.g. Priya">
+    <button class="btn btn-primary" id="createRoomBtn">Create Room</button>
+    <div class="row">
+      <input id="joinCodeInput" type="text" placeholder="Room code" maxlength="6" style="text-transform:uppercase;">
+    </div>
+    <button class="btn btn-ghost" id="joinRoomBtn">Join Room</button>
+    <div style="text-align:center;margin-top:14px;">
+      <span id="adminLoginLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">Admin login</span>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="viewAdmin" class="hidden">
+    <div class="card">
+      <div class="room-head">
+        <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;">Admin Panel</div>
+        <button class="btn btn-ghost btn-sm" id="adminBackBtn">Back</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:var(--gold-soft);margin-bottom:8px;">All Rooms</div>
+      <div id="adminRoomsWrap" style="color:var(--muted);font-size:13px;">No rooms yet.</div>
+    </div>
+  </div>
+
+  <!-- ROOM -->
+  <div id="viewRoom" class="hidden">
+    <div class="card">
+      <div class="room-head">
+        <div>
+          <div style="font-size:11px;color:var(--muted);">ROOM CODE — SHARE WITH FRIENDS</div>
+          <div class="room-code" id="roomCodeDisplay">——</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="leaveRoomBtn">Leave</button>
+      </div>
+      <div class="players" id="playersList"></div>
+    </div>
+
+    <div id="approvalBanner" class="card hidden" style="text-align:center;"></div>
+
+    <div class="card">
+      <div class="call-stage">
+        <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;">Now Calling</div>
+        <div class="call-number" id="callNumber">—</div>
+        <div class="call-remaining" id="remaining">90 numbers remaining</div>
+      </div>
+      <div id="ownerControls" class="hidden" style="margin-top:14px;">
+        <button class="btn btn-primary" id="callBtn">▶ Call Next Number</button>
+        <button class="btn btn-ghost" id="addPoolBtn">+ Add 5 Tickets to Pool</button>
+      </div>
+      <div id="playerHint" class="hint hidden" style="margin-top:10px;">Waiting for the room owner to call numbers.</div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:13px;font-weight:700;color:var(--gold-soft);">Get Tickets</div>
+        <button class="btn btn-ghost btn-sm" id="toggleGetTicketsBtn">Browse Available</button>
+      </div>
+      <div id="myPendingWrap"></div>
+      <div id="poolWrap" class="hidden" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="pendingRequestsCard" class="card hidden">
+      <div style="font-size:13px;font-weight:700;color:var(--gold-soft);margin-bottom:8px;">Pending Requests</div>
+      <div id="pendingRequestsWrap" style="color:var(--muted);font-size:13px;">No requests waiting.</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabMine">My Tickets</div>
+      <div class="tab" id="tabOthers">Opponents</div>
+    </div>
+    <div id="ticketsWrap"></div>
+
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:var(--gold-soft);margin-bottom:6px;">Winners</div>
+      <div id="winnersWrap" style="color:var(--muted);font-size:13px;">No winners yet.</div>
+    </div>
+
+    <div class="footer-note">Free game for friends — no purchases, no cash prizes. Everyone sees results live.</div>
+  </div>
+</main>
+
+<script>
+(function(){
+  const NICK_TTS = true;
+  const ADMIN_CODE = "HOUSE2026"; // change this to your own secret passcode
+  let db=null, roomCode=null, myId=null, myName=null, amOwner=false;
+  let players={}, tickets={}, calledOrder=[], currentNumber=null, winners={}, roomStatus='pending';
+  let activeTab='mine';
+
+  // ---------- persisted identity ----------
+  myId = localStorage.getItem('tb_playerId');
+  if(!myId){ myId = 'p_'+Math.random().toString(36).slice(2,10); localStorage.setItem('tb_playerId', myId); }
+
+  const el = id => document.getElementById(id);
+  const viewSetup = el('viewSetup'), viewHome = el('viewHome'), viewRoom = el('viewRoom'), viewAdmin = el('viewAdmin');
+
+  function show(view){
+    [viewSetup, viewHome, viewRoom, viewAdmin].forEach(v=>v.classList.add('hidden'));
+    view.classList.remove('hidden');
+  }
+
+  // ---------- firebase config bootstrap ----------
+  const savedConfig = localStorage.getItem('tb_fbconfig');
+  if(savedConfig){
+    try{ initFirebase(JSON.parse(savedConfig)); show(viewHome); }
+    catch(e){ show(viewSetup); }
+  } else {
+    show(viewSetup);
+  }
+
+  el('saveConfigBtn').addEventListener('click', ()=>{
+    let cfg;
+    try{ cfg = JSON.parse(el('configInput').value); }
+    catch(e){ alert('That doesn\'t look like valid config JSON. Copy the exact object from Firebase console.'); return; }
+    if(!cfg.databaseURL){ alert('Missing databaseURL — make sure Realtime Database is created and you copied the web app config.'); return; }
+    localStorage.setItem('tb_fbconfig', JSON.stringify(cfg));
+    initFirebase(cfg);
+    show(viewHome);
+  });
+
+  function initFirebase(cfg){
+    firebase.initializeApp(cfg);
+    db = firebase.database();
+  }
+
+  // ---------- home: create / join ----------
+  function genRoomCode(){
+    const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s=''; for(let i=0;i<5;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+    return s;
+  }
+
+  el('createRoomBtn').addEventListener('click', ()=>{
+    const name = el('nameInput').value.trim();
+    if(!name){ alert('Enter your name first.'); return; }
+    myName = name;
+    const code = genRoomCode();
+    db.ref('rooms/'+code).set({
+      ownerId: myId, ownerName: name, createdAt: Date.now(),
+      status: 'pending', calledOrder: [], currentNumber: null
+    }).then(()=>{
+      return db.ref(`rooms/${code}/players/${myId}`).set({name, isOwner:true, joinedAt:Date.now()});
+    }).then(()=>{
+      enterRoom(code, true);
+    }).catch(e=>alert('Could not create room: '+e.message));
+  });
+
+  el('joinRoomBtn').addEventListener('click', ()=>{
+    const name = el('nameInput').value.trim();
+    const code = el('joinCodeInput').value.trim().toUpperCase();
+    if(!name){ alert('Enter your name first.'); return; }
+    if(!code){ alert('Enter the room code.'); return; }
+    myName = name;
+    db.ref('rooms/'+code).get().then(snap=>{
+      if(!snap.exists()){ alert('Room not found. Check the code.'); return; }
+      db.ref(`rooms/${code}/players/${myId}`).set({name, isOwner:false, joinedAt:Date.now()}).then(()=>{
+        enterRoom(code, false);
+      });
+    }).catch(e=>alert('Could not join room: '+e.message));
+  });
+
+  el('leaveRoomBtn').addEventListener('click', ()=>{
+    if(roomCode) db.ref(`rooms/${roomCode}/players/${myId}`).remove();
+    detachListeners();
+    roomCode=null;
+    show(viewHome);
+  });
+
+  // ---------- room ----------
+  let refsAttached = [];
+  function detachListeners(){
+    refsAttached.forEach(({ref,fn})=>ref.off('value', fn));
+    refsAttached = [];
+  }
+
+  function enterRoom(code, isOwner){
+    roomCode = code; amOwner = isOwner;
+    el('roomCodeDisplay').textContent = code;
+    el('playerHint').classList.toggle('hidden', isOwner);
+    show(viewRoom);
+
+    const playersRef = db.ref(`rooms/${code}/players`);
+    const fnP = snap => { players = snap.val()||{}; renderPlayers(); renderTickets(); };
+    playersRef.on('value', fnP); refsAttached.push({ref:playersRef, fn:fnP});
+
+    const poolRef = db.ref(`rooms/${code}/pool`);
+    const fnT = snap => { tickets = snap.val()||{}; renderTickets(); renderPool(); renderPendingRequests(); renderMyPending(); checkClaims(); };
+    poolRef.on('value', fnT); refsAttached.push({ref:poolRef, fn:fnT});
+
+    const calledRef = db.ref(`rooms/${code}/calledOrder`);
+    const fnC = snap => {
+      const val = snap.val()||[];
+      const isNew = val.length > calledOrder.length;
+      calledOrder = val;
+      renderBoard();
+      if(isNew) checkClaims();
+    };
+    calledRef.on('value', fnC); refsAttached.push({ref:calledRef, fn:fnC});
+
+    const curRef = db.ref(`rooms/${code}/currentNumber`);
+    const fnN = snap => { currentNumber = snap.val(); el('callNumber').textContent = currentNumber || '—'; };
+    curRef.on('value', fnN); refsAttached.push({ref:curRef, fn:fnN});
+
+    const statusRef = db.ref(`rooms/${code}/status`);
+    const fnS = snap => { roomStatus = snap.val() || 'pending'; renderApprovalBanner(); };
+    statusRef.on('value', fnS); refsAttached.push({ref:statusRef, fn:fnS});
+
+    const winRef = db.ref(`rooms/${code}/winners`);
+    const fnW = snap => { winners = snap.val()||{}; renderWinners(); };
+    winRef.on('value', fnW); refsAttached.push({ref:winRef, fn:fnW});
+  }
+
+  function renderPlayers(){
+    const wrap = el('playersList');
+    wrap.innerHTML='';
+    const colors=['#e8b34c','#3fa796','#c1443c','#7a6fd6','#d68fb0','#6fb3d6'];
+    Object.entries(players).forEach(([pid,p],i)=>{
+      const div = document.createElement('div');
+      div.className='avatar'+(pid===myId?' you':'');
+      div.innerHTML = `<span class="dot" style="background:${colors[i%colors.length]}">${p.name.charAt(0).toUpperCase()}</span>${escapeHtml(p.name)}${p.isOwner?'<span class="owner-tag">HOST</span>':''}`;
+      wrap.appendChild(div);
+    });
+  }
+
+  // board
+  const boardEl = el('board');
+  const cellEls = {};
+  for(let i=1;i<=90;i++){
+    const c=document.createElement('div'); c.className='cell'; c.textContent=i;
+    boardEl.appendChild(c); cellEls[i]=c;
+  }
+  function renderBoard(){
+    Object.values(cellEls).forEach(c=>c.classList.remove('called','current'));
+    calledOrder.forEach(n=>cellEls[n] && cellEls[n].classList.add('called'));
+    if(calledOrder.length){
+      const last = calledOrder[calledOrder.length-1];
+      if(cellEls[last]) cellEls[last].classList.add('current');
+    }
+    el('remaining').textContent = (90-calledOrder.length)+' numbers remaining';
+  }
+
+  // ---------- owner: call numbers ----------
+  el('callBtn').addEventListener('click', ()=>{
+    if(roomStatus!=='approved') return;
+    if(calledOrder.length>=90) return;
+    const pool=[]; for(let i=1;i<=90;i++) if(!calledOrder.includes(i)) pool.push(i);
+    const num = pool[Math.floor(Math.random()*pool.length)];
+    const next = calledOrder.concat(num);
+    db.ref(`rooms/${roomCode}`).update({ calledOrder: next, currentNumber: num });
+    speak(num);
+  });
+
+  function speak(num){
+    if(!NICK_TTS || !('speechSynthesis' in window)) return;
+    try{
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(String(num));
+      u.pitch=1.15; u.rate=0.9; u.lang='en-US';
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  // ---------- ticket issuing ----------
+  function generateTicketGrid(){
+    const ranges=[[1,9],[10,19],[20,29],[30,39],[40,49],[50,59],[60,69],[70,79],[80,90]];
+    let rowsBool, colCounts, attempts=0;
+    do{
+      attempts++;
+      rowsBool=[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]];
+      for(let r=0;r<3;r++){
+        const cols=[0,1,2,3,4,5,6,7,8];
+        for(let i=cols.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cols[i],cols[j]]=[cols[j],cols[i]];}
+        cols.slice(0,5).forEach(c=>rowsBool[r][c]=true);
+      }
+      colCounts=[0,0,0,0,0,0,0,0,0];
+      for(let c=0;c<9;c++) for(let r=0;r<3;r++) if(rowsBool[r][c]) colCounts[c]++;
+    } while(colCounts.some(c=>c>3) && attempts<200);
+
+    const flat = new Array(27).fill(0);
+    for(let c=0;c<9;c++){
+      const count=colCounts[c]; if(!count) continue;
+      const [lo,hi]=ranges[c]; const avail=[];
+      for(let n=lo;n<=hi;n++) avail.push(n);
+      for(let i=avail.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[avail[i],avail[j]]=[avail[j],avail[i]];}
+      const picked=avail.slice(0,count).sort((a,b)=>a-b);
+      let p=0;
+      for(let r=0;r<3;r++){ if(rowsBool[r][c]){ flat[r*9+c]=picked[p]; p++; } }
+    }
+    return flat; // length-27 flat grid, 0 = blank
+  }
+
+  function issueTicket(){
+    const flat = generateTicketGrid();
+    const ref = db.ref(`rooms/${roomCode}/pool`).push();
+    ref.set({ status:'available', grid: flat, claimed: {} });
+  }
+
+  el('addPoolBtn').addEventListener('click', ()=>{
+    for(let i=0;i<5;i++) issueTicket();
+  });
+
+  // ---------- browse & request tickets ----------
+  el('toggleGetTicketsBtn').addEventListener('click', ()=>{
+    const w = el('poolWrap');
+    w.classList.toggle('hidden');
+    el('toggleGetTicketsBtn').textContent = w.classList.contains('hidden') ? 'Browse Available' : 'Hide List';
+  });
+
+  function renderPool(){
+    const wrap = el('poolWrap');
+    const available = Object.entries(tickets).filter(([tid,t])=>t.status==='available');
+    if(available.length===0){
+      wrap.innerHTML = `<div class="hint">No tickets available right now.${amOwner ? ' Tap "Add 5 Tickets to Pool" above.' : ' Ask the room owner to add more.'}</div>`;
+      return;
+    }
+    wrap.innerHTML='';
+    available.forEach(([tid,t])=>{
+      const card=document.createElement('div');
+      card.className='pool-card';
+      const mini=document.createElement('div'); mini.className='pool-mini';
+      t.grid.forEach(n=>{ const d=document.createElement('div'); if(n!==0) d.className='has'; mini.appendChild(d); });
+      card.appendChild(mini);
+      const btn=document.createElement('button');
+      btn.className='btn btn-primary btn-sm';
+      btn.style.width='100%';
+      btn.textContent='Request this ticket';
+      btn.addEventListener('click', ()=>requestTicket(tid));
+      card.appendChild(btn);
+      wrap.appendChild(card);
+    });
+  }
+
+  function requestTicket(tid){
+    if(roomStatus!=='approved'){ alert('This room is waiting for admin approval before tickets can be issued.'); return; }
+    const ref = db.ref(`rooms/${roomCode}/pool/${tid}`);
+    ref.transaction(cur=>{
+      if(!cur || cur.status!=='available') return cur;
+      cur.status='pending'; cur.requestedBy=myId; cur.requestedName=myName;
+      return cur;
+    }, (err,committed,snap)=>{
+      if(!err && committed && snap.val() && snap.val().status==='pending' && snap.val().requestedBy===myId){
+        // requested successfully
+      } else if(!err){
+        alert('Someone just grabbed that ticket — pick another.');
+      }
+    });
+  }
+
+  function renderMyPending(){
+    const mine = Object.entries(tickets).filter(([tid,t])=>t.status==='pending' && t.requestedBy===myId);
+    const wrap = el('myPendingWrap');
+    if(mine.length===0){ wrap.innerHTML=''; return; }
+    wrap.innerHTML = mine.map(()=>`<div class="pending-note">⏳ Waiting for the room owner to approve your ticket request…</div>`).join('');
+  }
+
+  function renderPendingRequests(){
+    const card = el('pendingRequestsCard');
+    card.classList.toggle('hidden', !amOwner);
+    if(!amOwner) return;
+    const pending = Object.entries(tickets).filter(([tid,t])=>t.status==='pending');
+    const wrap = el('pendingRequestsWrap');
+    if(pending.length===0){ wrap.innerHTML='No requests waiting.'; return; }
+    wrap.innerHTML='';
+    pending.forEach(([tid,t])=>{
+      const row=document.createElement('div');
+      row.className='req-row';
+      row.innerHTML = `<span>${escapeHtml(t.requestedName)} wants a ticket</span>`;
+      const btns=document.createElement('div');
+      btns.style.display='flex'; btns.style.gap='6px';
+      const approve=document.createElement('button');
+      approve.className='btn btn-primary btn-sm'; approve.textContent='Approve';
+      approve.addEventListener('click', ()=>{
+        db.ref(`rooms/${roomCode}/pool/${tid}`).update({ status:'approved', playerId:t.requestedBy, playerName:t.requestedName });
+      });
+      const reject=document.createElement('button');
+      reject.className='btn btn-ghost btn-sm'; reject.textContent='Reject';
+      reject.addEventListener('click', ()=>{
+        db.ref(`rooms/${roomCode}/pool/${tid}`).update({ status:'available', requestedBy:null, requestedName:null });
+      });
+      btns.appendChild(approve); btns.appendChild(reject);
+      row.appendChild(btns);
+      wrap.appendChild(row);
+    });
+  }
+
+  // ---------- tabs ----------
+  el('tabMine').addEventListener('click', ()=>{ activeTab='mine'; el('tabMine').classList.add('active'); el('tabOthers').classList.remove('active'); renderTickets(); });
+  el('tabOthers').addEventListener('click', ()=>{ activeTab='others'; el('tabOthers').classList.add('active'); el('tabMine').classList.remove('active'); renderTickets(); });
+
+  function calledSetFromOrder(){ return new Set(calledOrder); }
+
+  function renderTickets(){
+    const wrap = el('ticketsWrap');
+    wrap.innerHTML='';
+    const calledSet = calledSetFromOrder();
+    const entries = Object.entries(tickets).filter(([tid,t])=> t.status==='approved' && (activeTab==='mine' ? t.playerId===myId : t.playerId!==myId));
+
+    if(entries.length===0){
+      wrap.innerHTML = `<div class="hint">${activeTab==='mine' ? 'No tickets yet — ask the room owner to issue you one.' : 'No opponent tickets yet.'}</div>`;
+      return;
+    }
+
+    entries.forEach(([tid,t])=>{
+      const grid = t.grid;
+      const flatNums = grid.filter(n=>n!==0);
+      const markedCount = flatNums.filter(n=>calledSet.has(n)).length;
+      const rows = [grid.slice(0,9), grid.slice(9,18), grid.slice(18,27)];
+      const rowDone = rows.map(row=>{ const nums=row.filter(n=>n!==0); return nums.length>0 && nums.every(n=>calledSet.has(n)); });
+      const fullHouse = markedCount===15;
+      const earlyFive = markedCount>=5;
+      const claimed = t.claimed || {};
+
+      const items=[['Early Five',earlyFive],['Top Line',rowDone[0]],['Middle Line',rowDone[1]],['Bottom Line',rowDone[2]],['Full House',fullHouse]];
+
+      const card=document.createElement('div');
+      card.className='ticket';
+      card.innerHTML = `<div class="tname">${escapeHtml(t.playerName)}</div>`;
+      const gridEl=document.createElement('div'); gridEl.className='ticket-grid';
+      grid.forEach(n=>{
+        const c=document.createElement('div');
+        if(n===0){ c.className='tcell blank'; }
+        else { c.className='tcell'+(calledSet.has(n)?' marked':''); c.textContent=n; }
+        gridEl.appendChild(c);
+      });
+      card.appendChild(gridEl);
+      const claimsEl=document.createElement('div'); claimsEl.className='claims';
+      items.forEach(([label,done])=>{
+        const b=document.createElement('div');
+        b.className='claim'+((done||claimed[label])?' done':'');
+        b.textContent=((done||claimed[label])?'✓ ':'')+label;
+        claimsEl.appendChild(b);
+      });
+      card.appendChild(claimsEl);
+      wrap.appendChild(card);
+    });
+  }
+
+  // ---------- claim detection (idempotent via transaction) ----------
+  function checkClaims(){
+    const calledSet = calledSetFromOrder();
+    Object.entries(tickets).forEach(([tid,t])=>{
+      if(t.status!=='approved') return;
+      const grid=t.grid;
+      const flatNums=grid.filter(n=>n!==0);
+      const markedCount=flatNums.filter(n=>calledSet.has(n)).length;
+      const rows=[grid.slice(0,9),grid.slice(9,18),grid.slice(18,27)];
+      const rowDone=rows.map(row=>{const nums=row.filter(n=>n!==0);return nums.length>0 && nums.every(n=>calledSet.has(n));});
+      const items=[['Early Five',markedCount>=5],['Top Line',rowDone[0]],['Middle Line',rowDone[1]],['Bottom Line',rowDone[2]],['Full House',markedCount===15]];
+      items.forEach(([label,done])=>{
+        if(!done) return;
+        const claimRef = db.ref(`rooms/${roomCode}/tickets/${tid}/claimed/${label.replace(/\s+/g,'_')}`);
+        claimRef.transaction(cur => cur===true ? undefined : true, (err,committed)=>{
+          if(!err && committed){
+            db.ref(`rooms/${roomCode}/winners`).push({
+              playerName: t.playerName, label, ticketId: tid,
+              numbers: flatNums.join(', '), time: Date.now()
+            });
+            if(t.playerId===myId || amOwner) toast(`🎉 ${label} — ${t.playerName}!`);
+          }
+        });
+      });
+    });
+  }
+
+  function renderApprovalBanner(){
+    const banner = el('approvalBanner');
+    const gateOn = roomStatus!=='approved';
+    el('ownerControls').classList.toggle('hidden', !amOwner || gateOn);
+    document.querySelectorAll('.card').forEach(()=>{}); // no-op, keeps structure stable
+    const getTicketsBtn = el('toggleGetTicketsBtn');
+    if(getTicketsBtn) getTicketsBtn.disabled = gateOn;
+
+    if(roomStatus==='pending'){
+      banner.classList.remove('hidden');
+      banner.innerHTML = amOwner
+        ? `<div class="pending-note" style="margin:0;">⏳ Waiting for admin approval before this room can start. You can still add players while you wait.</div>`
+        : `<div class="pending-note" style="margin:0;">⏳ This room is waiting for admin approval. The host can't call numbers or issue tickets yet.</div>`;
+    } else if(roomStatus==='rejected'){
+      banner.classList.remove('hidden');
+      banner.innerHTML = `<div class="pending-note" style="margin:0;color:var(--cage);background:rgba(193,68,60,0.12);border-color:rgba(193,68,60,0.35);">✕ This room was not approved by the admin.</div>`;
+    } else {
+      banner.classList.add('hidden');
+      banner.innerHTML='';
+    }
+  }
+
+  // ---------- admin panel ----------
+  el('adminLoginLink').addEventListener('click', ()=>{
+    const code = prompt('Enter admin passcode:');
+    if(code === ADMIN_CODE){
+      localStorage.setItem('tb_isAdmin','yes');
+      openAdminPanel();
+    } else if(code!==null){
+      alert('Incorrect passcode.');
+    }
+  });
+
+  el('adminBackBtn').addEventListener('click', ()=>{
+    if(adminRoomsRef) adminRoomsRef.off('value', adminRoomsFn);
+    show(viewHome);
+  });
+
+  let adminRoomsRef=null, adminRoomsFn=null;
+  function openAdminPanel(){
+    show(viewAdmin);
+    adminRoomsRef = db.ref('rooms');
+    adminRoomsFn = snap => renderAdminRooms(snap.val()||{});
+    adminRoomsRef.on('value', adminRoomsFn);
+  }
+
+  function renderAdminRooms(allRooms){
+    const wrap = el('adminRoomsWrap');
+    const entries = Object.entries(allRooms);
+    if(entries.length===0){ wrap.innerHTML='No rooms yet.'; return; }
+    entries.sort((a,b)=> (a[1].status==='pending'?0:1) - (b[1].status==='pending'?0:1) || (b[1].createdAt-a[1].createdAt));
+    wrap.innerHTML='';
+    entries.forEach(([code, room])=>{
+      const playerCount = room.players ? Object.keys(room.players).length : 0;
+      const ticketCount = room.pool ? Object.keys(room.pool).length : 0;
+      const status = room.status || 'pending';
+      const row = document.createElement('div');
+      row.className='pool-card';
+      row.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-family:var(--font-display);font-weight:800;color:var(--gold-soft);letter-spacing:1px;">${escapeHtml(code)}</div>
+            <div style="font-size:12px;color:var(--muted);">Host: ${escapeHtml(room.ownerName||'—')} · ${playerCount} players · ${ticketCount} tickets</div>
+          </div>
+          <div class="claim ${status==='approved'?'done':''}" style="text-transform:uppercase;">${escapeHtml(status)}</div>
+        </div>`;
+      const btns=document.createElement('div');
+      btns.style.cssText='display:flex;gap:6px;margin-top:8px;';
+      if(status!=='approved'){
+        const approve=document.createElement('button');
+        approve.className='btn btn-primary btn-sm'; approve.textContent='Approve';
+        approve.addEventListener('click', ()=> db.ref(`rooms/${code}/status`).set('approved'));
+        btns.appendChild(approve);
+      }
+      if(status!=='rejected'){
+        const reject=document.createElement('button');
+        reject.className='btn btn-ghost btn-sm'; reject.textContent='Reject';
+        reject.addEventListener('click', ()=> db.ref(`rooms/${code}/status`).set('rejected'));
+        btns.appendChild(reject);
+      }
+      const del=document.createElement('button');
+      del.className='btn btn-ghost btn-sm'; del.textContent='Delete Room';
+      del.addEventListener('click', ()=>{
+        if(confirm(`Delete room ${code} permanently?`)) db.ref(`rooms/${code}`).remove();
+      });
+      btns.appendChild(del);
+      row.appendChild(btns);
+      wrap.appendChild(row);
+    });
+  }
+
+  function toast(msg){
+    const el2 = el('winnerToast');
+    el2.textContent = msg;
+    el2.style.display='block';
+    requestAnimationFrame(()=>{ el2.style.opacity='1'; el2.style.transform='translateX(-50%) translateY(0)'; });
+    clearTimeout(el2._t);
+    el2._t = setTimeout(()=>{
+      el2.style.opacity='0'; el2.style.transform='translateX(-50%) translateY(-20px)';
+      setTimeout(()=>{ el2.style.display='none'; }, 300);
+    }, 3200);
+    if('speechSynthesis' in window){
+      try{ const u=new SpeechSynthesisUtterance(msg.replace('🎉','')); u.pitch=1.15; u.lang='en-US'; window.speechSynthesis.speak(u); }catch(e){}
+    }
+  }
+
+  function renderWinners(){
+    const wrap = el('winnersWrap');
+    const list = Object.values(winners).sort((a,b)=>b.time-a.time);
+    if(list.length===0){ wrap.innerHTML='No winners yet.'; return; }
+    wrap.innerHTML = list.map(w=>`<div class="winner-row"><b>${escapeHtml(w.playerName)}</b> — ${escapeHtml(w.label)}<div class="wn">Ticket: ${escapeHtml(w.numbers)}</div></div>`).join('');
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+})();
+</script>
+</body>
+</html>
