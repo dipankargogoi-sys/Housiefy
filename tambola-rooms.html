@@ -9,6 +9,7 @@
 <meta name="theme-color" content="#181735">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
   :root{
     --bg-deep:#181735; --bg-panel:#232049; --bg-panel-2:#2b2760;
@@ -111,6 +112,14 @@
 
   <!-- HOME: create/join -->
   <div id="viewHome" class="card hidden">
+    <div id="googleSignedOut">
+      <button class="btn btn-primary" id="googleSignInBtn">🔵 Continue with Google</button>
+      <div style="text-align:center;color:var(--muted);font-size:12px;margin:12px 0;">— or play as guest —</div>
+    </div>
+    <div id="googleSignedIn" class="hidden" style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:14px;">Signed in as <strong id="googleUserName" style="color:var(--gold-soft);"></strong></div>
+      <div id="googleSignOutBtn" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;margin-top:4px;">Not you? Sign out</div>
+    </div>
     <label>Your name</label>
     <input id="nameInput" type="text" placeholder="e.g. Priya">
     <button class="btn btn-primary" id="createRoomBtn">Create Room</button>
@@ -237,7 +246,38 @@
   function initFirebase(cfg){
     firebase.initializeApp(cfg);
     db = firebase.database();
+    auth = firebase.auth();
+    auth.getRedirectResult().catch(e=>{ if(e && e.message) console.log('redirect result:', e.message); });
+    auth.onAuthStateChanged(user=>{
+      googleUser = user;
+      if(user){
+        myId = 'g_' + user.uid;
+        localStorage.setItem('tb_playerId', myId);
+        el('googleSignedOut').classList.add('hidden');
+        el('googleSignedIn').classList.remove('hidden');
+        el('googleUserName').textContent = user.displayName || user.email || 'Google user';
+        if(!el('nameInput').value) el('nameInput').value = user.displayName || '';
+      } else {
+        el('googleSignedOut').classList.remove('hidden');
+        el('googleSignedIn').classList.add('hidden');
+      }
+    });
   }
+
+  let auth = null, googleUser = null;
+
+  el('googleSignInBtn').addEventListener('click', ()=>{
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithRedirect(provider).catch(e=>{
+      alert('Sign-in failed: ' + e.message + '\nMake sure Google sign-in is enabled in your Firebase console, and this domain is in the authorized domains list.');
+    });
+  });
+
+  el('googleSignOutBtn').addEventListener('click', ()=>{
+    auth.signOut();
+    localStorage.setItem('tb_playerId', 'p_'+Math.random().toString(36).slice(2,10));
+    myId = localStorage.getItem('tb_playerId');
+  });
 
   // ---------- home: create / join ----------
   function genRoomCode(){
