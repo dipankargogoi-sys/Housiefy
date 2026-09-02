@@ -122,6 +122,17 @@
     <button class="btn btn-primary" id="loadRetryBtn" onclick="location.reload()" style="display:none;">Retry</button>
   </div>
 
+  <!-- DISCLAIMER: shown once before first use -->
+  <div id="viewDisclaimer" class="card hidden">
+    <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:10px;">Before you play</div>
+    <div style="font-size:14px;line-height:1.7;color:var(--cream);">
+      <p style="margin:0 0 10px;">Housiefy is a <strong>free game for entertainment only</strong>. There are no purchases, no entry fees, and no real-money prizes anywhere in this app.</p>
+      <p style="margin:0 0 10px;">This app does not facilitate, process, or endorse cash betting, wagering, or any real-money exchange between players. Any private arrangement between players, outside this app, is solely their own responsibility and is not affiliated with, supported by, or condoned by Housiefy or its developer.</p>
+      <p style="margin:0 0 10px;">By continuing, you agree to use Housiefy only as a free, casual game with friends.</p>
+    </div>
+    <button class="btn btn-primary" id="agreeDisclaimerBtn" style="margin-top:10px;">I Agree &amp; Continue</button>
+  </div>
+
   <!-- HOME: create/join -->
   <div id="viewHome" class="card hidden">
     <div id="googleSignedOut">
@@ -252,10 +263,10 @@
   if(!myId){ myId = 'p_'+Math.random().toString(36).slice(2,10); localStorage.setItem('tb_playerId', myId); }
 
   const el = id => document.getElementById(id);
-  const viewSetup = el('viewSetup'), viewHome = el('viewHome'), viewRoom = el('viewRoom'), viewAdmin = el('viewAdmin');
+  const viewSetup = el('viewSetup'), viewHome = el('viewHome'), viewRoom = el('viewRoom'), viewAdmin = el('viewAdmin'), viewDisclaimer = el('viewDisclaimer');
 
   function show(view){
-    [viewSetup, viewHome, viewRoom, viewAdmin].forEach(v=>v.classList.add('hidden'));
+    [viewSetup, viewHome, viewRoom, viewAdmin, viewDisclaimer].forEach(v=>v.classList.add('hidden'));
     view.classList.remove('hidden');
   }
 
@@ -298,8 +309,12 @@
       document.getElementById('loadError').classList.add('hidden');
       try{
         initFirebase(FIREBASE_CONFIG);
-        show(viewHome);
-        renderMyRooms();
+        if(localStorage.getItem('tb_disclaimer_accepted') === 'yes'){
+          show(viewHome);
+          renderMyRooms();
+        } else {
+          show(viewDisclaimer);
+        }
         if(new URLSearchParams(window.location.search).get('admin') === '1'){
           el('adminLoginLink').classList.remove('hidden');
         }
@@ -356,6 +371,12 @@
     auth.signOut();
     localStorage.setItem('tb_playerId', 'p_'+Math.random().toString(36).slice(2,10));
     myId = localStorage.getItem('tb_playerId');
+  });
+
+  el('agreeDisclaimerBtn').addEventListener('click', ()=>{
+    localStorage.setItem('tb_disclaimer_accepted', 'yes');
+    show(viewHome);
+    renderMyRooms();
   });
 
   // ---------- local "my rooms" tracking ----------
