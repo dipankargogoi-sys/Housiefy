@@ -213,6 +213,12 @@
          data-full-width-responsive="true"></ins>
   </div>
 
+  <!-- My Games: online mode only — shows the current unfinished game and the last completed result -->
+  <div id="myRoomsCard" class="card hidden">
+    <div style="font-size:13px;font-weight:700;color:var(--gold-soft);margin-bottom:8px;">My Games</div>
+    <div id="myRoomsWrap"></div>
+  </div>
+
   <!-- ADMIN -->
   <div id="viewAdmin" class="hidden">
     <div class="card">
@@ -550,49 +556,49 @@
     Object.values(offlineCellEls).forEach(c=>c.classList.remove('called'));
   });
 
-  // ---------- local "my rooms" tracking ----------
+  // ---------- local "my games" tracking (online mode only) ----------
   function saveMyRoom(code, name){
     let list = [];
     try{ list = JSON.parse(localStorage.getItem('tb_myRooms') || '[]'); }catch(e){}
     list = list.filter(r=>r.code!==code);
     list.unshift({code, name, savedAt: Date.now()});
-    list = list.slice(0, 2); // keep only the 2 most recent games
+    list = list.slice(0, 6); // keep a bit of history so we can find one current + one finished game
     localStorage.setItem('tb_myRooms', JSON.stringify(list));
   }
 
   function renderMyRooms(){
-    return; // "My Rooms" list removed from the Home screen per request
     let list = [];
     try{ list = JSON.parse(localStorage.getItem('tb_myRooms') || '[]'); }catch(e){}
-    list = list.slice(0, 2); // keep only the 2 most recent games
     const card = el('myRoomsCard');
     if(list.length===0){ card.classList.add('hidden'); return; }
-    card.classList.remove('hidden');
-    const wrap = el('myRoomsWrap');
-    wrap.innerHTML='';
-    list.forEach(r=>{
-      const row=document.createElement('div');
-      row.className='req-row';
-      row.innerHTML = `<span><strong style="color:var(--gold-soft);">${escapeHtml(r.code)}</strong> <span class="room-status-label" style="color:var(--muted);font-size:12px;">checking…</span></span>`;
-      const btn=document.createElement('button');
-      btn.className='btn btn-primary btn-sm'; btn.textContent='Open';
-      btn.addEventListener('click', ()=>rejoinRoom(r.code));
-      row.appendChild(btn);
-      wrap.appendChild(row);
 
-      // check whether this game already finished, to label it clearly
-      db.ref(`rooms/${r.code}/gameOver`).get().then(snap=>{
-        const label = row.querySelector('.room-status-label');
-        if(!label) return;
-        if(snap.val()){
-          label.textContent = '— finished';
-          btn.textContent = 'View Result';
-        } else {
-          label.textContent = '— in progress';
-          btn.textContent = 'Rejoin';
-        }
-      }).catch(()=>{});
+    Promise.all(list.map(r =>
+      db.ref(`rooms/${r.code}/gameOver`).get()
+        .then(snap => ({...r, finished: !!snap.val()}))
+        .catch(()=>({...r, finished:null})) // room might no longer exist
+    )).then(results=>{
+      const current = results.find(r=>r.finished===false);
+      const lastFinished = results.find(r=>r.finished===true);
+
+      const wrap = el('myRoomsWrap');
+      wrap.innerHTML='';
+      if(!current && !lastFinished){ card.classList.add('hidden'); return; }
+      card.classList.remove('hidden');
+
+      if(current) wrap.appendChild(makeMyGameRow(current.code, 'Current game — in progress', 'Rejoin'));
+      if(lastFinished) wrap.appendChild(makeMyGameRow(lastFinished.code, 'Last game — finished', 'View Result'));
     });
+  }
+
+  function makeMyGameRow(code, statusText, btnText){
+    const row=document.createElement('div');
+    row.className='req-row';
+    row.innerHTML = `<span><strong style="color:var(--gold-soft);">${escapeHtml(code)}</strong> <span style="color:var(--muted);font-size:12px;">— ${statusText}</span></span>`;
+    const btn=document.createElement('button');
+    btn.className='btn btn-primary btn-sm'; btn.textContent=btnText;
+    btn.addEventListener('click', ()=>rejoinRoom(code));
+    row.appendChild(btn);
+    return row;
   }
 
   function rejoinRoom(code){
