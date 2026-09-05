@@ -68,6 +68,7 @@
   .tcell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,2.4vw,12px);font-weight:700;border-radius:5px;background:#e9dfc4;}
   .tcell.blank{background:transparent;}
   .tcell.marked{background:var(--cage);color:var(--cream);text-decoration:line-through;text-decoration-color:rgba(243,233,210,0.6);}
+  .tcell.winning-number{background:var(--gold-soft);color:#241f0a;text-decoration:none;box-shadow:0 0 0 2px var(--teal);font-weight:900;}
   .claims{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
   .claim{font-size:9px;font-weight:700;padding:3px 7px;border-radius:7px;background:rgba(36,31,10,0.08);color:#6a6248;}
   .claim.done{background:var(--gold-soft);color:#241f0a;}
@@ -324,7 +325,7 @@
   const NICK_TTS = true;
   const ADMIN_CODE = "HOUSE2026"; // change this to your own secret passcode
   let db=null, roomCode=null, myId=null, myName=null, amOwner=false;
-  let players={}, tickets={}, calledOrder=[], currentNumber=null, winner=null, roomStatus='pending', gameStarted=false, gameOver=false;
+  let players={}, tickets={}, calledOrder=[], currentNumber=null, winners={}, winningNumber=null, roomStatus='pending', gameStarted=false, gameOver=false;
   let activeTab='mine';
 
   // ---------- persisted identity ----------
@@ -709,9 +710,13 @@
     const fnGameOver = snap => { gameOver = !!snap.val(); updateGameStartUI(); renderGameOverBanner(); };
     gameOverRef.on('value', fnGameOver); refsAttached.push({ref:gameOverRef, fn:fnGameOver});
 
-    const winRef = db.ref(`rooms/${code}/winner`);
-    const fnW = snap => { winner = snap.val()||null; renderWinners(); };
+    const winRef = db.ref(`rooms/${code}/winners`);
+    const fnW = snap => { winners = snap.val()||{}; renderWinners(); renderTickets(); };
     winRef.on('value', fnW); refsAttached.push({ref:winRef, fn:fnW});
+
+    const winningNumberRef = db.ref(`rooms/${code}/winningNumber`);
+    const fnWN = snap => { winningNumber = snap.val()||null; renderWinners(); renderTickets(); };
+    winningNumberRef.on('value', fnWN); refsAttached.push({ref:winningNumberRef, fn:fnWN});
   }
 
   function renderPlayers(){
@@ -989,7 +994,12 @@
       grid.forEach(n=>{
         const c=document.createElement('div');
         if(n===0){ c.className='tcell blank'; }
-        else { c.className='tcell'+(calledSet.has(n)?' marked':''); c.textContent=n; }
+        else {
+          let cls = 'tcell'+(calledSet.has(n)?' marked':'');
+          if(winningNumber && n===winningNumber) cls += ' winning-number';
+          c.className = cls;
+          c.textContent=n;
+        }
         gridEl.appendChild(c);
       });
       card.appendChild(gridEl);
@@ -1008,6 +1018,8 @@
   // ---------- claim detection (idempotent via transaction) ----------
   function checkClaims(){
     const calledSet = calledSetFromOrder();
+    const fullHouseTickets = [];
+
     Object.entries(tickets).forEach(([tid,t])=>{
       if(t.status!=='approved') return;
       const grid=t.grid;
@@ -1015,31 +1027,37 @@
       const markedCount=flatNums.filter(n=>calledSet.has(n)).length;
       const rows=[grid.slice(0,9),grid.slice(9,18),grid.slice(18,27)];
       const rowDone=rows.map(row=>{const nums=row.filter(n=>n!==0);return nums.length>0 && nums.every(n=>calledSet.has(n));});
-      const items=[['Early Five',markedCount>=5],['Top Line',rowDone[0]],['Middle Line',rowDone[1]],['Bottom Line',rowDone[2]],['Full House',markedCount===15]];
+      const items=[['Early Five',markedCount>=5],['Top Line',rowDone[0]],['Middle Line',rowDone[1]],['Bottom Line',rowDone[2]]];
       items.forEach(([label,done])=>{
         if(!done) return;
         const claimRef = db.ref(`rooms/${roomCode}/tickets/${tid}/claimed/${label.replace(/\s+/g,'_')}`);
         claimRef.transaction(cur => cur===true ? undefined : true, (err,committed)=>{
           if(err || !committed) return;
-          if(label === 'Full House'){
-            if(gameOver) return; // game already decided
-            db.ref(`rooms/${roomCode}/fullHouseCount`).transaction(cur => (cur||0)+1, (err2, committed2, snap2)=>{
-              if(err2 || !committed2) return;
-              const position = snap2.val();
-              if(position !== 1) return; // only the first Full House counts as the winner
-              db.ref(`rooms/${roomCode}`).update({
-                gameOver: true,
-                winner: { playerName: t.playerName, ticketId: tid, numbers: flatNums.join(', '), time: Date.now() }
-              });
-              stopAuto();
-              toast(`🏆 FULL HOUSE! ${t.playerName} wins! Game over.`, 6000);
-            });
-          } else {
-            if(t.playerId===myId || amOwner) toast(`🎉 ${label} — ${t.playerName}!`);
-          }
+          if(t.playerId===myId || amOwner) toast(`🎉 ${label} — ${t.playerName}!`);
         });
       });
+      if(markedCount===15){
+        fullHouseTickets.push({tid, playerName:t.playerName, numbers: flatNums.join(', ')});
+      }
     });
+
+    // Full House: catch ties — every ticket that's complete when the game ends is a winner
+    if(fullHouseTickets.length > 0 && !gameOver){
+      db.ref(`rooms/${roomCode}/gameOver`).transaction(cur => cur ? undefined : true, (err,committed)=>{
+        if(err || !committed) return; // game already claimed by another client's check
+        const winningNumber = calledOrder[0];
+        const winnersObj = {};
+        fullHouseTickets.forEach(w=>{
+          winnersObj[w.tid] = { playerName: w.playerName, ticketId: w.tid, numbers: w.numbers };
+          db.ref(`rooms/${roomCode}/tickets/${w.tid}/claimed/Full_House`).set(true);
+        });
+        db.ref(`rooms/${roomCode}`).update({ winners: winnersObj, winningNumber, time: Date.now() });
+        stopAuto();
+        const names = fullHouseTickets.map(w=>w.playerName).join(' & ');
+        const verb = fullHouseTickets.length > 1 ? 'win' : 'wins';
+        toast(`🏆 FULL HOUSE on ${winningNumber}! ${names} ${verb}! Game over.`, 6000);
+      });
+    }
   }
 
   function ordinal(n){
@@ -1211,8 +1229,13 @@
 
   function renderWinners(){
     const wrap = el('winnersWrap');
-    if(!winner){ wrap.innerHTML='No winner yet.'; return; }
-    wrap.innerHTML = `<div class="winner-row">🏆 <b>${escapeHtml(winner.playerName)}</b> — Full House! Game over.<div class="wn">Ticket: ${escapeHtml(winner.numbers)}</div></div>`;
+    const list = Object.values(winners);
+    if(list.length===0){ wrap.innerHTML='No winner yet.'; return; }
+    const heading = list.length > 1
+      ? `🏆 Tie! ${list.length} winners on number ${winningNumber}`
+      : `🏆 Winner on number ${winningNumber}`;
+    wrap.innerHTML = `<div style="font-weight:700;color:var(--gold-soft);margin-bottom:6px;">${heading}</div>` +
+      list.map(w=>`<div class="winner-row"><b>${escapeHtml(w.playerName)}</b> — Full House!<div class="wn">Ticket: ${escapeHtml(w.numbers)}</div></div>`).join('');
   }
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
