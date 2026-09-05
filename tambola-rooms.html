@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Housiefy — Play Tambola with Friends</title>
+<!-- Google AdSense: replace ca-pub-XXXXXXXXXXXXXXXX with your real Publisher ID once your AdSense account is approved -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#181735">
@@ -155,6 +157,7 @@
         <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;">Now Calling</div>
         <div class="call-number" id="offlineCallNumber">—</div>
         <div class="call-remaining" id="offlineRemaining">90 numbers remaining</div>
+        <button class="btn btn-primary hidden" id="offlineStopResumeBtn" style="margin-top:12px;font-size:18px;padding:16px;">⏸ Stop — Check Numbers</button>
       </div>
       <div style="margin-top:14px;">
         <button class="btn btn-primary" id="offlineCallBtn">▶ Call Next Number</button>
@@ -200,9 +203,14 @@
     </div>
   </div>
 
-  <div id="myRoomsCard" class="card hidden">
-    <div style="font-size:13px;font-weight:700;color:var(--gold-soft);margin-bottom:8px;">My Rooms</div>
-    <div id="myRoomsWrap"></div>
+  <!-- Ad slot: Home screen. Replace data-ad-slot with your real AdSense slot ID once approved -->
+  <div class="card" id="adSlotHome" style="text-align:center;padding:8px;">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+         data-ad-slot="0000000000"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
   </div>
 
   <!-- ADMIN -->
@@ -291,6 +299,16 @@
       <div id="winnersWrap" style="color:var(--muted);font-size:13px;">No winners yet.</div>
     </div>
 
+    <!-- Ad slot: inside a game room, below all game content. Replace data-ad-slot once approved -->
+    <div class="card" id="adSlotRoom" style="text-align:center;padding:8px;">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+           data-ad-slot="0000000001"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
+
     <div class="footer-note">Free game for friends — no purchases, no cash prizes. Everyone sees results live.</div>
   </div>
 </main>
@@ -359,6 +377,7 @@
         } else {
           show(viewDisclaimer);
         }
+        refreshAds();
         if(new URLSearchParams(window.location.search).get('admin') === '1'){
           el('adminLoginLink').classList.remove('hidden');
         }
@@ -377,6 +396,22 @@
   document.getElementById('loadErrorMsg').textContent = "Loading… (this can take a bit on a slow connection)";
   document.getElementById('loadError').classList.remove('hidden');
   boot();
+
+  // ---------- Google AdSense: safely request ads without breaking the app if not yet approved ----------
+  const adsLoaded = {};
+  function loadAd(slotId){
+    if(adsLoaded[slotId]) return; // AdSense allows only one push per ad slot
+    try{
+      const container = document.getElementById(slotId);
+      if(!container) return;
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      adsLoaded[slotId] = true;
+    }catch(e){ /* AdSense not ready or not approved yet — fail silently */ }
+  }
+  function refreshAds(){
+    loadAd('adSlotHome');
+    loadAd('adSlotRoom');
+  }
 
   function initFirebase(cfg){
     firebase.initializeApp(cfg);
@@ -476,6 +511,8 @@
   function startOfflineAuto(){
     offlineAutoOn = true;
     el('offlineAutoSwitch').classList.add('on');
+    el('offlineStopResumeBtn').classList.remove('hidden');
+    el('offlineStopResumeBtn').textContent = '⏸ Stop — Check Numbers';
     clearInterval(offlineAutoTimer);
     offlineAutoTimer = setInterval(offlineCallNext, offlineSpeedMap[el('offlineSpeedRange').value]);
   }
@@ -483,8 +520,17 @@
     offlineAutoOn = false;
     el('offlineAutoSwitch').classList.remove('on');
     clearInterval(offlineAutoTimer);
+    if(offlineCalledOrder.length > 0 && offlineCalledOrder.length < 90){
+      el('offlineStopResumeBtn').textContent = '▶ Resume Auto-Call';
+      el('offlineStopResumeBtn').classList.remove('hidden');
+    } else {
+      el('offlineStopResumeBtn').classList.add('hidden');
+    }
   }
   el('offlineAutoSwitch').addEventListener('click', ()=>{
+    if(offlineAutoOn) stopOfflineAuto(); else startOfflineAuto();
+  });
+  el('offlineStopResumeBtn').addEventListener('click', ()=>{
     if(offlineAutoOn) stopOfflineAuto(); else startOfflineAuto();
   });
   el('offlineSpeedRange').addEventListener('input', ()=>{
@@ -500,6 +546,7 @@
     offlineCalledOrder = [];
     el('offlineCallNumber').textContent = '—';
     el('offlineRemaining').textContent = '90 numbers remaining';
+    el('offlineStopResumeBtn').classList.add('hidden');
     Object.values(offlineCellEls).forEach(c=>c.classList.remove('called'));
   });
 
@@ -514,6 +561,7 @@
   }
 
   function renderMyRooms(){
+    return; // "My Rooms" list removed from the Home screen per request
     let list = [];
     try{ list = JSON.parse(localStorage.getItem('tb_myRooms') || '[]'); }catch(e){}
     list = list.slice(0, 2); // keep only the 2 most recent games
