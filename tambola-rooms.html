@@ -133,8 +133,53 @@
     <button class="btn btn-primary" id="agreeDisclaimerBtn" style="margin-top:10px;">I Agree &amp; Continue</button>
   </div>
 
+  <!-- MODE SELECT -->
+  <div id="viewModeSelect" class="card hidden" style="text-align:center;">
+    <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;">How do you want to play?</div>
+    <button class="btn btn-primary" id="playOnlineBtn">🌐 Play Online with Friends</button>
+    <div style="font-size:12px;color:var(--muted);margin:6px 0 16px;">Rooms, live sync, free digital tickets</div>
+    <button class="btn btn-ghost" id="playOfflineBtn">📻 Play Offline — Number Caller Only</button>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px;">For groups using their own printed tickets — this just calls numbers</div>
+  </div>
+
+  <!-- OFFLINE MODE: pure number caller, no tickets, no internet needed -->
+  <div id="viewOffline" class="hidden">
+    <div class="card">
+      <div class="room-head">
+        <div style="font-family:var(--font-display);font-size:16px;color:var(--gold-soft);font-weight:800;">Offline Caller</div>
+        <button class="btn btn-ghost btn-sm" id="offlineBackBtn">◀ Menu</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="call-stage">
+        <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;">Now Calling</div>
+        <div class="call-number" id="offlineCallNumber">—</div>
+        <div class="call-remaining" id="offlineRemaining">90 numbers remaining</div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-primary" id="offlineCallBtn">▶ Call Next Number</button>
+        <div class="row-controls" style="margin-top:10px;">
+          <div class="toggle-wrap">
+            <span>Auto-call</span>
+            <div class="switch" id="offlineAutoSwitch"></div>
+          </div>
+          <div class="speed-wrap">
+            <label for="offlineSpeedRange">Pace</label>
+            <input type="range" id="offlineSpeedRange" min="1" max="5" value="3">
+            <label id="offlineSpeedLabel">Medium</label>
+          </div>
+        </div>
+        <button class="btn btn-ghost" id="offlineResetBtn" style="margin-top:8px;">Reset Board</button>
+      </div>
+      <div class="board" id="offlineBoard"></div>
+    </div>
+  </div>
+
   <!-- HOME: create/join -->
   <div id="viewHome" class="card hidden">
+    <div style="text-align:right;margin-bottom:8px;">
+      <span id="homeMenuLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ Menu</span>
+    </div>
     <div id="googleSignedOut">
       <button class="btn btn-primary" id="googleSignInBtn">🔵 Continue with Google</button>
       <div style="text-align:center;color:var(--muted);font-size:12px;margin:12px 0;">— or play as guest —</div>
@@ -263,10 +308,10 @@
   if(!myId){ myId = 'p_'+Math.random().toString(36).slice(2,10); localStorage.setItem('tb_playerId', myId); }
 
   const el = id => document.getElementById(id);
-  const viewSetup = el('viewSetup'), viewHome = el('viewHome'), viewRoom = el('viewRoom'), viewAdmin = el('viewAdmin'), viewDisclaimer = el('viewDisclaimer');
+  const viewSetup = el('viewSetup'), viewHome = el('viewHome'), viewRoom = el('viewRoom'), viewAdmin = el('viewAdmin'), viewDisclaimer = el('viewDisclaimer'), viewModeSelect = el('viewModeSelect'), viewOffline = el('viewOffline');
 
   function show(view){
-    [viewSetup, viewHome, viewRoom, viewAdmin, viewDisclaimer].forEach(v=>v.classList.add('hidden'));
+    [viewSetup, viewHome, viewRoom, viewAdmin, viewDisclaimer, viewModeSelect, viewOffline].forEach(v=>v.classList.add('hidden'));
     view.classList.remove('hidden');
   }
 
@@ -310,8 +355,7 @@
       try{
         initFirebase(FIREBASE_CONFIG);
         if(localStorage.getItem('tb_disclaimer_accepted') === 'yes'){
-          show(viewHome);
-          renderMyRooms();
+          show(viewModeSelect);
         } else {
           show(viewDisclaimer);
         }
@@ -375,8 +419,88 @@
 
   el('agreeDisclaimerBtn').addEventListener('click', ()=>{
     localStorage.setItem('tb_disclaimer_accepted', 'yes');
+    show(viewModeSelect);
+  });
+
+  el('playOnlineBtn').addEventListener('click', ()=>{
     show(viewHome);
     renderMyRooms();
+  });
+  el('playOfflineBtn').addEventListener('click', ()=>{
+    show(viewOffline);
+    initOfflineBoard();
+  });
+  el('offlineBackBtn').addEventListener('click', ()=>{
+    stopOfflineAuto();
+    show(viewModeSelect);
+  });
+  el('homeMenuLink').addEventListener('click', ()=> show(viewModeSelect));
+
+  // ---------- OFFLINE MODE: pure local number caller, no Firebase, works with no internet ----------
+  let offlinePool = [], offlineCalledOrder = [], offlineCellEls = {};
+  let offlineAutoTimer = null, offlineAutoOn = false;
+  const offlineSpeedMap = {1:6000,2:4200,3:2800,4:1800,5:1000};
+  const offlineSpeedLabels = {1:"Very Slow",2:"Slow",3:"Medium",4:"Fast",5:"Very Fast"};
+
+  function initOfflineBoard(){
+    const boardEl = el('offlineBoard');
+    if(boardEl.children.length === 0){
+      for(let i=1;i<=90;i++){
+        const c=document.createElement('div'); c.className='cell'; c.textContent=i;
+        boardEl.appendChild(c); offlineCellEls[i]=c;
+      }
+    }
+    if(offlinePool.length===0 && offlineCalledOrder.length===0){
+      offlinePool = freshOfflinePool();
+    }
+  }
+
+  function freshOfflinePool(){
+    const arr=[]; for(let i=1;i<=90;i++) arr.push(i);
+    for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+    return arr;
+  }
+
+  function offlineCallNext(){
+    if(offlinePool.length===0){ stopOfflineAuto(); return; }
+    const num = offlinePool.pop();
+    offlineCalledOrder.unshift(num);
+    el('offlineCallNumber').textContent = num;
+    el('offlineRemaining').textContent = offlinePool.length + ' numbers remaining';
+    if(offlineCellEls[num]) offlineCellEls[num].classList.add('called');
+    speak(num);
+    if(offlinePool.length===0) stopOfflineAuto();
+  }
+  el('offlineCallBtn').addEventListener('click', offlineCallNext);
+
+  function startOfflineAuto(){
+    offlineAutoOn = true;
+    el('offlineAutoSwitch').classList.add('on');
+    clearInterval(offlineAutoTimer);
+    offlineAutoTimer = setInterval(offlineCallNext, offlineSpeedMap[el('offlineSpeedRange').value]);
+  }
+  function stopOfflineAuto(){
+    offlineAutoOn = false;
+    el('offlineAutoSwitch').classList.remove('on');
+    clearInterval(offlineAutoTimer);
+  }
+  el('offlineAutoSwitch').addEventListener('click', ()=>{
+    if(offlineAutoOn) stopOfflineAuto(); else startOfflineAuto();
+  });
+  el('offlineSpeedRange').addEventListener('input', ()=>{
+    el('offlineSpeedLabel').textContent = offlineSpeedLabels[el('offlineSpeedRange').value];
+    if(offlineAutoOn) startOfflineAuto();
+  });
+  el('offlineSpeedLabel').textContent = offlineSpeedLabels[el('offlineSpeedRange').value];
+
+  el('offlineResetBtn').addEventListener('click', ()=>{
+    if(!confirm('Reset the offline board? This clears all called numbers.')) return;
+    stopOfflineAuto();
+    offlinePool = freshOfflinePool();
+    offlineCalledOrder = [];
+    el('offlineCallNumber').textContent = '—';
+    el('offlineRemaining').textContent = '90 numbers remaining';
+    Object.values(offlineCellEls).forEach(c=>c.classList.remove('called'));
   });
 
   // ---------- local "my rooms" tracking ----------
