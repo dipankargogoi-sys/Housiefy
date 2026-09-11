@@ -173,6 +173,13 @@
             <label id="offlineSpeedLabel">Medium</label>
           </div>
         </div>
+        <div class="row-controls" style="margin-top:8px;">
+          <div class="toggle-wrap"><span>Caller voice</span></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" id="offlineVoiceFemaleBtn">👩 Female</button>
+            <button class="btn btn-ghost btn-sm" id="offlineVoiceMaleBtn">👨 Male</button>
+          </div>
+        </div>
         <button class="btn btn-ghost" id="offlineResetBtn" style="margin-top:8px;">Reset Board</button>
       </div>
       <div class="board" id="offlineBoard"></div>
@@ -229,6 +236,23 @@
       </div>
     </div>
     <div class="card">
+      <div style="font-size:13px;font-weight:700;color:var(--gold-soft);margin-bottom:10px;">Activity</div>
+      <div style="display:flex;gap:10px;text-align:center;">
+        <div style="flex:1;">
+          <div style="font-size:26px;font-weight:800;color:var(--gold-soft);" id="statTotalUsers">—</div>
+          <div style="font-size:11px;color:var(--muted);">Total Users</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:26px;font-weight:800;color:var(--teal);" id="statOnlineUsers">—</div>
+          <div style="font-size:11px;color:var(--muted);">Online Now</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:26px;font-weight:800;color:var(--muted);" id="statOfflineUsers">—</div>
+          <div style="font-size:11px;color:var(--muted);">Offline</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
       <div style="font-size:13px;font-weight:700;color:var(--gold-soft);margin-bottom:8px;">All Rooms</div>
       <div id="adminRoomsWrap" style="color:var(--muted);font-size:13px;">No rooms yet.</div>
     </div>
@@ -268,6 +292,13 @@
             <label for="speedRange">Pace</label>
             <input type="range" id="speedRange" min="1" max="5" value="3">
             <label id="speedLabel">Medium</label>
+          </div>
+        </div>
+        <div id="voicePickRow" class="row-controls hidden" style="margin-top:8px;">
+          <div class="toggle-wrap"><span>Caller voice</span></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" id="voiceFemaleBtn">👩 Female</button>
+            <button class="btn btn-ghost btn-sm" id="voiceMaleBtn">👨 Male</button>
           </div>
         </div>
         <button class="btn btn-ghost" id="addPoolBtn">+ Add 5 Tickets to Pool</button>
@@ -437,7 +468,33 @@
         el('googleSignedOut').classList.remove('hidden');
         el('googleSignedIn').classList.add('hidden');
       }
+      setupPresence();
     });
+    setupPresence();
+  }
+
+  // ---------- presence tracking (for admin's Activity view) ----------
+  let presenceRegisteredFor = null;
+  function setupPresence(){
+    if(!db || !myId) return;
+    if(presenceRegisteredFor === myId){ touchPresenceName(); return; }
+    presenceRegisteredFor = myId;
+    const myPresenceRef = db.ref(`presence/${myId}`);
+    const connectedRef = db.ref('.info/connected');
+    connectedRef.on('value', snap=>{
+      if(snap.val()===true){
+        myPresenceRef.onDisconnect().update({ online:false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+        myPresenceRef.update({
+          name: myName || (googleUser && googleUser.displayName) || 'Guest',
+          online: true,
+          lastSeen: firebase.database.ServerValue.TIMESTAMP
+        });
+      }
+    });
+  }
+  function touchPresenceName(){
+    if(!db || !myId) return;
+    db.ref(`presence/${myId}`).update({ name: myName || (googleUser && googleUser.displayName) || 'Guest' });
   }
 
   let auth = null, googleUser = null;
@@ -609,6 +666,7 @@
       const isOwner = room.ownerId === myId;
       const nameToUse = el('nameInput').value.trim() || myName || (googleUser && googleUser.displayName) || 'Player';
       myName = nameToUse;
+      touchPresenceName();
       db.ref(`rooms/${code}/players/${myId}`).set({ name: nameToUse, isOwner, joinedAt: Date.now() }).then(()=>{
         saveMyRoom(code, nameToUse);
         enterRoom(code, isOwner);
@@ -627,10 +685,11 @@
     const name = el('nameInput').value.trim();
     if(!name){ alert('Enter your name first.'); return; }
     myName = name;
+    touchPresenceName();
     const code = genRoomCode();
     db.ref('rooms/'+code).set({
       ownerId: myId, ownerName: name, createdAt: Date.now(),
-      status: 'pending', started: false, calledOrder: [], currentNumber: null
+      status: 'approved', started: false, calledOrder: [], currentNumber: null
     }).then(()=>{
       return db.ref(`rooms/${code}/players/${myId}`).set({name, isOwner:true, joinedAt:Date.now()});
     }).then(()=>{
@@ -645,6 +704,7 @@
     if(!name){ alert('Enter your name first.'); return; }
     if(!code){ alert('Enter the room code.'); return; }
     myName = name;
+    touchPresenceName();
     db.ref('rooms/'+code).get().then(snap=>{
       if(!snap.exists()){ alert('Room not found. Check the code.'); return; }
       db.ref(`rooms/${code}/players/${myId}`).set({name, isOwner:false, joinedAt:Date.now()}).then(()=>{
@@ -779,13 +839,32 @@
     return match || pool[0] || voices[0];
   }
 
+  function pickMaleVoice(){
+    if(!voices.length) return null;
+    const englishVoices = voices.filter(v=>v.lang && v.lang.startsWith('en'));
+    const pool = englishVoices.length ? englishVoices : voices;
+    const maleHints = ['male','man','david','mark','alex','daniel','fred','george','james','google uk english male','ravi','rishi'];
+    let match = pool.find(v => maleHints.some(h => v.name.toLowerCase().includes(h)));
+    return match || pool[0] || voices[0];
+  }
+
+  function getVoicePref(){
+    return localStorage.getItem('tb_voiceGender') || 'female';
+  }
+  function setVoicePref(gender){
+    localStorage.setItem('tb_voiceGender', gender);
+  }
+
   function speak(num){
     if(!NICK_TTS || !('speechSynthesis' in window)) return;
     try{
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(String(num));
-      u.pitch=1.15; u.rate=0.9; u.lang='en-US';
-      const v = pickFemaleVoice();
+      const isMale = getVoicePref() === 'male';
+      u.pitch = isMale ? 0.75 : 1.15;
+      u.rate = isMale ? 0.82 : 0.9; // slower, deeper delivery for the male voice
+      u.lang='en-US';
+      const v = isMale ? pickMaleVoice() : pickFemaleVoice();
       if(v) u.voice = v;
       window.speechSynthesis.speak(u);
     }catch(e){}
@@ -816,6 +895,25 @@
     if(autoOn) startAuto();
   });
   el('speedLabel').textContent = speedLabels[el('speedRange').value];
+
+  // ---------- voice gender toggle (shared preference for online + offline) ----------
+  function refreshVoiceButtons(){
+    const pref = getVoicePref();
+    ['voiceFemaleBtn','voiceMaleBtn','offlineVoiceFemaleBtn','offlineVoiceMaleBtn'].forEach(id=>{
+      const btn = el(id);
+      if(!btn) return;
+      const isFemaleBtn = id.toLowerCase().includes('female');
+      const selected = (isFemaleBtn && pref==='female') || (!isFemaleBtn && pref==='male');
+      btn.style.background = selected ? 'var(--gold-soft)' : '';
+      btn.style.color = selected ? '#241f0a' : '';
+      btn.style.borderColor = selected ? 'var(--gold-soft)' : '';
+    });
+  }
+  el('voiceFemaleBtn').addEventListener('click', ()=>{ setVoicePref('female'); refreshVoiceButtons(); });
+  el('voiceMaleBtn').addEventListener('click', ()=>{ setVoicePref('male'); refreshVoiceButtons(); });
+  el('offlineVoiceFemaleBtn').addEventListener('click', ()=>{ setVoicePref('female'); refreshVoiceButtons(); });
+  el('offlineVoiceMaleBtn').addEventListener('click', ()=>{ setVoicePref('male'); refreshVoiceButtons(); });
+  refreshVoiceButtons();
 
   // ---------- ticket issuing ----------
   function generateTicketGrid(){
@@ -1095,6 +1193,7 @@
       el('startGameBtn').classList.toggle('hidden', !approved || gameStarted || gameOver);
       el('callBtn').classList.toggle('hidden', !active);
       el('autoPlayRow').classList.toggle('hidden', !active);
+      el('voicePickRow').classList.toggle('hidden', !active);
       if(!active && typeof stopAuto === 'function') stopAuto();
     }
     el('playerHint').classList.add('hidden'); // superseded by waitingStartHint below
@@ -1138,16 +1237,30 @@
 
   el('adminBackBtn').addEventListener('click', ()=>{
     if(adminRoomsRef) adminRoomsRef.off('value', adminRoomsFn);
+    if(adminPresenceRef) adminPresenceRef.off('value', adminPresenceFn);
     show(viewHome);
     renderMyRooms();
   });
 
-  let adminRoomsRef=null, adminRoomsFn=null;
+  let adminRoomsRef=null, adminRoomsFn=null, adminPresenceRef=null, adminPresenceFn=null;
   function openAdminPanel(){
     show(viewAdmin);
     adminRoomsRef = db.ref('rooms');
     adminRoomsFn = snap => renderAdminRooms(snap.val()||{});
     adminRoomsRef.on('value', adminRoomsFn);
+
+    adminPresenceRef = db.ref('presence');
+    adminPresenceFn = snap => renderActivityStats(snap.val()||{});
+    adminPresenceRef.on('value', adminPresenceFn);
+  }
+
+  function renderActivityStats(presenceData){
+    const entries = Object.values(presenceData);
+    const total = entries.length;
+    const online = entries.filter(p=>p.online===true).length;
+    el('statTotalUsers').textContent = total;
+    el('statOnlineUsers').textContent = online;
+    el('statOfflineUsers').textContent = total - online;
   }
 
   function joinAsAdmin(code, room){
