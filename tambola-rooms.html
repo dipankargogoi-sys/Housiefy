@@ -227,6 +227,19 @@
     <div id="myRoomsWrap"></div>
   </div>
 
+  <!-- FULL HISTORY: online mode only, everything beyond the recent 5 -->
+  <div id="viewMyHistory" class="hidden">
+    <div class="card">
+      <div class="room-head">
+        <div style="font-family:var(--font-display);font-size:16px;color:var(--gold-soft);font-weight:800;">My Game History</div>
+        <button class="btn btn-ghost btn-sm" id="myHistoryBackBtn">Back</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="myHistoryWrap"></div>
+    </div>
+  </div>
+
   <!-- ADMIN -->
   <div id="viewAdmin" class="hidden">
     <div class="card">
@@ -364,10 +377,10 @@
   if(!myId){ myId = 'p_'+Math.random().toString(36).slice(2,10); localStorage.setItem('tb_playerId', myId); }
 
   const el = id => document.getElementById(id);
-  const viewSetup = el('viewSetup'), viewHome = el('viewHome'), viewRoom = el('viewRoom'), viewAdmin = el('viewAdmin'), viewDisclaimer = el('viewDisclaimer'), viewModeSelect = el('viewModeSelect'), viewOffline = el('viewOffline');
+  const viewSetup = el('viewSetup'), viewHome = el('viewHome'), viewRoom = el('viewRoom'), viewAdmin = el('viewAdmin'), viewDisclaimer = el('viewDisclaimer'), viewModeSelect = el('viewModeSelect'), viewOffline = el('viewOffline'), viewMyHistory = el('viewMyHistory');
 
   function show(view){
-    [viewSetup, viewHome, viewRoom, viewAdmin, viewDisclaimer, viewModeSelect, viewOffline].forEach(v=>v.classList.add('hidden'));
+    [viewSetup, viewHome, viewRoom, viewAdmin, viewDisclaimer, viewModeSelect, viewOffline, viewMyHistory].forEach(v=>v.classList.add('hidden'));
     view.classList.remove('hidden');
   }
 
@@ -534,6 +547,7 @@
     show(viewModeSelect);
   });
   el('homeMenuLink').addEventListener('click', ()=> show(viewModeSelect));
+  el('myHistoryBackBtn').addEventListener('click', ()=>{ show(viewHome); renderMyRooms(); });
 
   // ---------- OFFLINE MODE: pure local number caller, no Firebase, works with no internet ----------
   let offlinePool = [], offlineCalledOrder = [], offlineCellEls = {};
@@ -620,43 +634,95 @@
     try{ list = JSON.parse(localStorage.getItem('tb_myRooms') || '[]'); }catch(e){}
     list = list.filter(r=>r.code!==code);
     list.unshift({code, name, savedAt: Date.now()});
-    list = list.slice(0, 6); // keep a bit of history so we can find one current + one finished game
+    list = list.slice(0, 20); // keep more history for the full history view
     localStorage.setItem('tb_myRooms', JSON.stringify(list));
   }
 
-  function renderMyRooms(){
+  function getMyRoomsList(){
     let list = [];
     try{ list = JSON.parse(localStorage.getItem('tb_myRooms') || '[]'); }catch(e){}
+    return list;
+  }
+
+  function deleteMyRoomEntry(code){
+    let list = getMyRoomsList();
+    list = list.filter(r=>r.code!==code);
+    localStorage.setItem('tb_myRooms', JSON.stringify(list));
+    renderMyRooms();
+    if(!el('viewMyHistory').classList.contains('hidden')) renderMyHistory();
+  }
+
+  function renderMyRooms(){
+    const list = getMyRoomsList().slice(0, 5); // recent 5 only — rest lives in Full History
     const card = el('myRoomsCard');
     if(list.length===0){ card.classList.add('hidden'); return; }
-
-    Promise.all(list.map(r =>
-      db.ref(`rooms/${r.code}/gameOver`).get()
-        .then(snap => ({...r, finished: !!snap.val()}))
-        .catch(()=>({...r, finished:null})) // room might no longer exist
-    )).then(results=>{
-      const current = results.find(r=>r.finished===false);
-      const lastFinished = results.find(r=>r.finished===true);
-
-      const wrap = el('myRoomsWrap');
-      wrap.innerHTML='';
-      if(!current && !lastFinished){ card.classList.add('hidden'); return; }
-      card.classList.remove('hidden');
-
-      if(current) wrap.appendChild(makeMyGameRow(current.code, 'Current game — in progress', 'Rejoin'));
-      if(lastFinished) wrap.appendChild(makeMyGameRow(lastFinished.code, 'Last game — finished', 'View Result'));
+    card.classList.remove('hidden');
+    const wrap = el('myRoomsWrap');
+    wrap.innerHTML='';
+    list.forEach(r=>{
+      // render immediately with a placeholder status, then update once we hear back —
+      // this way the row is never silently missing while the network call is in flight
+      const row = makeMyGameRow(r.code, 'checking status…', 'Open');
+      wrap.appendChild(row);
+      db.ref(`rooms/${r.code}/gameOver`).get().then(snap=>{
+        const finished = !!snap.val();
+        updateMyGameRow(row, r.code, finished ? 'finished' : 'in progress', finished ? 'View Result' : 'Rejoin');
+      }).catch(()=>{
+        updateMyGameRow(row, r.code, 'no longer available', 'Remove');
+      });
     });
+    if(getMyRoomsList().length > 5){
+      const moreLink = document.createElement('div');
+      moreLink.style.cssText = 'text-align:center;margin-top:8px;';
+      moreLink.innerHTML = `<span style="font-size:12px;color:var(--teal);text-decoration:underline;cursor:pointer;">View Full History (${getMyRoomsList().length})</span>`;
+      moreLink.addEventListener('click', ()=>{ show(viewMyHistory); renderMyHistory(); });
+      wrap.appendChild(moreLink);
+    }
   }
 
   function makeMyGameRow(code, statusText, btnText){
     const row=document.createElement('div');
     row.className='req-row';
-    row.innerHTML = `<span><strong style="color:var(--gold-soft);">${escapeHtml(code)}</strong> <span style="color:var(--muted);font-size:12px;">— ${statusText}</span></span>`;
+    row.innerHTML = `<span><strong style="color:var(--gold-soft);">${escapeHtml(code)}</strong> <span class="my-game-status" style="color:var(--muted);font-size:12px;">— ${statusText}</span></span>`;
+    const btnWrap = document.createElement('div');
+    btnWrap.style.cssText = 'display:flex;gap:6px;';
     const btn=document.createElement('button');
-    btn.className='btn btn-primary btn-sm'; btn.textContent=btnText;
+    btn.className='btn btn-primary btn-sm my-game-action'; btn.textContent=btnText;
     btn.addEventListener('click', ()=>rejoinRoom(code));
-    row.appendChild(btn);
+    const del=document.createElement('button');
+    del.className='btn btn-ghost btn-sm'; del.textContent='✕';
+    del.title = 'Remove from my history';
+    del.addEventListener('click', (e)=>{ e.stopPropagation(); deleteMyRoomEntry(code); });
+    btnWrap.appendChild(btn); btnWrap.appendChild(del);
+    row.appendChild(btnWrap);
     return row;
+  }
+
+  function updateMyGameRow(row, code, statusText, btnText){
+    const label = row.querySelector('.my-game-status');
+    const btn = row.querySelector('.my-game-action');
+    if(label) label.textContent = '— ' + statusText;
+    if(btn){
+      btn.textContent = btnText;
+      btn.onclick = btnText==='Remove' ? (()=>deleteMyRoomEntry(code)) : (()=>rejoinRoom(code));
+    }
+  }
+
+  function renderMyHistory(){
+    const list = getMyRoomsList();
+    const wrap = el('myHistoryWrap');
+    wrap.innerHTML='';
+    if(list.length===0){ wrap.innerHTML = '<div class="hint">No game history yet.</div>'; return; }
+    list.forEach(r=>{
+      const row = makeMyGameRow(r.code, 'checking status…', 'Open');
+      wrap.appendChild(row);
+      db.ref(`rooms/${r.code}/gameOver`).get().then(snap=>{
+        const finished = !!snap.val();
+        updateMyGameRow(row, r.code, finished ? 'finished' : 'in progress', finished ? 'View Result' : 'Rejoin');
+      }).catch(()=>{
+        updateMyGameRow(row, r.code, 'no longer available', 'Remove');
+      });
+    });
   }
 
   function rejoinRoom(code){
@@ -1277,7 +1343,7 @@
     const wrap = el('adminRoomsWrap');
     const entries = Object.entries(allRooms);
     if(entries.length===0){ wrap.innerHTML='No rooms yet.'; return; }
-    entries.sort((a,b)=> (a[1].status==='pending'?0:1) - (b[1].status==='pending'?0:1) || (b[1].createdAt-a[1].createdAt));
+    entries.sort((a,b)=> (a[1].status==='pending'?0:1) - (b[1].status==='pending'?0:1) || ((b[1].createdAt||0)-(a[1].createdAt||0)));
     wrap.innerHTML='';
     entries.forEach(([code, room])=>{
       const playerCount = room.players ? Object.keys(room.players).length : 0;
