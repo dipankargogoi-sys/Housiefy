@@ -140,8 +140,70 @@
   </div>
 
   <!-- MODE SELECT -->
+  <!-- GAMES HUB: the real landing screen after the disclaimer -->
+  <div id="viewGamesHub" class="hidden">
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-family:var(--font-display);font-size:19px;color:var(--gold-soft);font-weight:800;">Choose a Game</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Free to play — no purchases, no cash prizes</div>
+    </div>
+
+    <div class="card" id="hubTambolaCard" style="cursor:pointer;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-size:34px;">🎟️</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:16px;color:var(--gold-soft);">Tambola / Housie</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Play online with friends, or call numbers offline</div>
+        </div>
+        <div style="color:var(--muted);">▶</div>
+      </div>
+    </div>
+
+    <div class="card" style="opacity:0.55;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-size:34px;">🎲</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:16px;color:var(--cream);">Ludo</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Coming soon</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="opacity:0.55;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-size:34px;">🐍</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:16px;color:var(--cream);">Snakes &amp; Ladders</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Coming soon</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="opacity:0.55;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-size:34px;">🥌</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:16px;color:var(--cream);">Carrom</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Coming soon</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="opacity:0.55;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-size:34px;">🧩</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:16px;color:var(--cream);">Puzzle</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Coming soon</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="viewModeSelect" class="card hidden" style="text-align:center;">
-    <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;">How do you want to play?</div>
+    <div style="text-align:left;margin-bottom:10px;">
+      <span id="hubBackLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ All Games</span>
+    </div>
+    <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;">Tambola — How do you want to play?</div>
     <button class="btn btn-primary" id="playOnlineBtn">🌐 Play Online with Friends</button>
     <div style="font-size:12px;color:var(--muted);margin:6px 0 16px;">Rooms, live sync, free digital tickets</div>
     <button class="btn btn-ghost" id="playOfflineBtn">📻 Play Offline — Number Caller Only</button>
@@ -383,14 +445,14 @@
   if(!myId){ myId = 'p_'+Math.random().toString(36).slice(2,10); localStorage.setItem('tb_playerId', myId); }
 
   const el = id => document.getElementById(id);
-  const viewSetup = el('viewSetup'), viewHome = el('viewHome'), viewRoom = el('viewRoom'), viewAdmin = el('viewAdmin'), viewDisclaimer = el('viewDisclaimer'), viewModeSelect = el('viewModeSelect'), viewOffline = el('viewOffline'), viewMyHistory = el('viewMyHistory');
+  const viewSetup = el('viewSetup'), viewHome = el('viewHome'), viewRoom = el('viewRoom'), viewAdmin = el('viewAdmin'), viewDisclaimer = el('viewDisclaimer'), viewModeSelect = el('viewModeSelect'), viewOffline = el('viewOffline'), viewMyHistory = el('viewMyHistory'), viewGamesHub = el('viewGamesHub');
 
   function show(view){
-    [viewSetup, viewHome, viewRoom, viewAdmin, viewDisclaimer, viewModeSelect, viewOffline, viewMyHistory].forEach(v=>v.classList.add('hidden'));
+    [viewSetup, viewHome, viewRoom, viewAdmin, viewDisclaimer, viewModeSelect, viewOffline, viewMyHistory, viewGamesHub].forEach(v=>v.classList.add('hidden'));
     view.classList.remove('hidden');
   }
 
-  const APP_VERSION = "1.0.0"; // bump this + version.json together on every release
+  const APP_VERSION = "1.2.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -549,9 +611,12 @@
       el('joinCodeInput').value = pendingJoinCode;
       renderMyRooms();
     } else {
-      show(viewModeSelect);
+      show(viewGamesHub);
     }
   }
+
+  el('hubTambolaCard').addEventListener('click', ()=> show(viewModeSelect));
+  el('hubBackLink').addEventListener('click', ()=> show(viewGamesHub));
 
   // ---------- version check: notify users when a newer app is live ----------
   function checkForUpdate(){
@@ -581,6 +646,7 @@
     show(viewOffline);
     initOfflineBoard();
   });
+
   el('offlineBackBtn').addEventListener('click', ()=>{
     stopOfflineAuto();
     show(viewModeSelect);
@@ -1227,6 +1293,7 @@
   }
 
   // ---------- claim detection (idempotent via transaction) ----------
+  // ---------- points system: earned for playing/winning, no stakes, nothing spendable ----------
   function checkClaims(){
     const calledSet = calledSetFromOrder();
     const fullHouseTickets = [];
