@@ -2057,4 +2057,338 @@
     if(color !== activeColors[turnIdx]) return; // can't touch opponents' tokens
     if(!movableList.includes(i)) return;
     awaitingTap = false;
-    const val = p
+    const val = pendingRoll;
+    document.querySelectorAll('.ludo-token-highlight').forEach(p=>p.classList.remove('ludo-token-highlight'));
+    moveTokenAnimated(color, i, val, ()=>{
+      if(checkWin(color)){
+        over = true;
+        sndWin();
+        showWin();
+        return;
+      }
+      advanceAfterRoll(val===6);
+    });
+  }
+
+  function advanceAfterRoll(bonusTurn){
+    if(bonusTurn){
+      sixStreak++;
+      if(sixStreak<3){ updateTurnLabel(); refreshDiceBoxHighlight(); return; }
+    }
+    sixStreak = 0;
+    turnIdx = (turnIdx+1)%activeColors.length;
+    updateTurnLabel();
+    refreshDiceBoxHighlight();
+  }
+
+  function showWin(){
+    el('ludoPlay').classList.add('hidden');
+    el('ludoWin').classList.remove('hidden');
+    const color = activeColors[turnIdx];
+    el('ludoWinText').innerHTML = '<span style="color:'+COLORS[color]+';">'+NAMES[color]+'</span> wins! 🎉';
+  }
+
+  function startGame(){
+    activeColors = colorsForCount(numPlayers);
+    tokens = {};
+    activeColors.forEach(c=> tokens[c] = [0,0,0,0]);
+    turnIdx = 0; over = false; rolling = false; awaitingTap = false; animating = false; movableList = []; sixStreak = 0;
+    el('ludoSetup').classList.add('hidden');
+    el('ludoWin').classList.add('hidden');
+    el('ludoPlay').classList.remove('hidden');
+    buildBoardDom();
+    buildDiceBoxes();
+    renderTokens();
+    updateTurnLabel();
+    refreshDiceBoxHighlight();
+  }
+
+  document.querySelectorAll('.ludoPlayerCountBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      numPlayers = parseInt(btn.dataset.n,10);
+      document.querySelectorAll('.ludoPlayerCountBtn').forEach(b=>{b.classList.remove('btn-primary');b.classList.add('btn-ghost');});
+      btn.classList.remove('btn-ghost'); btn.classList.add('btn-primary');
+    });
+  });
+  el('ludoStartBtn').addEventListener('click', startGame);
+  el('ludoPlayAgainBtn').addEventListener('click', startGame);
+  el('ludoMenuBtn').addEventListener('click', ()=>{
+    document.querySelectorAll('main > div[id^="view"]').forEach(v=>v.classList.add('hidden'));
+    const hub = document.getElementById('viewGamesHub');
+    if(hub) hub.classList.remove('hidden');
+    document.body.classList.remove('ludo-fullscreen');
+  });
+
+  window.LUDO = { onShow(){
+    // re-entering from the hub always returns to the setup screen
+    el('ludoPlay').classList.add('hidden');
+    el('ludoWin').classList.add('hidden');
+    el('ludoSetup').classList.remove('hidden');
+  } };
+})();
+
+</script>
+<script>
+/* ============ ARROW PUZZLE ENGINE ============ */
+(function(){
+  const el = id => document.getElementById(id);
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const DIRV = { up:[-1,0], down:[1,0], left:[0,-1], right:[0,1] };
+
+  const MODES = {
+    arrows: { title:'Tap Away Arrows', rows:9, cols:7, mask:null, pieces:14 },
+    clear:  { title:'Clear the Board',  rows:9, cols:6, mask:null, pieces:11 },
+    heart:  { title:'Find the Free Path', rows:11, cols:13, mask:heartMask, pieces:18 }
+  };
+
+  function heartMask(r,c,rows,cols){
+    const x = (c - cols/2 + 0.5) / (cols/2) * 1.3;
+    const y = (rows/2 - 0.5 - r) / (rows/2) * 1.3;
+    const f = Math.pow(x*x+y*y-1,3) - x*x*Math.pow(y,3);
+    return f <= 0;
+  }
+
+  let curMode = null, rows=0, cols=0, mask=null, pieces=[], occupied=null, hearts=3, moves=0, U=36;
+
+  function cellPlayable(r,c){
+    if(r<0||r>=rows||c<0||c>=cols) return false;
+    if(mask && !mask(r,c,rows,cols)) return false;
+    return true;
+  }
+
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+  function exitPathClear(head, dir, occ){
+    let [r,c] = head;
+    const [dr,dc] = DIRV[dir];
+    r+=dr; c+=dc;
+    while(cellPlayable(r,c)){
+      if(occ[r][c]) return false;
+      r+=dr; c+=dc;
+    }
+    return true;
+  }
+
+  function tryPlacePiece(occ){
+    const empties = [];
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(cellPlayable(r,c) && !occ[r][c]) empties.push([r,c]);
+    if(!empties.length) return null;
+    const start = empties[Math.floor(Math.random()*empties.length)];
+    const len = 3 + Math.floor(Math.random()*4);
+    let cells = [start];
+    let visited = new Set([start[0]+','+start[1]]);
+    let cur = start;
+    for(let i=1;i<len;i++){
+      const dirs = shuffle(['up','down','left','right']);
+      let moved = false;
+      for(const d of dirs){
+        const [dr,dc] = DIRV[d];
+        const nr=cur[0]+dr, nc=cur[1]+dc;
+        if(cellPlayable(nr,nc) && !occ[nr][nc] && !visited.has(nr+','+nc)){
+          cells.push([nr,nc]); visited.add(nr+','+nc); cur=[nr,nc]; moved=true; break;
+        }
+      }
+      if(!moved) break;
+    }
+    if(cells.length<2) return null;
+    const head = cells[cells.length-1];
+    const dirs = shuffle(['up','down','left','right']);
+    for(const dir of dirs){
+      if(exitPathClear(head, dir, occ)) return { cells, head, dir };
+    }
+    return null;
+  }
+
+  function generatePuzzle(){
+    const occ = Array.from({length:rows},()=>new Array(cols).fill(false));
+    const built = [];
+    let tries = 0;
+    while(built.length < MODES[curMode].pieces && tries < 400){
+      tries++;
+      const p = tryPlacePiece(occ);
+      if(p){ built.push(p); p.cells.forEach(([r,c])=> occ[r][c]=true); }
+    }
+    built.reverse(); // built[0] = first removable
+    return built;
+  }
+
+  // ---------------- rendering ----------------
+  function render(){
+    const svg = el('puzzleSvg');
+    svg.setAttribute('viewBox', `0 0 ${cols*U} ${rows*U}`);
+    svg.innerHTML = '';
+    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
+    pieces.forEach(p=>{ p.alive = true; p.cells.forEach(([r,c])=> occupied[r][c]=true); });
+
+    pieces.forEach((p, idx)=>{
+      if(!p.alive) return;
+      const g = document.createElementNS(svgNS,'g');
+      g.setAttribute('data-idx', idx);
+      g.style.cursor = 'pointer';
+
+      const pts = p.cells.map(([r,c])=> [(c+0.5)*U, (r+0.5)*U]);
+      // extend a bit past head cell in arrow direction to draw the arrowhead
+      const [dr,dc] = DIRV[p.dir];
+      const [hx,hy] = pts[pts.length-1];
+      const tipx = hx + dc*U*0.55, tipy = hy + dr*U*0.55;
+
+      const d = 'M ' + pts.map(pt=>pt.join(',')).join(' L ');
+      const path = document.createElementNS(svgNS,'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke','#2b2760');
+      path.setAttribute('stroke-width', U*0.34);
+      path.setAttribute('stroke-linecap','round');
+      path.setAttribute('stroke-linejoin','round');
+      path.setAttribute('class','pz-line');
+      g.appendChild(path);
+
+      // hit area (wider, invisible)
+      const hit = document.createElementNS(svgNS,'path');
+      hit.setAttribute('d', d);
+      hit.setAttribute('fill','none');
+      hit.setAttribute('stroke','transparent');
+      hit.setAttribute('stroke-width', U*0.9);
+      g.appendChild(hit);
+
+      // arrowhead triangle
+      const perp = [-dr, dc]; // perpendicular for triangle base
+      const baseW = U*0.32;
+      const p1 = [hx + dc*U*0.18 + perp[1]*baseW, hy + dr*U*0.18 + perp[0]*baseW];
+      const p2 = [hx + dc*U*0.18 - perp[1]*baseW, hy + dr*U*0.18 - perp[0]*baseW];
+      const p3 = [tipx, tipy];
+      const tri = document.createElementNS(svgNS,'polygon');
+      tri.setAttribute('points', [p1,p2,p3].map(p=>p.join(',')).join(' '));
+      tri.setAttribute('fill', '#2b2760');
+      tri.setAttribute('class','pz-arrow');
+      g.appendChild(tri);
+
+      g.addEventListener('click', ()=> tapPiece(idx));
+      svg.appendChild(g);
+    });
+
+    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
+  }
+
+  function recomputeOccupied(){
+    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
+    pieces.forEach(p=>{ if(p.alive) p.cells.forEach(([r,c])=> occupied[r][c]=true); });
+  }
+
+  function tapPiece(idx){
+    const p = pieces[idx];
+    if(!p || !p.alive) return;
+    moves++;
+    el('puzzleMoves').textContent = moves;
+    recomputeOccupied();
+    p.cells.forEach(([r,c])=> occupied[r][c]=false); // don't block on self
+    const clear = exitPathClear(p.head, p.dir, occupied);
+    const svg = el('puzzleSvg');
+    const g = svg.querySelector('g[data-idx="'+idx+'"]');
+    if(clear){
+      p.alive = false;
+      if(g){
+        const [dr,dc] = DIRV[p.dir];
+        g.style.transition = 'transform 0.35s ease-in, opacity 0.35s ease-in';
+        g.style.transform = `translate(${dc*U*8}px, ${dr*U*8}px)`;
+        g.style.opacity = '0';
+        setTimeout(()=>{ g.remove(); checkWinOrContinue(); }, 360);
+      } else {
+        checkWinOrContinue();
+      }
+    } else {
+      loseHeart();
+      if(g){
+        g.querySelector('.pz-line').setAttribute('stroke', 'var(--cage)');
+        g.style.transition = 'transform 0.08s'; 
+        let n=0; const shake=setInterval(()=>{ n++; g.style.transform = 'translateX('+((n%2===0)?4:-4)+'px)'; if(n>4){ clearInterval(shake); g.style.transform=''; g.querySelector('.pz-line').setAttribute('stroke','#2b2760'); } },40);
+      }
+    }
+  }
+
+  function checkWinOrContinue(){
+    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
+    if(pieces.every(p=>!p.alive)){
+      el('puzzlePlay').classList.add('hidden');
+      el('puzzleWin').classList.remove('hidden');
+    }
+  }
+
+  function renderHearts(){
+    el('puzzleHearts').textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3-hearts);
+  }
+
+  function loseHeart(){
+    hearts--;
+    renderHearts();
+    if(hearts<=0){
+      setTimeout(()=>{
+        el('puzzlePlay').classList.add('hidden');
+        el('puzzleLose').classList.remove('hidden');
+      }, 300);
+    }
+  }
+
+  function hint(){
+    recomputeOccupied();
+    for(let i=0;i<pieces.length;i++){
+      const p = pieces[i];
+      if(!p.alive) continue;
+      const occ2 = occupied.map(row=>row.slice());
+      p.cells.forEach(([r,c])=> occ2[r][c]=false);
+      if(exitPathClear(p.head, p.dir, occ2)){
+        const g = el('puzzleSvg').querySelector('g[data-idx="'+i+'"]');
+        if(g){
+          const line = g.querySelector('.pz-line');
+          const arrow = g.querySelector('.pz-arrow');
+          line.setAttribute('stroke', 'var(--gold-soft)');
+          arrow.setAttribute('fill', 'var(--gold-soft)');
+          setTimeout(()=>{ if(line){line.setAttribute('stroke','#2b2760');} if(arrow){arrow.setAttribute('fill','#2b2760');} }, 1400);
+        }
+        return;
+      }
+    }
+  }
+
+  function startLevel(mode){
+    curMode = mode;
+    const cfg = MODES[mode];
+    rows = cfg.rows; cols = cfg.cols; mask = cfg.mask;
+    hearts = 3; moves = 0;
+    el('puzzleTitle').textContent = cfg.title;
+    el('puzzleMoves').textContent = '0';
+    renderHearts();
+    pieces = generatePuzzle();
+    render();
+    el('puzzleModeSelect').classList.add('hidden');
+    el('puzzleWin').classList.add('hidden');
+    el('puzzleLose').classList.add('hidden');
+    el('puzzlePlay').classList.remove('hidden');
+  }
+
+  document.querySelectorAll('.puzzleModeBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=> startLevel(btn.dataset.mode));
+  });
+  el('puzzleBackToModes').addEventListener('click', ()=>{
+    el('puzzlePlay').classList.add('hidden');
+    el('puzzleModeSelect').classList.remove('hidden');
+  });
+  el('puzzleHintBtn').addEventListener('click', hint);
+  el('puzzleRestartBtn').addEventListener('click', ()=> startLevel(curMode));
+  el('puzzleNextBtn').addEventListener('click', ()=> startLevel(curMode));
+  el('puzzleWinMenuBtn').addEventListener('click', ()=>{
+    el('puzzleWin').classList.add('hidden');
+    el('puzzleModeSelect').classList.remove('hidden');
+  });
+  el('puzzleRetryBtn').addEventListener('click', ()=> startLevel(curMode));
+  el('puzzleLoseMenuBtn').addEventListener('click', ()=>{
+    el('puzzleLose').classList.add('hidden');
+    el('puzzleModeSelect').classList.remove('hidden');
+  });
+
+  window.ARROWPUZZLE = { onShow(){} };
+})();
+
+</script>
+</body>
+</html>
