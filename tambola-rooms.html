@@ -103,6 +103,20 @@
   .ludo-dicebox.myturn{border-color:var(--gold-soft);box-shadow:0 4px 0 rgba(0,0,0,0.3),0 0 16px rgba(242,198,107,0.75);}
   .ludo-dicebox-face{width:34px;height:34px;background:linear-gradient(145deg,#ffffff,#d8d8e0);border-radius:8px;box-shadow:0 3px 0 #a8a8b8,inset 0 1px 1px rgba(255,255,255,0.8);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:5px;gap:1px;flex:none;}
   .ludo-dicebox-face .pip{border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4560,#1a1730);}
+
+  /* real 3D dice cube */
+  .ludo-cube-outer{width:34px;height:34px;perspective:140px;flex:none;}
+  .ludo-cube{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.75s cubic-bezier(.2,.75,.25,1);}
+  .ludo-cube-face{position:absolute;width:34px;height:34px;background:linear-gradient(145deg,#ffffff,#d8d8e0);border-radius:7px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:5px;gap:1px;box-shadow:inset 0 1px 1px rgba(255,255,255,0.8);backface-visibility:hidden;}
+  .ludo-cube-face .pip{border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4560,#1a1730);}
+  .ludo-cube-front{transform:translateZ(17px);}
+  .ludo-cube-back{transform:rotateY(180deg) translateZ(17px);}
+  .ludo-cube-right{transform:rotateY(90deg) translateZ(17px);}
+  .ludo-cube-left{transform:rotateY(-90deg) translateZ(17px);}
+  .ludo-cube-top{transform:rotateX(90deg) translateZ(17px);}
+  .ludo-cube-bottom{transform:rotateX(-90deg) translateZ(17px);}
+  .ludo-token-hop{animation:ludoHop 0.15s ease-out;}
+  @keyframes ludoHop{0%{transform:scale(1);}45%{transform:scale(1.5) translateY(-30%);}100%{transform:scale(1);}}
   .ludo-token-highlight{animation:ludoPulse 0.9s ease-in-out infinite;}
   @keyframes ludoPulse{0%,100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0));transform:scale(1);}50%{filter:drop-shadow(0 0 5px rgba(255,255,255,0.9));transform:scale(1.15);}}
 
@@ -112,7 +126,7 @@
   body.ludo-fullscreen{padding-bottom:0;}
   #viewLudo{
     position:fixed; inset:0; z-index:300; overflow-y:auto;
-    display:flex; flex-direction:column; align-items:center;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:22px 16px calc(84px + env(safe-area-inset-bottom));
     background:
       radial-gradient(circle at 15% 0%, rgba(242,198,107,0.28), transparent 55%),
@@ -1685,16 +1699,46 @@
   const EXTRA_SAFE = [8,22,36,50];
   const PIP_LAYOUTS = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
   const FINISH_STEP = 61;
+  // wrapper rotation (deg) needed to bring each face value to the front
+  const FACE_ROTATION = { 1:{x:0,y:0}, 2:{x:0,y:-90}, 3:{x:-90,y:0}, 4:{x:90,y:0}, 5:{x:0,y:90}, 6:{x:0,y:180} };
+  const FACE_VALUE = { front:1, back:6, right:2, left:5, top:3, bottom:4 };
+  const diceRot = {}; // accumulated rotation per color, for continuous spin
 
-  function renderDiceFaceInto(boxEl, val){
-    boxEl.innerHTML = '';
+  function buildPipFace(val, cls){
+    const f = document.createElement('div');
+    f.className = 'ludo-cube-face ludo-cube-'+cls;
     const active = new Set(PIP_LAYOUTS[val] || []);
     for(let i=1;i<=9;i++){
       const p = document.createElement('div');
       if(active.has(i)) p.className = 'pip';
-      boxEl.appendChild(p);
+      f.appendChild(p);
     }
+    return f;
   }
+
+  // ---------------- sound (synthesized, no external assets) ----------------
+  let audioCtx = null;
+  function ac(){
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) audioCtx = new AC();
+    }
+    if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function tone(freq, dur, type, vol){
+    const ctx = ac(); if(!ctx) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime+dur);
+  }
+  function sndRollTick(){ tone(220+Math.random()*380, 0.05, 'square', 0.07); }
+  function sndStep(){ tone(480+Math.random()*90, 0.08, 'triangle', 0.16); }
+  function sndCapture(){ tone(200,0.22,'sawtooth',0.18); setTimeout(()=>tone(130,0.28,'sawtooth',0.18),100); }
+  function sndWin(){ [523,659,784,1046].forEach((f,i)=> setTimeout(()=>tone(f,0.25,'triangle',0.18), i*130)); }
 
   function ringCellForColor(color, step){ return RING[(START_OFFSET[color] + step - 1) % RING_LEN]; }
   function cellForStep(color, step){
@@ -1709,7 +1753,7 @@
   }
 
   let numPlayers = 2, activeColors = [], tokens = {}, turnIdx = 0, over = false;
-  let rolling = false, awaitingTap = false, movableList = [], pendingRoll = 0, sixStreak = 0;
+  let rolling = false, awaitingTap = false, animating = false, movableList = [], pendingRoll = 0, sixStreak = 0;
 
   function colorsForCount(n){
     if(n===2) return ['red','blue'];
@@ -1727,7 +1771,7 @@
       const box = el('ludo-dicebox-'+color);
       box.classList.add('active');
       box.addEventListener('click', ()=> onDiceBoxTap(color));
-      renderDiceFaceInto(el('ludo-dicebox-face-'+color), 1);
+      diceRot[color] = {x:0,y:0};
     });
   }
   function makeDiceBox(color){
@@ -1735,13 +1779,44 @@
     box.className = 'ludo-dicebox';
     box.id = 'ludo-dicebox-'+color;
     box.style.display = activeColors.includes(color) ? 'flex' : 'none';
-    box.innerHTML = `
-      <div style="width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${COLORS[color]};border:1.5px solid #fff;flex:none;"></div>
-      <div style="text-align:left;flex:1;">
-        <div style="font-size:10px;color:var(--cream);font-weight:700;">${NAMES[color]}</div>
-        <div id="ludo-dicebox-face-${color}" class="ludo-dicebox-face"></div>
-      </div>`;
+    const pin = document.createElement('div');
+    pin.style.cssText = `width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${COLORS[color]};border:1.5px solid #fff;flex:none;`;
+    const right = document.createElement('div');
+    right.style.cssText = 'text-align:left;flex:1;';
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:10px;color:var(--cream);font-weight:700;';
+    label.textContent = NAMES[color];
+    const cubeOuter = document.createElement('div');
+    cubeOuter.className = 'ludo-cube-outer';
+    const cube = document.createElement('div');
+    cube.className = 'ludo-cube';
+    cube.id = 'ludo-dicebox-cube-'+color;
+    cube.appendChild(buildPipFace(FACE_VALUE.front,'front'));
+    cube.appendChild(buildPipFace(FACE_VALUE.back,'back'));
+    cube.appendChild(buildPipFace(FACE_VALUE.right,'right'));
+    cube.appendChild(buildPipFace(FACE_VALUE.left,'left'));
+    cube.appendChild(buildPipFace(FACE_VALUE.top,'top'));
+    cube.appendChild(buildPipFace(FACE_VALUE.bottom,'bottom'));
+    cubeOuter.appendChild(cube);
+    right.appendChild(label); right.appendChild(cubeOuter);
+    box.appendChild(pin); box.appendChild(right);
     return box;
+  }
+
+  function rollDiceVisual(color, finalVal, onDone){
+    const cube = el('ludo-dicebox-cube-'+color);
+    const st = diceRot[color] || {x:0,y:0};
+    const target = FACE_ROTATION[finalVal];
+    const mod360 = n => ((n%360)+360)%360;
+    const spinX = 720 + Math.floor(Math.random()*360);
+    const spinY = 720 + Math.floor(Math.random()*360);
+    const newX = st.x + spinX + mod360(target.x - mod360(st.x));
+    const newY = st.y + spinY + mod360(target.y - mod360(st.y));
+    cube.style.transform = `rotateX(${newX}deg) rotateY(${newY}deg)`;
+    diceRot[color] = {x:newX, y:newY};
+    let ticks = 0;
+    const tickInt = setInterval(()=>{ sndRollTick(); ticks++; if(ticks>10) clearInterval(tickInt); }, 65);
+    setTimeout(()=>{ clearInterval(tickInt); onDone(); }, 780);
   }
 
   function refreshDiceBoxHighlight(){
@@ -1749,7 +1824,7 @@
       const box = el('ludo-dicebox-'+color);
       const isTurn = color===activeColors[turnIdx] && !over;
       box.classList.toggle('myturn', isTurn);
-      box.style.pointerEvents = (isTurn && !rolling && !awaitingTap) ? 'auto' : 'none';
+      box.style.pointerEvents = (isTurn && !rolling && !awaitingTap && !animating) ? 'auto' : 'none';
       box.style.opacity = isTurn ? '1' : '0.4';
     });
   }
@@ -1894,195 +1969,79 @@
     return list;
   }
 
-  function moveToken(color, i, rollVal){
+  function moveTokenAnimated(color, i, rollVal, callback){
+    animating = true;
+    refreshDiceBoxHighlight();
+    const startStep = tokens[color][i];
+    if(startStep===0){
+      tokens[color][i] = 1;
+      renderTokens();
+      sndStep();
+      bounceToken(color, i);
+      setTimeout(()=> finalizeLanding(color, i, callback), 200);
+      return;
+    }
+    const endStep = startStep + rollVal;
+    let cur = startStep;
+    function hop(){
+      cur++;
+      tokens[color][i] = cur;
+      renderTokens();
+      sndStep();
+      bounceToken(color, i);
+      if(cur < endStep){
+        setTimeout(hop, 170);
+      } else {
+        setTimeout(()=> finalizeLanding(color, i, callback), 170);
+      }
+    }
+    setTimeout(hop, 170);
+  }
+
+  function bounceToken(color, i){
+    const p = el('ludo-pin-'+color+'-'+i);
+    if(!p) return;
+    p.classList.remove('ludo-token-hop');
+    void p.offsetWidth; // restart animation
+    p.classList.add('ludo-token-hop');
+  }
+
+  function finalizeLanding(color, i, callback){
+    animating = false;
     const step = tokens[color][i];
-    const next = (step===0) ? 1 : step+rollVal;
-    tokens[color][i] = next;
-    if(next>=1 && next<=55){
-      const [r,c] = ringCellForColor(color, next);
+    if(step>=1 && step<=55){
+      const [r,c] = ringCellForColor(color, step);
       if(!isSafeGlobalCell(r,c)){
+        let captured = false;
         activeColors.forEach(op=>{
           if(op===color) return;
           tokens[op].forEach((oStep,oi)=>{
             if(oStep>=1 && oStep<=55){
               const [orr,occ] = ringCellForColor(op, oStep);
-              if(orr===r && occ===c) tokens[op][oi] = 0;
+              if(orr===r && occ===c){ tokens[op][oi] = 0; captured = true; }
             }
           });
         });
+        if(captured){ renderTokens(); sndCapture(); }
       }
     }
-    renderTokens();
+    refreshDiceBoxHighlight();
+    callback();
   }
 
   function checkWin(color){ return tokens[color].every(s=>s===FINISH_STEP); }
 
   function onDiceBoxTap(color){
-    if(rolling || awaitingTap || over) return;
+    if(rolling || awaitingTap || animating || over) return;
     if(color !== activeColors[turnIdx]) return; // not your dice — opponents can't touch it
     rolling = true;
     refreshDiceBoxHighlight();
-    const faceEl = el('ludo-dicebox-face-'+color);
-    let ticks = 0;
-    const spin = setInterval(()=>{
-      renderDiceFaceInto(faceEl, 1+Math.floor(Math.random()*6));
-      ticks++;
-      if(ticks>6){
-        clearInterval(spin);
-        const val = 1+Math.floor(Math.random()*6);
-        renderDiceFaceInto(faceEl, val);
-        handleRoll(val);
-      }
-    },70);
+    const val = 1+Math.floor(Math.random()*6);
+    rollDiceVisual(color, val, ()=> handleRoll(val));
   }
 
   function handleRoll(val){
     const color = activeColors[turnIdx];
     const movable = movableTokens(color, val);
     rolling = false;
-    if(movable.length===0){
-      updateTurnLabel('No valid move — passing turn');
-      refreshDiceBoxHighlight();
-      setTimeout(()=>advanceAfterRoll(false), 700);
-      return;
-    }
-    pendingRoll = val;
-    movableList = movable;
-    awaitingTap = true;
-    updateTurnLabel('Rolled '+val+' — tap the goti you want to move');
-    refreshDiceBoxHighlight();
-    applyHighlights();
-  }
-
-  function onTokenTap(color, i){
-    if(!awaitingTap) return;
-    if(color !== activeColors[turnIdx]) return; // can't touch opponents' tokens
-    if(!movableList.includes(i)) return;
-    awaitingTap = false;
-    const val = pendingRoll;
-    document.querySelectorAll('.ludo-token-highlight').forEach(p=>p.classList.remove('ludo-token-highlight'));
-    moveToken(color, i, val);
-    if(checkWin(color)){
-      over = true;
-      showWin();
-      return;
-    }
-    advanceAfterRoll(val===6);
-  }
-
-  function advanceAfterRoll(bonusTurn){
-    if(bonusTurn){
-      sixStreak++;
-      if(sixStreak<3){ updateTurnLabel(); refreshDiceBoxHighlight(); return; }
-    }
-    sixStreak = 0;
-    turnIdx = (turnIdx+1)%activeColors.length;
-    updateTurnLabel();
-    refreshDiceBoxHighlight();
-  }
-
-  function showWin(){
-    el('ludoPlay').classList.add('hidden');
-    el('ludoWin').classList.remove('hidden');
-    const color = activeColors[turnIdx];
-    el('ludoWinText').innerHTML = '<span style="color:'+COLORS[color]+';">'+NAMES[color]+'</span> wins! 🎉';
-  }
-
-  function startGame(){
-    activeColors = colorsForCount(numPlayers);
-    tokens = {};
-    activeColors.forEach(c=> tokens[c] = [0,0,0,0]);
-    turnIdx = 0; over = false; rolling = false; awaitingTap = false; movableList = []; sixStreak = 0;
-    el('ludoSetup').classList.add('hidden');
-    el('ludoWin').classList.add('hidden');
-    el('ludoPlay').classList.remove('hidden');
-    buildBoardDom();
-    buildDiceBoxes();
-    renderTokens();
-    updateTurnLabel();
-    refreshDiceBoxHighlight();
-  }
-
-  document.querySelectorAll('.ludoPlayerCountBtn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      numPlayers = parseInt(btn.dataset.n,10);
-      document.querySelectorAll('.ludoPlayerCountBtn').forEach(b=>{b.classList.remove('btn-primary');b.classList.add('btn-ghost');});
-      btn.classList.remove('btn-ghost'); btn.classList.add('btn-primary');
-    });
-  });
-  el('ludoStartBtn').addEventListener('click', startGame);
-  el('ludoPlayAgainBtn').addEventListener('click', startGame);
-  el('ludoMenuBtn').addEventListener('click', ()=>{
-    document.querySelectorAll('main > div[id^="view"]').forEach(v=>v.classList.add('hidden'));
-    const hub = document.getElementById('viewGamesHub');
-    if(hub) hub.classList.remove('hidden');
-    document.body.classList.remove('ludo-fullscreen');
-  });
-
-  window.LUDO = { onShow(){
-    // re-entering from the hub always returns to the setup screen
-    el('ludoPlay').classList.add('hidden');
-    el('ludoWin').classList.add('hidden');
-    el('ludoSetup').classList.remove('hidden');
-  } };
-})();
-
-</script>
-<script>
-/* ============ ARROW PUZZLE ENGINE ============ */
-(function(){
-  const el = id => document.getElementById(id);
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const DIRV = { up:[-1,0], down:[1,0], left:[0,-1], right:[0,1] };
-
-  const MODES = {
-    arrows: { title:'Tap Away Arrows', rows:9, cols:7, mask:null, pieces:14 },
-    clear:  { title:'Clear the Board',  rows:9, cols:6, mask:null, pieces:11 },
-    heart:  { title:'Find the Free Path', rows:11, cols:13, mask:heartMask, pieces:18 }
-  };
-
-  function heartMask(r,c,rows,cols){
-    const x = (c - cols/2 + 0.5) / (cols/2) * 1.3;
-    const y = (rows/2 - 0.5 - r) / (rows/2) * 1.3;
-    const f = Math.pow(x*x+y*y-1,3) - x*x*Math.pow(y,3);
-    return f <= 0;
-  }
-
-  let curMode = null, rows=0, cols=0, mask=null, pieces=[], occupied=null, hearts=3, moves=0, U=36;
-
-  function cellPlayable(r,c){
-    if(r<0||r>=rows||c<0||c>=cols) return false;
-    if(mask && !mask(r,c,rows,cols)) return false;
-    return true;
-  }
-
-  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
-
-  function exitPathClear(head, dir, occ){
-    let [r,c] = head;
-    const [dr,dc] = DIRV[dir];
-    r+=dr; c+=dc;
-    while(cellPlayable(r,c)){
-      if(occ[r][c]) return false;
-      r+=dr; c+=dc;
-    }
-    return true;
-  }
-
-  function tryPlacePiece(occ){
-    const empties = [];
-    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(cellPlayable(r,c) && !occ[r][c]) empties.push([r,c]);
-    if(!empties.length) return null;
-    const start = empties[Math.floor(Math.random()*empties.length)];
-    const len = 3 + Math.floor(Math.random()*4);
-    let cells = [start];
-    let visited = new Set([start[0]+','+start[1]]);
-    let cur = start;
-    for(let i=1;i<len;i++){
-      const dirs = shuffle(['up','down','left','right']);
-      let moved = false;
-      for(const d of dirs){
-        const [dr,dc] = DIRV[d];
-        const nr=cur[0]+dr, nc=cur[1]+dc;
-        if(cellPlayable(nr,nc) && !occ[nr][nc] && !visited.has(nr+','+nc)){
-          cells.push([nr,nc]); visited.add
+    if(movabl
