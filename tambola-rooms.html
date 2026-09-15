@@ -93,6 +93,10 @@
   .speed-wrap label{font-size:12px;color:var(--muted);white-space:nowrap;}
   .speed-wrap input[type=range]{flex:1;accent-color:var(--gold-soft);height:4px;}
   .footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:22px;line-height:1.6;padding:0 10px;}
+
+  /* ludo dice */
+  .ludo-dice-3d{width:62px;height:62px;background:linear-gradient(145deg,#ffffff,#d8d8e0);border-radius:14px;box-shadow:0 6px 0 #a8a8b8,0 10px 14px rgba(0,0,0,0.35),inset 0 2px 2px rgba(255,255,255,0.8);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:9px;gap:2px;}
+  .ludo-dice-3d .pip{border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4560,#1a1730);}
 </style>
 </head>
 <body>
@@ -206,7 +210,7 @@
         <div id="ludoBoard"></div>
       </div>
       <div style="margin-top:14px;">
-        <div id="ludoDiceFace" style="font-size:54px;line-height:1;margin-bottom:8px;">🎲</div>
+        <div id="ludoDiceFace" class="ludo-dice-3d" style="margin:0 auto 8px;"></div>
         <button class="btn btn-primary" id="ludoRollBtn">Roll Dice</button>
         <div id="ludoTokenChoice" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;"></div>
         <button class="btn btn-ghost" id="ludoResetBtn" style="margin-top:8px;">Restart</button>
@@ -1613,7 +1617,7 @@
 /* ============ LUDO ENGINE (real cross board, verified geometry) ============ */
 (function(){
   const el = id => document.getElementById(id);
-  const COLORS = { blue:'#3f6fd6', red:'#c1443c', green:'#3fa796', yellow:'#e8b34c' };
+  const COLORS = { red:'#e0453c', green:'#3fae4a', blue:'#3f6fd6', yellow:'#f0c531' };
   const ORDER = ['blue','red','green','yellow'];
   const NAMES = { blue:'Blue', red:'Red', green:'Green', yellow:'Yellow' };
 
@@ -1640,16 +1644,30 @@
   }
   const RING = buildRing(); // 56 cells
   const RING_LEN = RING.length;
-  const START_OFFSET = { blue:0, red:14, green:28, yellow:42 };
+  const START_OFFSET = { red:0, green:14, yellow:28, blue:42 };
   const HOME_COLUMN = {
-    blue:   [[7,1],[7,2],[7,3],[7,4],[7,5]],
-    red:    [[1,7],[2,7],[3,7],[4,7],[5,7]],
-    green:  [[7,9],[7,10],[7,11],[7,12],[7,13]],
-    yellow: [[9,7],[10,7],[11,7],[12,7],[13,7]]
+    red:    [[7,1],[7,2],[7,3],[7,4],[7,5]],
+    green:  [[1,7],[2,7],[3,7],[4,7],[5,7]],
+    yellow: [[7,9],[7,10],[7,11],[7,12],[7,13]],
+    blue:   [[9,7],[10,7],[11,7],[12,7],[13,7]]
   };
-  const FINISH_CELL = { blue:[7,6], red:[6,7], green:[7,8], yellow:[8,7] };
-  const BASE_ORIGIN = { blue:[0,0], red:[0,9], yellow:[9,0], green:[9,9] };
+  const FINISH_CELL = { red:[7,6], green:[6,7], yellow:[7,8], blue:[8,7] };
+  const BASE_ORIGIN = { red:[0,0], green:[0,9], blue:[9,0], yellow:[9,9] };
+  const EXTRA_SAFE = [8,22,36,50]; // ring indices 8 steps into each color's path — standard extra safe cells
   const DICE_FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
+  const PIP_LAYOUTS = {
+    1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9]
+  };
+  function renderDiceFace(val){
+    const box = el('ludoDiceFace');
+    box.innerHTML = '';
+    const active = new Set(PIP_LAYOUTS[val] || []);
+    for(let i=1;i<=9;i++){
+      const p = document.createElement('div');
+      if(active.has(i)) p.className = 'pip';
+      box.appendChild(p);
+    }
+  }
   const FINISH_STEP = 61; // 1..55 ring, 56..60 home column, 61 finish
 
   function ringCellForColor(color, step){ // step 1..55
@@ -1662,11 +1680,9 @@
     return FINISH_CELL[color];
   }
   function isSafeGlobalCell(r,c){
-    // the 4 start cells are safe
-    return ORDER.some(col => {
-      const s = ringCellForColor(col,1);
-      return s[0]===r && s[1]===c;
-    });
+    // the 4 start cells + 4 extra star cells are safe
+    if(ORDER.some(col => { const s = ringCellForColor(col,1); return s[0]===r && s[1]===c; })) return true;
+    return EXTRA_SAFE.some(idx => RING[idx][0]===r && RING[idx][1]===c);
   }
 
   let numPlayers = 2, activeColors = [], tokens = {}, turnIdx = 0, over = false, rolling = false, sixStreak = 0;
@@ -1703,22 +1719,28 @@
 
     // center home (conic gradient quadrants pointing to center)
     const center = document.createElement('div');
-    center.style.cssText = `grid-row:7/10;grid-column:7/10;background:conic-gradient(${COLORS.red} 0deg 90deg, ${COLORS.green} 90deg 180deg, ${COLORS.yellow} 180deg 270deg, ${COLORS.blue} 270deg 360deg);`;
+    center.style.cssText = `grid-row:7/10;grid-column:7/10;background:conic-gradient(${COLORS.green} 0deg 90deg, ${COLORS.yellow} 90deg 180deg, ${COLORS.blue} 180deg 270deg, ${COLORS.red} 270deg 360deg);`;
     wrap.appendChild(center);
 
     // ring cells
+    const DIR_ARROW = { red:'→', green:'↓', yellow:'←', blue:'↑' };
     RING.forEach(([r,c],idx)=>{
       const cell = document.createElement('div');
       cell.id = 'ludo-cell-'+r+'-'+c;
       cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:#fff;border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;position:relative;`;
       // is this a start cell for a color?
+      let isStart = false;
       ORDER.forEach(color=>{
         const s = ringCellForColor(color,1);
         if(s[0]===r && s[1]===c){
+          isStart = true;
           cell.style.background = COLORS[color];
-          cell.innerHTML = '<span style="font-size:9px;color:#fff;">★</span>';
+          cell.innerHTML = '<span style="font-size:13px;font-weight:800;color:#fff;">'+DIR_ARROW[color]+'</span>';
         }
       });
+      if(!isStart && EXTRA_SAFE.includes(idx)){
+        cell.innerHTML = '<span style="font-size:12px;color:var(--muted);">★</span>';
+      }
       const dotsWrap = document.createElement('div');
       dotsWrap.className = 'ludo-token-dots';
       dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;';
@@ -1751,24 +1773,34 @@
     });
   }
 
+  function makePin(color, sizePx){
+    const outer = document.createElement('div');
+    outer.style.cssText = `width:${sizePx}px;height:${sizePx}px;display:flex;align-items:center;justify-content:center;`;
+    const pin = document.createElement('div');
+    const ps = sizePx*0.86;
+    pin.style.cssText = `width:${ps}px;height:${ps}px;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:1.5px solid #fff;box-shadow:0 2px 3px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;`;
+    const inner = document.createElement('div');
+    const is = ps*0.42;
+    inner.style.cssText = `width:${is}px;height:${is}px;border-radius:50%;background:#fff;transform:rotate(45deg);`;
+    pin.appendChild(inner);
+    outer.appendChild(pin);
+    return outer;
+  }
+
   function renderTokens(){
     document.querySelectorAll('.ludo-token-dots').forEach(t=>t.innerHTML='');
     ORDER.forEach(color=>document.querySelectorAll('[id^="ludo-dock-'+color+'"]').forEach(d=>d.innerHTML=''));
     activeColors.forEach(color=>{
       tokens[color].forEach((step, i)=>{
-        const dot = document.createElement('div');
-        dot.style.cssText = `width:62%;height:62%;border-radius:50%;background:${COLORS[color]};border:1.5px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,0.4);`;
         if(step===0){
           const dock = el('ludo-dock-'+color+'-'+i);
-          if(dock) dock.appendChild(dot);
+          if(dock) dock.appendChild(makePin(COLORS[color], 28));
         } else {
           const [r,c] = cellForStep(color, step);
           const cell = el('ludo-cell-'+r+'-'+c);
           if(cell){
             const wrap2 = cell.querySelector('.ludo-token-dots');
-            const small = document.createElement('div');
-            small.style.cssText = `width:38%;height:38%;border-radius:50%;background:${COLORS[color]};border:1px solid #fff;`;
-            wrap2.appendChild(small);
+            wrap2.appendChild(makePin(COLORS[color], 17));
           }
         }
       });
@@ -1831,12 +1863,12 @@
     el('ludoTokenChoice').innerHTML = '';
     let ticks = 0;
     const spin = setInterval(()=>{
-      el('ludoDiceFace').textContent = DICE_FACES[1+Math.floor(Math.random()*6)];
+      renderDiceFace(1+Math.floor(Math.random()*6));
       ticks++;
       if(ticks>6){
         clearInterval(spin);
         const val = 1+Math.floor(Math.random()*6);
-        el('ludoDiceFace').textContent = DICE_FACES[val];
+        renderDiceFace(val);
         handleRoll(val);
       }
     },70);
@@ -1915,7 +1947,7 @@
     renderPlayers();
     renderTokens();
     updateTurnLabel();
-    el('ludoDiceFace').textContent = '🎲';
+    renderDiceFace(1);
     el('ludoTokenChoice').innerHTML = '';
   }
 
@@ -2114,54 +2146,4 @@
       loseHeart();
       if(g){
         g.querySelector('.pz-line').setAttribute('stroke', 'var(--cage)');
-        g.style.transition = 'transform 0.08s'; 
-        let n=0; const shake=setInterval(()=>{ n++; g.style.transform = 'translateX('+((n%2===0)?4:-4)+'px)'; if(n>4){ clearInterval(shake); g.style.transform=''; g.querySelector('.pz-line').setAttribute('stroke','#2b2760'); } },40);
-      }
-    }
-  }
-
-  function checkWinOrContinue(){
-    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
-    if(pieces.every(p=>!p.alive)){
-      el('puzzlePlay').classList.add('hidden');
-      el('puzzleWin').classList.remove('hidden');
-    }
-  }
-
-  function renderHearts(){
-    el('puzzleHearts').textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3-hearts);
-  }
-
-  function loseHeart(){
-    hearts--;
-    renderHearts();
-    if(hearts<=0){
-      setTimeout(()=>{
-        el('puzzlePlay').classList.add('hidden');
-        el('puzzleLose').classList.remove('hidden');
-      }, 300);
-    }
-  }
-
-  function hint(){
-    recomputeOccupied();
-    for(let i=0;i<pieces.length;i++){
-      const p = pieces[i];
-      if(!p.alive) continue;
-      const occ2 = occupied.map(row=>row.slice());
-      p.cells.forEach(([r,c])=> occ2[r][c]=false);
-      if(exitPathClear(p.head, p.dir, occ2)){
-        const g = el('puzzleSvg').querySelector('g[data-idx="'+i+'"]');
-        if(g){
-          const line = g.querySelector('.pz-line');
-          const arrow = g.querySelector('.pz-arrow');
-          line.setAttribute('stroke', 'var(--gold-soft)');
-          arrow.setAttribute('fill', 'var(--gold-soft)');
-          setTimeout(()=>{ if(line){line.setAttribute('stroke','#2b2760');} if(arrow){arrow.setAttribute('fill','#2b2760');} }, 1400);
-        }
-        return;
-      }
-    }
-  }
-
-  function star
+  
