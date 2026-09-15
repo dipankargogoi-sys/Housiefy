@@ -97,6 +97,38 @@
   /* ludo dice */
   .ludo-dice-3d{width:62px;height:62px;background:linear-gradient(145deg,#ffffff,#d8d8e0);border-radius:14px;box-shadow:0 6px 0 #a8a8b8,0 10px 14px rgba(0,0,0,0.35),inset 0 2px 2px rgba(255,255,255,0.8);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:9px;gap:2px;}
   .ludo-dice-3d .pip{border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4560,#1a1730);}
+  .ludo-dicebox{display:flex;align-items:center;gap:6px;background:linear-gradient(180deg,var(--bg-panel-2),var(--bg-panel));border:2.5px solid rgba(255,255,255,0.12);border-radius:14px;padding:8px 10px;min-width:84px;opacity:0.4;transition:opacity .15s, border-color .15s, transform .1s;box-shadow:0 4px 0 rgba(0,0,0,0.3),0 8px 16px rgba(0,0,0,0.35);}
+  .ludo-dicebox.active{opacity:1;cursor:pointer;}
+  .ludo-dicebox.active:active{transform:translateY(3px);}
+  .ludo-dicebox.myturn{border-color:var(--gold-soft);box-shadow:0 4px 0 rgba(0,0,0,0.3),0 0 16px rgba(242,198,107,0.75);}
+  .ludo-dicebox-face{width:34px;height:34px;background:linear-gradient(145deg,#ffffff,#d8d8e0);border-radius:8px;box-shadow:0 3px 0 #a8a8b8,inset 0 1px 1px rgba(255,255,255,0.8);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:5px;gap:1px;flex:none;}
+  .ludo-dicebox-face .pip{border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4560,#1a1730);}
+  .ludo-token-highlight{animation:ludoPulse 0.9s ease-in-out infinite;}
+  @keyframes ludoPulse{0%,100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0));transform:scale(1);}50%{filter:drop-shadow(0 0 5px rgba(255,255,255,0.9));transform:scale(1.15);}}
+
+  /* ---- Ludo fullscreen mode ---- */
+  body.ludo-fullscreen h1#appTitle, body.ludo-fullscreen .sub, body.ludo-fullscreen #updateBanner{display:none !important;}
+  body.ludo-fullscreen main{max-width:none;padding:0;margin:0;}
+  body.ludo-fullscreen{padding-bottom:0;}
+  #viewLudo{
+    position:fixed; inset:0; z-index:300; overflow-y:auto;
+    display:flex; flex-direction:column; align-items:center;
+    padding:22px 16px calc(84px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(circle at 15% 0%, rgba(242,198,107,0.28), transparent 55%),
+      radial-gradient(circle at 100% 15%, rgba(63,167,150,0.22), transparent 50%),
+      radial-gradient(circle at 50% 100%, rgba(193,68,60,0.18), transparent 55%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 22px),
+      linear-gradient(160deg,#141230,#2b2560 45%,#181542);
+  }
+  .ludo-panel{width:100%;max-width:400px;border:2px solid rgba(242,198,107,0.35);box-shadow:0 16px 40px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,255,255,0.08);border-radius:22px;}
+  .ludo-title{font-family:var(--font-display);font-weight:900;font-size:26px;letter-spacing:1.5px;color:var(--gold-soft);text-shadow:0 3px 0 rgba(0,0,0,0.4);margin-bottom:14px;}
+  .ludo-turn-label{font-family:var(--font-display);font-weight:900;font-size:18px;color:var(--cream);text-shadow:0 2px 0 rgba(0,0,0,0.4);margin-bottom:10px;letter-spacing:.5px;}
+  #ludoBoard{box-shadow:0 18px 40px rgba(0,0,0,0.55),0 0 0 4px rgba(242,198,107,0.4) !important;}
+  .ludo-menubar{position:fixed;left:0;right:0;bottom:0;z-index:310;display:flex;justify-content:center;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(20,18,48,0.96),rgba(20,18,48,0));}
+  .ludo-menu-btn{font-family:var(--font-display);font-weight:900;font-size:16px;letter-spacing:1px;color:#241f0a;background:linear-gradient(180deg,var(--gold-soft),#d99f3f);border:none;border-radius:16px;padding:14px 40px;box-shadow:0 6px 0 #a97a26,0 10px 20px rgba(0,0,0,0.5);cursor:pointer;}
+  .ludo-menu-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #a97a26,0 4px 10px rgba(0,0,0,0.5);}
+  #ludoPlay .ludoPlayerCountBtn, #viewLudo .btn-primary{font-weight:900;letter-spacing:.5px;box-shadow:0 5px 0 #7a281f,0 8px 16px rgba(0,0,0,0.4);}
 </style>
 </head>
 <body>
@@ -187,13 +219,9 @@
 
   <!-- ============ LUDO ============ -->
   <div id="viewLudo" class="hidden">
-    <div style="text-align:left;margin-bottom:10px;">
-      <span class="hubBackLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ All Games</span>
-    </div>
-
-    <div id="ludoSetup" class="card" style="text-align:center;">
-      <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:14px;">🎲 Ludo</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">How many players? (pass the phone each turn)</div>
+    <div id="ludoSetup" class="card ludo-panel" style="text-align:center;">
+      <div class="ludo-title">🎲 LUDO</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">How many players? (pass the phone each turn)</div>
       <div class="row" style="margin-bottom:14px;">
         <button class="btn btn-ghost ludoPlayerCountBtn" data-n="2">2</button>
         <button class="btn btn-ghost ludoPlayerCountBtn" data-n="3">3</button>
@@ -203,25 +231,24 @@
       <button class="btn btn-primary" id="ludoStartBtn">Start Game</button>
     </div>
 
-    <div id="ludoPlay" class="card hidden" style="text-align:center;">
-      <div class="players" id="ludoPlayers" style="justify-content:center;margin-bottom:10px;"></div>
-      <div id="ludoTurnLabel" style="font-family:var(--font-display);font-weight:800;color:var(--gold-soft);font-size:15px;margin-bottom:10px;"></div>
+    <div id="ludoPlay" class="hidden" style="text-align:center;">
+      <div id="ludoTurnLabel" class="ludo-turn-label"></div>
+
+      <div id="ludoDiceRowTop" style="display:flex;justify-content:space-between;margin-bottom:6px;"></div>
       <div id="ludoBoardWrap" style="display:flex;justify-content:center;">
         <div id="ludoBoard"></div>
       </div>
-      <div style="margin-top:14px;">
-        <div id="ludoDiceFace" class="ludo-dice-3d" style="margin:0 auto 8px;"></div>
-        <button class="btn btn-primary" id="ludoRollBtn">Roll Dice</button>
-        <div id="ludoTokenChoice" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;"></div>
-        <button class="btn btn-ghost" id="ludoResetBtn" style="margin-top:8px;">Restart</button>
-      </div>
+      <div id="ludoDiceRowBottom" style="display:flex;justify-content:space-between;margin-top:6px;"></div>
     </div>
 
-    <div id="ludoWin" class="card hidden" style="text-align:center;">
-      <div style="font-size:44px;margin-bottom:8px;">🏆</div>
-      <div id="ludoWinText" style="font-family:var(--font-display);font-size:19px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;"></div>
+    <div id="ludoWin" class="card ludo-panel hidden" style="text-align:center;">
+      <div style="font-size:52px;margin-bottom:8px;">🏆</div>
+      <div id="ludoWinText" class="ludo-title" style="margin-bottom:16px;"></div>
       <button class="btn btn-primary" id="ludoPlayAgainBtn">Play Again</button>
-      <button class="btn btn-ghost" id="ludoToHubBtn" style="margin-top:8px;">Back to All Games</button>
+    </div>
+
+    <div class="ludo-menubar">
+      <button id="ludoMenuBtn" class="ludo-menu-btn">☰ Menu</button>
     </div>
   </div>
 
@@ -522,6 +549,7 @@
   function show(view){
     document.querySelectorAll('main > div[id^="view"]').forEach(v=>v.classList.add('hidden'));
     view.classList.remove('hidden');
+    document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo');
   }
 
   const APP_VERSION = "1.3.0"; // bump this + version.json together on every release
@@ -1614,35 +1642,36 @@
 </script>
 
 <script>
-/* ============ LUDO ENGINE (real cross board, verified geometry) ============ */
+/* ============ LUDO ENGINE (real cross board, tap-your-dice / tap-your-goti) ============ */
 (function(){
   const el = id => document.getElementById(id);
   const COLORS = { red:'#e0453c', green:'#3fae4a', blue:'#3f6fd6', yellow:'#f0c531' };
   const ORDER = ['blue','red','green','yellow'];
   const NAMES = { blue:'Blue', red:'Red', green:'Green', yellow:'Yellow' };
+  const CORNER = { red:'top-left', green:'top-right', blue:'bottom-left', yellow:'bottom-right' };
 
-  // ---- verified 56-cell shared ring (see derivation) ----
+  // ---- verified 56-cell shared ring ----
   function buildRing(){
     const ring = [];
-    ring.push(...[0,1,2,3,4,5].map(c=>[6,c]));      // left-row6
-    ring.push([6,6]);                                 // corner
-    ring.push(...[5,4,3,2,1,0].map(r=>[r,6]));       // top-col6
-    ring.push([0,7]);                                  // cap
-    ring.push(...[0,1,2,3,4,5].map(r=>[r,8]));       // top-col8
-    ring.push([6,8]);                                  // corner
-    ring.push(...[9,10,11,12,13,14].map(c=>[6,c]));  // right-row6
-    ring.push([7,14]);                                 // cap
-    ring.push(...[14,13,12,11,10,9].map(c=>[8,c]));  // right-row8
-    ring.push([8,8]);                                  // corner
-    ring.push(...[9,10,11,12,13,14].map(r=>[r,8]));  // bottom-col8
-    ring.push([14,7]);                                 // cap
-    ring.push(...[14,13,12,11,10,9].map(r=>[r,6]));  // bottom-col6
-    ring.push([8,6]);                                  // corner
-    ring.push(...[5,4,3,2,1,0].map(c=>[8,c]));       // left-row8
-    ring.push([7,0]);                                  // cap
+    ring.push(...[0,1,2,3,4,5].map(c=>[6,c]));
+    ring.push([6,6]);
+    ring.push(...[5,4,3,2,1,0].map(r=>[r,6]));
+    ring.push([0,7]);
+    ring.push(...[0,1,2,3,4,5].map(r=>[r,8]));
+    ring.push([6,8]);
+    ring.push(...[9,10,11,12,13,14].map(c=>[6,c]));
+    ring.push([7,14]);
+    ring.push(...[14,13,12,11,10,9].map(c=>[8,c]));
+    ring.push([8,8]);
+    ring.push(...[9,10,11,12,13,14].map(r=>[r,8]));
+    ring.push([14,7]);
+    ring.push(...[14,13,12,11,10,9].map(r=>[r,6]));
+    ring.push([8,6]);
+    ring.push(...[5,4,3,2,1,0].map(c=>[8,c]));
+    ring.push([7,0]);
     return ring;
   }
-  const RING = buildRing(); // 56 cells
+  const RING = buildRing();
   const RING_LEN = RING.length;
   const START_OFFSET = { red:0, green:14, yellow:28, blue:42 };
   const HOME_COLUMN = {
@@ -1653,26 +1682,21 @@
   };
   const FINISH_CELL = { red:[7,6], green:[6,7], yellow:[7,8], blue:[8,7] };
   const BASE_ORIGIN = { red:[0,0], green:[0,9], blue:[9,0], yellow:[9,9] };
-  const EXTRA_SAFE = [8,22,36,50]; // ring indices 8 steps into each color's path — standard extra safe cells
-  const DICE_FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
-  const PIP_LAYOUTS = {
-    1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9]
-  };
-  function renderDiceFace(val){
-    const box = el('ludoDiceFace');
-    box.innerHTML = '';
+  const EXTRA_SAFE = [8,22,36,50];
+  const PIP_LAYOUTS = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
+  const FINISH_STEP = 61;
+
+  function renderDiceFaceInto(boxEl, val){
+    boxEl.innerHTML = '';
     const active = new Set(PIP_LAYOUTS[val] || []);
     for(let i=1;i<=9;i++){
       const p = document.createElement('div');
       if(active.has(i)) p.className = 'pip';
-      box.appendChild(p);
+      boxEl.appendChild(p);
     }
   }
-  const FINISH_STEP = 61; // 1..55 ring, 56..60 home column, 61 finish
 
-  function ringCellForColor(color, step){ // step 1..55
-    return RING[(START_OFFSET[color] + step - 1) % RING_LEN];
-  }
+  function ringCellForColor(color, step){ return RING[(START_OFFSET[color] + step - 1) % RING_LEN]; }
   function cellForStep(color, step){
     if(step<=0) return null;
     if(step<=55) return ringCellForColor(color, step);
@@ -1680,18 +1704,54 @@
     return FINISH_CELL[color];
   }
   function isSafeGlobalCell(r,c){
-    // the 4 start cells + 4 extra star cells are safe
     if(ORDER.some(col => { const s = ringCellForColor(col,1); return s[0]===r && s[1]===c; })) return true;
     return EXTRA_SAFE.some(idx => RING[idx][0]===r && RING[idx][1]===c);
   }
 
-  let numPlayers = 2, activeColors = [], tokens = {}, turnIdx = 0, over = false, rolling = false, sixStreak = 0;
+  let numPlayers = 2, activeColors = [], tokens = {}, turnIdx = 0, over = false;
+  let rolling = false, awaitingTap = false, movableList = [], pendingRoll = 0, sixStreak = 0;
 
   function colorsForCount(n){
-    // pick spread-out colors for fewer players so bases aren't adjacent-confusing
-    if(n===2) return ['blue','green'];
-    if(n===3) return ['blue','red','green'];
-    return ['blue','red','green','yellow'];
+    if(n===2) return ['red','blue'];
+    if(n===3) return ['red','green','blue'];
+    return ['red','green','blue','yellow'];
+  }
+
+  // ---------------- dice boxes (one per corner, matching board layout) ----------------
+  function buildDiceBoxes(){
+    el('ludoDiceRowTop').innerHTML = '';
+    el('ludoDiceRowBottom').innerHTML = '';
+    ['red','green'].forEach(color=> el('ludoDiceRowTop').appendChild(makeDiceBox(color)));
+    ['blue','yellow'].forEach(color=> el('ludoDiceRowBottom').appendChild(makeDiceBox(color)));
+    activeColors.forEach(color=>{
+      const box = el('ludo-dicebox-'+color);
+      box.classList.add('active');
+      box.addEventListener('click', ()=> onDiceBoxTap(color));
+      renderDiceFaceInto(el('ludo-dicebox-face-'+color), 1);
+    });
+  }
+  function makeDiceBox(color){
+    const box = document.createElement('div');
+    box.className = 'ludo-dicebox';
+    box.id = 'ludo-dicebox-'+color;
+    box.style.display = activeColors.includes(color) ? 'flex' : 'none';
+    box.innerHTML = `
+      <div style="width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${COLORS[color]};border:1.5px solid #fff;flex:none;"></div>
+      <div style="text-align:left;flex:1;">
+        <div style="font-size:10px;color:var(--cream);font-weight:700;">${NAMES[color]}</div>
+        <div id="ludo-dicebox-face-${color}" class="ludo-dicebox-face"></div>
+      </div>`;
+    return box;
+  }
+
+  function refreshDiceBoxHighlight(){
+    activeColors.forEach(color=>{
+      const box = el('ludo-dicebox-'+color);
+      const isTurn = color===activeColors[turnIdx] && !over;
+      box.classList.toggle('myturn', isTurn);
+      box.style.pointerEvents = (isTurn && !rolling && !awaitingTap) ? 'auto' : 'none';
+      box.style.opacity = isTurn ? '1' : '0.4';
+    });
   }
 
   // ---------------- board rendering ----------------
@@ -1700,7 +1760,6 @@
     wrap.innerHTML = '';
     wrap.style.cssText = 'display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);width:min(88vw,360px);aspect-ratio:1;background:var(--cream);border-radius:10px;overflow:hidden;border:2px solid var(--line);';
 
-    // base quadrants
     ORDER.forEach(color=>{
       const [r0,c0] = BASE_ORIGIN[color];
       const base = document.createElement('div');
@@ -1717,18 +1776,15 @@
       wrap.appendChild(base);
     });
 
-    // center home (conic gradient quadrants pointing to center)
     const center = document.createElement('div');
     center.style.cssText = `grid-row:7/10;grid-column:7/10;background:conic-gradient(${COLORS.green} 0deg 90deg, ${COLORS.yellow} 90deg 180deg, ${COLORS.blue} 180deg 270deg, ${COLORS.red} 270deg 360deg);`;
     wrap.appendChild(center);
 
-    // ring cells
     const DIR_ARROW = { red:'→', green:'↓', yellow:'←', blue:'↑' };
     RING.forEach(([r,c],idx)=>{
       const cell = document.createElement('div');
       cell.id = 'ludo-cell-'+r+'-'+c;
       cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:#fff;border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;position:relative;`;
-      // is this a start cell for a color?
       let isStart = false;
       ORDER.forEach(color=>{
         const s = ringCellForColor(color,1);
@@ -1748,7 +1804,6 @@
       wrap.appendChild(cell);
     });
 
-    // home columns
     ORDER.forEach(color=>{
       HOME_COLUMN[color].forEach(([r,c])=>{
         const cell = document.createElement('div');
@@ -1773,10 +1828,12 @@
     });
   }
 
-  function makePin(color, sizePx){
+  function makePin(color, sizePx, id){
     const outer = document.createElement('div');
+    if(id) outer.id = id;
     outer.style.cssText = `width:${sizePx}px;height:${sizePx}px;display:flex;align-items:center;justify-content:center;`;
     const pin = document.createElement('div');
+    pin.className = 'ludo-pin-shape';
     const ps = sizePx*0.86;
     pin.style.cssText = `width:${ps}px;height:${ps}px;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:1.5px solid #fff;box-shadow:0 2px 3px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;`;
     const inner = document.createElement('div');
@@ -1792,51 +1849,54 @@
     ORDER.forEach(color=>document.querySelectorAll('[id^="ludo-dock-'+color+'"]').forEach(d=>d.innerHTML=''));
     activeColors.forEach(color=>{
       tokens[color].forEach((step, i)=>{
+        const pinId = 'ludo-pin-'+color+'-'+i;
+        let pinEl;
         if(step===0){
           const dock = el('ludo-dock-'+color+'-'+i);
-          if(dock) dock.appendChild(makePin(COLORS[color], 28));
+          pinEl = makePin(COLORS[color], 28, pinId);
+          if(dock) dock.appendChild(pinEl);
         } else {
           const [r,c] = cellForStep(color, step);
           const cell = el('ludo-cell-'+r+'-'+c);
-          if(cell){
-            const wrap2 = cell.querySelector('.ludo-token-dots');
-            wrap2.appendChild(makePin(COLORS[color], 17));
-          }
+          pinEl = makePin(COLORS[color], 17, pinId);
+          if(cell){ cell.querySelector('.ludo-token-dots').appendChild(pinEl); }
         }
+        pinEl.style.cursor = 'pointer';
+        pinEl.addEventListener('click', (e)=>{ e.stopPropagation(); onTokenTap(color, i); });
       });
     });
+    applyHighlights();
   }
 
-  function renderPlayers(){
-    const wrap = el('ludoPlayers');
-    wrap.innerHTML = '';
-    activeColors.forEach((color,i)=>{
-      const av = document.createElement('div');
-      av.className = 'avatar' + (i===turnIdx && !over ? ' you' : '');
-      av.innerHTML = '<div class="dot" style="background:'+COLORS[color]+';">'+(i+1)+'</div>'+NAMES[color];
-      wrap.appendChild(av);
+  function applyHighlights(){
+    document.querySelectorAll('.ludo-token-highlight').forEach(p=>p.classList.remove('ludo-token-highlight'));
+    if(!awaitingTap) return;
+    const color = activeColors[turnIdx];
+    movableList.forEach(i=>{
+      const p = el('ludo-pin-'+color+'-'+i);
+      if(p) p.classList.add('ludo-token-highlight');
     });
   }
 
   function updateTurnLabel(msg){
     if(over) return;
     const color = activeColors[turnIdx];
-    el('ludoTurnLabel').innerHTML = msg || ('<span style="color:'+COLORS[color]+';">●</span> '+NAMES[color]+"'s turn");
+    el('ludoTurnLabel').innerHTML = msg || ('<span style="color:'+COLORS[color]+';">●</span> '+NAMES[color]+"'s turn — tap your dice");
   }
 
-  function movableTokens(color, roll){
+  function movableTokens(color, rollVal){
     const list = [];
     tokens[color].forEach((step,i)=>{
-      if(step===0){ if(roll===6) list.push(i); return; }
+      if(step===0){ if(rollVal===6) list.push(i); return; }
       if(step===FINISH_STEP) return;
-      if(step+roll<=FINISH_STEP) list.push(i);
+      if(step+rollVal<=FINISH_STEP) list.push(i);
     });
     return list;
   }
 
-  function moveToken(color, i, roll){
+  function moveToken(color, i, rollVal){
     const step = tokens[color][i];
-    const next = (step===0) ? 1 : step+roll;
+    const next = (step===0) ? 1 : step+rollVal;
     tokens[color][i] = next;
     if(next>=1 && next<=55){
       const [r,c] = ringCellForColor(color, next);
@@ -1857,18 +1917,20 @@
 
   function checkWin(color){ return tokens[color].every(s=>s===FINISH_STEP); }
 
-  function roll(){
-    if(rolling || over) return;
+  function onDiceBoxTap(color){
+    if(rolling || awaitingTap || over) return;
+    if(color !== activeColors[turnIdx]) return; // not your dice — opponents can't touch it
     rolling = true;
-    el('ludoTokenChoice').innerHTML = '';
+    refreshDiceBoxHighlight();
+    const faceEl = el('ludo-dicebox-face-'+color);
     let ticks = 0;
     const spin = setInterval(()=>{
-      renderDiceFace(1+Math.floor(Math.random()*6));
+      renderDiceFaceInto(faceEl, 1+Math.floor(Math.random()*6));
       ticks++;
       if(ticks>6){
         clearInterval(spin);
         const val = 1+Math.floor(Math.random()*6);
-        renderDiceFace(val);
+        renderDiceFaceInto(faceEl, val);
         handleRoll(val);
       }
     },70);
@@ -1877,55 +1939,46 @@
   function handleRoll(val){
     const color = activeColors[turnIdx];
     const movable = movableTokens(color, val);
+    rolling = false;
     if(movable.length===0){
-      rolling = false;
       updateTurnLabel('No valid move — passing turn');
+      refreshDiceBoxHighlight();
       setTimeout(()=>advanceAfterRoll(false), 700);
       return;
     }
-    if(movable.length===1){
-      doMove(movable[0], val);
-      return;
-    }
-    const wrap = el('ludoTokenChoice');
-    wrap.innerHTML = '';
-    movable.forEach(i=>{
-      const step = tokens[color][i];
-      const label = step===0 ? 'Token '+(i+1)+' (yard)' : 'Token '+(i+1)+' (step '+step+')';
-      const b = document.createElement('button');
-      b.className = 'btn btn-ghost btn-sm';
-      b.textContent = label;
-      b.addEventListener('click', ()=>{ wrap.innerHTML=''; doMove(i, val); });
-      wrap.appendChild(b);
-    });
-    rolling = false;
-    updateTurnLabel('Choose a token to move');
+    pendingRoll = val;
+    movableList = movable;
+    awaitingTap = true;
+    updateTurnLabel('Rolled '+val+' — tap the goti you want to move');
+    refreshDiceBoxHighlight();
+    applyHighlights();
   }
 
-  function doMove(i, val){
-    rolling = true;
-    const color = activeColors[turnIdx];
+  function onTokenTap(color, i){
+    if(!awaitingTap) return;
+    if(color !== activeColors[turnIdx]) return; // can't touch opponents' tokens
+    if(!movableList.includes(i)) return;
+    awaitingTap = false;
+    const val = pendingRoll;
+    document.querySelectorAll('.ludo-token-highlight').forEach(p=>p.classList.remove('ludo-token-highlight'));
     moveToken(color, i, val);
-    setTimeout(()=>{
-      rolling = false;
-      if(checkWin(color)){
-        over = true;
-        showWin();
-        return;
-      }
-      advanceAfterRoll(val===6);
-    }, 300);
+    if(checkWin(color)){
+      over = true;
+      showWin();
+      return;
+    }
+    advanceAfterRoll(val===6);
   }
 
   function advanceAfterRoll(bonusTurn){
     if(bonusTurn){
       sixStreak++;
-      if(sixStreak<3){ renderPlayers(); updateTurnLabel(); return; }
+      if(sixStreak<3){ updateTurnLabel(); refreshDiceBoxHighlight(); return; }
     }
     sixStreak = 0;
     turnIdx = (turnIdx+1)%activeColors.length;
-    renderPlayers();
     updateTurnLabel();
+    refreshDiceBoxHighlight();
   }
 
   function showWin(){
@@ -1939,16 +1992,15 @@
     activeColors = colorsForCount(numPlayers);
     tokens = {};
     activeColors.forEach(c=> tokens[c] = [0,0,0,0]);
-    turnIdx = 0; over = false; rolling = false; sixStreak = 0;
+    turnIdx = 0; over = false; rolling = false; awaitingTap = false; movableList = []; sixStreak = 0;
     el('ludoSetup').classList.add('hidden');
     el('ludoWin').classList.add('hidden');
     el('ludoPlay').classList.remove('hidden');
     buildBoardDom();
-    renderPlayers();
+    buildDiceBoxes();
     renderTokens();
     updateTurnLabel();
-    renderDiceFace(1);
-    el('ludoTokenChoice').innerHTML = '';
+    refreshDiceBoxHighlight();
   }
 
   document.querySelectorAll('.ludoPlayerCountBtn').forEach(btn=>{
@@ -1959,18 +2011,20 @@
     });
   });
   el('ludoStartBtn').addEventListener('click', startGame);
-  el('ludoRollBtn').addEventListener('click', roll);
-  el('ludoResetBtn').addEventListener('click', ()=>{
-    el('ludoPlay').classList.add('hidden');
-    el('ludoSetup').classList.remove('hidden');
-  });
   el('ludoPlayAgainBtn').addEventListener('click', startGame);
-  el('ludoToHubBtn').addEventListener('click', ()=>{
-    el('ludoWin').classList.add('hidden');
-    el('ludoSetup').classList.remove('hidden');
+  el('ludoMenuBtn').addEventListener('click', ()=>{
+    document.querySelectorAll('main > div[id^="view"]').forEach(v=>v.classList.add('hidden'));
+    const hub = document.getElementById('viewGamesHub');
+    if(hub) hub.classList.remove('hidden');
+    document.body.classList.remove('ludo-fullscreen');
   });
 
-  window.LUDO = { onShow(){} };
+  window.LUDO = { onShow(){
+    // re-entering from the hub always returns to the setup screen
+    el('ludoPlay').classList.add('hidden');
+    el('ludoWin').classList.add('hidden');
+    el('ludoSetup').classList.remove('hidden');
+  } };
 })();
 
 </script>
@@ -2031,119 +2085,4 @@
         const [dr,dc] = DIRV[d];
         const nr=cur[0]+dr, nc=cur[1]+dc;
         if(cellPlayable(nr,nc) && !occ[nr][nc] && !visited.has(nr+','+nc)){
-          cells.push([nr,nc]); visited.add(nr+','+nc); cur=[nr,nc]; moved=true; break;
-        }
-      }
-      if(!moved) break;
-    }
-    if(cells.length<2) return null;
-    const head = cells[cells.length-1];
-    const dirs = shuffle(['up','down','left','right']);
-    for(const dir of dirs){
-      if(exitPathClear(head, dir, occ)) return { cells, head, dir };
-    }
-    return null;
-  }
-
-  function generatePuzzle(){
-    const occ = Array.from({length:rows},()=>new Array(cols).fill(false));
-    const built = [];
-    let tries = 0;
-    while(built.length < MODES[curMode].pieces && tries < 400){
-      tries++;
-      const p = tryPlacePiece(occ);
-      if(p){ built.push(p); p.cells.forEach(([r,c])=> occ[r][c]=true); }
-    }
-    built.reverse(); // built[0] = first removable
-    return built;
-  }
-
-  // ---------------- rendering ----------------
-  function render(){
-    const svg = el('puzzleSvg');
-    svg.setAttribute('viewBox', `0 0 ${cols*U} ${rows*U}`);
-    svg.innerHTML = '';
-    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
-    pieces.forEach(p=>{ p.alive = true; p.cells.forEach(([r,c])=> occupied[r][c]=true); });
-
-    pieces.forEach((p, idx)=>{
-      if(!p.alive) return;
-      const g = document.createElementNS(svgNS,'g');
-      g.setAttribute('data-idx', idx);
-      g.style.cursor = 'pointer';
-
-      const pts = p.cells.map(([r,c])=> [(c+0.5)*U, (r+0.5)*U]);
-      // extend a bit past head cell in arrow direction to draw the arrowhead
-      const [dr,dc] = DIRV[p.dir];
-      const [hx,hy] = pts[pts.length-1];
-      const tipx = hx + dc*U*0.55, tipy = hy + dr*U*0.55;
-
-      const d = 'M ' + pts.map(pt=>pt.join(',')).join(' L ');
-      const path = document.createElementNS(svgNS,'path');
-      path.setAttribute('d', d);
-      path.setAttribute('fill','none');
-      path.setAttribute('stroke','#2b2760');
-      path.setAttribute('stroke-width', U*0.34);
-      path.setAttribute('stroke-linecap','round');
-      path.setAttribute('stroke-linejoin','round');
-      path.setAttribute('class','pz-line');
-      g.appendChild(path);
-
-      // hit area (wider, invisible)
-      const hit = document.createElementNS(svgNS,'path');
-      hit.setAttribute('d', d);
-      hit.setAttribute('fill','none');
-      hit.setAttribute('stroke','transparent');
-      hit.setAttribute('stroke-width', U*0.9);
-      g.appendChild(hit);
-
-      // arrowhead triangle
-      const perp = [-dr, dc]; // perpendicular for triangle base
-      const baseW = U*0.32;
-      const p1 = [hx + dc*U*0.18 + perp[1]*baseW, hy + dr*U*0.18 + perp[0]*baseW];
-      const p2 = [hx + dc*U*0.18 - perp[1]*baseW, hy + dr*U*0.18 - perp[0]*baseW];
-      const p3 = [tipx, tipy];
-      const tri = document.createElementNS(svgNS,'polygon');
-      tri.setAttribute('points', [p1,p2,p3].map(p=>p.join(',')).join(' '));
-      tri.setAttribute('fill', '#2b2760');
-      tri.setAttribute('class','pz-arrow');
-      g.appendChild(tri);
-
-      g.addEventListener('click', ()=> tapPiece(idx));
-      svg.appendChild(g);
-    });
-
-    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
-  }
-
-  function recomputeOccupied(){
-    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
-    pieces.forEach(p=>{ if(p.alive) p.cells.forEach(([r,c])=> occupied[r][c]=true); });
-  }
-
-  function tapPiece(idx){
-    const p = pieces[idx];
-    if(!p || !p.alive) return;
-    moves++;
-    el('puzzleMoves').textContent = moves;
-    recomputeOccupied();
-    p.cells.forEach(([r,c])=> occupied[r][c]=false); // don't block on self
-    const clear = exitPathClear(p.head, p.dir, occupied);
-    const svg = el('puzzleSvg');
-    const g = svg.querySelector('g[data-idx="'+idx+'"]');
-    if(clear){
-      p.alive = false;
-      if(g){
-        const [dr,dc] = DIRV[p.dir];
-        g.style.transition = 'transform 0.35s ease-in, opacity 0.35s ease-in';
-        g.style.transform = `translate(${dc*U*8}px, ${dr*U*8}px)`;
-        g.style.opacity = '0';
-        setTimeout(()=>{ g.remove(); checkWinOrContinue(); }, 360);
-      } else {
-        checkWinOrContinue();
-      }
-    } else {
-      loseHeart();
-      if(g){
-        g.querySelector('.pz-line').setAttribute('stroke', 'var(--cage)');
-  
+          cells.push([nr,nc]); visited.add
