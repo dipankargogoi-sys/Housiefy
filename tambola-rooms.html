@@ -105,16 +105,10 @@
   .ludo-dicebox-face .pip{border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4560,#1a1730);}
 
   /* real 3D dice cube */
-  .ludo-cube-outer{width:34px;height:34px;perspective:140px;flex:none;}
-  .ludo-cube{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.75s cubic-bezier(.2,.75,.25,1);}
-  .ludo-cube-face{position:absolute;width:34px;height:34px;background:linear-gradient(145deg,#ffffff,#d8d8e0);border-radius:7px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:5px;gap:1px;box-shadow:inset 0 1px 1px rgba(255,255,255,0.8);backface-visibility:hidden;}
-  .ludo-cube-face .pip{border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4560,#1a1730);}
-  .ludo-cube-front{transform:translateZ(17px);}
-  .ludo-cube-back{transform:rotateY(180deg) translateZ(17px);}
-  .ludo-cube-right{transform:rotateY(90deg) translateZ(17px);}
-  .ludo-cube-left{transform:rotateY(-90deg) translateZ(17px);}
-  .ludo-cube-top{transform:rotateX(90deg) translateZ(17px);}
-  .ludo-cube-bottom{transform:rotateX(-90deg) translateZ(17px);}
+  .ludo-dice-flat{width:34px;height:34px;background:linear-gradient(145deg,#ffffff,#d8d8e0);border-radius:8px;box-shadow:0 3px 0 #a8a8b8,inset 0 1px 1px rgba(255,255,255,0.85);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:5px;gap:1px;flex:none;}
+  .ludo-dice-flat .pip{border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4560,#1a1730);}
+  .ludo-dice-flat.rolling{animation:ludoDiceShake 0.11s linear infinite;}
+  @keyframes ludoDiceShake{0%{transform:rotate(0deg) scale(1);}25%{transform:rotate(-12deg) scale(1.06);}50%{transform:rotate(9deg) scale(0.96);}75%{transform:rotate(-7deg) scale(1.04);}100%{transform:rotate(0deg) scale(1);}}
   .ludo-token-hop{animation:ludoHop 0.15s ease-out;}
   @keyframes ludoHop{0%{transform:scale(1);}45%{transform:scale(1.5) translateY(-30%);}100%{transform:scale(1);}}
   .ludo-token-highlight{animation:ludoPulse 0.9s ease-in-out infinite;}
@@ -1712,21 +1706,15 @@
   const EXTRA_SAFE = [8,22,36,50];
   const PIP_LAYOUTS = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
   const FINISH_STEP = 61;
-  // wrapper rotation (deg) needed to bring each face value to the front
-  const FACE_ROTATION = { 1:{x:0,y:0}, 2:{x:0,y:-90}, 3:{x:-90,y:0}, 4:{x:90,y:0}, 5:{x:0,y:90}, 6:{x:0,y:180} };
-  const FACE_VALUE = { front:1, back:6, right:2, left:5, top:3, bottom:4 };
-  const diceRot = {}; // accumulated rotation per color, for continuous spin
 
-  function buildPipFace(val, cls){
-    const f = document.createElement('div');
-    f.className = 'ludo-cube-face ludo-cube-'+cls;
+  function renderDiceFace(boxEl, val){
+    boxEl.innerHTML = '';
     const active = new Set(PIP_LAYOUTS[val] || []);
     for(let i=1;i<=9;i++){
       const p = document.createElement('div');
       if(active.has(i)) p.className = 'pip';
-      f.appendChild(p);
+      boxEl.appendChild(p);
     }
-    return f;
   }
 
   // ---------------- sound (synthesized, no external assets) ----------------
@@ -1784,7 +1772,7 @@
       const box = el('ludo-dicebox-'+color);
       box.classList.add('active');
       box.addEventListener('click', ()=> onDiceBoxTap(color));
-      diceRot[color] = {x:0,y:0};
+      renderDiceFace(el('ludo-dicebox-face-'+color), 1);
     });
   }
   function makeDiceBox(color){
@@ -1799,37 +1787,30 @@
     const label = document.createElement('div');
     label.style.cssText = 'font-size:10px;color:var(--cream);font-weight:700;';
     label.textContent = NAMES[color];
-    const cubeOuter = document.createElement('div');
-    cubeOuter.className = 'ludo-cube-outer';
-    const cube = document.createElement('div');
-    cube.className = 'ludo-cube';
-    cube.id = 'ludo-dicebox-cube-'+color;
-    cube.appendChild(buildPipFace(FACE_VALUE.front,'front'));
-    cube.appendChild(buildPipFace(FACE_VALUE.back,'back'));
-    cube.appendChild(buildPipFace(FACE_VALUE.right,'right'));
-    cube.appendChild(buildPipFace(FACE_VALUE.left,'left'));
-    cube.appendChild(buildPipFace(FACE_VALUE.top,'top'));
-    cube.appendChild(buildPipFace(FACE_VALUE.bottom,'bottom'));
-    cubeOuter.appendChild(cube);
-    right.appendChild(label); right.appendChild(cubeOuter);
+    const face = document.createElement('div');
+    face.className = 'ludo-dice-flat';
+    face.id = 'ludo-dicebox-face-'+color;
+    right.appendChild(label); right.appendChild(face);
     box.appendChild(pin); box.appendChild(right);
     return box;
   }
 
   function rollDiceVisual(color, finalVal, onDone){
-    const cube = el('ludo-dicebox-cube-'+color);
-    const st = diceRot[color] || {x:0,y:0};
-    const target = FACE_ROTATION[finalVal];
-    const mod360 = n => ((n%360)+360)%360;
-    const spinX = 720 + Math.floor(Math.random()*360);
-    const spinY = 720 + Math.floor(Math.random()*360);
-    const newX = st.x + spinX + mod360(target.x - mod360(st.x));
-    const newY = st.y + spinY + mod360(target.y - mod360(st.y));
-    cube.style.transform = `rotateX(${newX}deg) rotateY(${newY}deg)`;
-    diceRot[color] = {x:newX, y:newY};
+    const face = el('ludo-dicebox-face-'+color);
+    face.classList.add('rolling');
     let ticks = 0;
-    const tickInt = setInterval(()=>{ sndRollTick(); ticks++; if(ticks>10) clearInterval(tickInt); }, 65);
-    setTimeout(()=>{ clearInterval(tickInt); onDone(); }, 780);
+    const totalTicks = 10;
+    const tickInt = setInterval(()=>{
+      renderDiceFace(face, 1+Math.floor(Math.random()*6));
+      sndRollTick();
+      ticks++;
+      if(ticks>=totalTicks){
+        clearInterval(tickInt);
+        face.classList.remove('rolling');
+        renderDiceFace(face, finalVal); // always settles flat, showing exactly one clean face
+        onDone();
+      }
+    }, 70);
   }
 
   function refreshDiceBoxHighlight(){
@@ -2076,338 +2057,4 @@
     if(color !== activeColors[turnIdx]) return; // can't touch opponents' tokens
     if(!movableList.includes(i)) return;
     awaitingTap = false;
-    const val = pendingRoll;
-    document.querySelectorAll('.ludo-token-highlight').forEach(p=>p.classList.remove('ludo-token-highlight'));
-    moveTokenAnimated(color, i, val, ()=>{
-      if(checkWin(color)){
-        over = true;
-        sndWin();
-        showWin();
-        return;
-      }
-      advanceAfterRoll(val===6);
-    });
-  }
-
-  function advanceAfterRoll(bonusTurn){
-    if(bonusTurn){
-      sixStreak++;
-      if(sixStreak<3){ updateTurnLabel(); refreshDiceBoxHighlight(); return; }
-    }
-    sixStreak = 0;
-    turnIdx = (turnIdx+1)%activeColors.length;
-    updateTurnLabel();
-    refreshDiceBoxHighlight();
-  }
-
-  function showWin(){
-    el('ludoPlay').classList.add('hidden');
-    el('ludoWin').classList.remove('hidden');
-    const color = activeColors[turnIdx];
-    el('ludoWinText').innerHTML = '<span style="color:'+COLORS[color]+';">'+NAMES[color]+'</span> wins! 🎉';
-  }
-
-  function startGame(){
-    activeColors = colorsForCount(numPlayers);
-    tokens = {};
-    activeColors.forEach(c=> tokens[c] = [0,0,0,0]);
-    turnIdx = 0; over = false; rolling = false; awaitingTap = false; animating = false; movableList = []; sixStreak = 0;
-    el('ludoSetup').classList.add('hidden');
-    el('ludoWin').classList.add('hidden');
-    el('ludoPlay').classList.remove('hidden');
-    buildBoardDom();
-    buildDiceBoxes();
-    renderTokens();
-    updateTurnLabel();
-    refreshDiceBoxHighlight();
-  }
-
-  document.querySelectorAll('.ludoPlayerCountBtn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      numPlayers = parseInt(btn.dataset.n,10);
-      document.querySelectorAll('.ludoPlayerCountBtn').forEach(b=>{b.classList.remove('btn-primary');b.classList.add('btn-ghost');});
-      btn.classList.remove('btn-ghost'); btn.classList.add('btn-primary');
-    });
-  });
-  el('ludoStartBtn').addEventListener('click', startGame);
-  el('ludoPlayAgainBtn').addEventListener('click', startGame);
-  el('ludoMenuBtn').addEventListener('click', ()=>{
-    document.querySelectorAll('main > div[id^="view"]').forEach(v=>v.classList.add('hidden'));
-    const hub = document.getElementById('viewGamesHub');
-    if(hub) hub.classList.remove('hidden');
-    document.body.classList.remove('ludo-fullscreen');
-  });
-
-  window.LUDO = { onShow(){
-    // re-entering from the hub always returns to the setup screen
-    el('ludoPlay').classList.add('hidden');
-    el('ludoWin').classList.add('hidden');
-    el('ludoSetup').classList.remove('hidden');
-  } };
-})();
-
-</script>
-<script>
-/* ============ ARROW PUZZLE ENGINE ============ */
-(function(){
-  const el = id => document.getElementById(id);
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const DIRV = { up:[-1,0], down:[1,0], left:[0,-1], right:[0,1] };
-
-  const MODES = {
-    arrows: { title:'Tap Away Arrows', rows:9, cols:7, mask:null, pieces:14 },
-    clear:  { title:'Clear the Board',  rows:9, cols:6, mask:null, pieces:11 },
-    heart:  { title:'Find the Free Path', rows:11, cols:13, mask:heartMask, pieces:18 }
-  };
-
-  function heartMask(r,c,rows,cols){
-    const x = (c - cols/2 + 0.5) / (cols/2) * 1.3;
-    const y = (rows/2 - 0.5 - r) / (rows/2) * 1.3;
-    const f = Math.pow(x*x+y*y-1,3) - x*x*Math.pow(y,3);
-    return f <= 0;
-  }
-
-  let curMode = null, rows=0, cols=0, mask=null, pieces=[], occupied=null, hearts=3, moves=0, U=36;
-
-  function cellPlayable(r,c){
-    if(r<0||r>=rows||c<0||c>=cols) return false;
-    if(mask && !mask(r,c,rows,cols)) return false;
-    return true;
-  }
-
-  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
-
-  function exitPathClear(head, dir, occ){
-    let [r,c] = head;
-    const [dr,dc] = DIRV[dir];
-    r+=dr; c+=dc;
-    while(cellPlayable(r,c)){
-      if(occ[r][c]) return false;
-      r+=dr; c+=dc;
-    }
-    return true;
-  }
-
-  function tryPlacePiece(occ){
-    const empties = [];
-    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(cellPlayable(r,c) && !occ[r][c]) empties.push([r,c]);
-    if(!empties.length) return null;
-    const start = empties[Math.floor(Math.random()*empties.length)];
-    const len = 3 + Math.floor(Math.random()*4);
-    let cells = [start];
-    let visited = new Set([start[0]+','+start[1]]);
-    let cur = start;
-    for(let i=1;i<len;i++){
-      const dirs = shuffle(['up','down','left','right']);
-      let moved = false;
-      for(const d of dirs){
-        const [dr,dc] = DIRV[d];
-        const nr=cur[0]+dr, nc=cur[1]+dc;
-        if(cellPlayable(nr,nc) && !occ[nr][nc] && !visited.has(nr+','+nc)){
-          cells.push([nr,nc]); visited.add(nr+','+nc); cur=[nr,nc]; moved=true; break;
-        }
-      }
-      if(!moved) break;
-    }
-    if(cells.length<2) return null;
-    const head = cells[cells.length-1];
-    const dirs = shuffle(['up','down','left','right']);
-    for(const dir of dirs){
-      if(exitPathClear(head, dir, occ)) return { cells, head, dir };
-    }
-    return null;
-  }
-
-  function generatePuzzle(){
-    const occ = Array.from({length:rows},()=>new Array(cols).fill(false));
-    const built = [];
-    let tries = 0;
-    while(built.length < MODES[curMode].pieces && tries < 400){
-      tries++;
-      const p = tryPlacePiece(occ);
-      if(p){ built.push(p); p.cells.forEach(([r,c])=> occ[r][c]=true); }
-    }
-    built.reverse(); // built[0] = first removable
-    return built;
-  }
-
-  // ---------------- rendering ----------------
-  function render(){
-    const svg = el('puzzleSvg');
-    svg.setAttribute('viewBox', `0 0 ${cols*U} ${rows*U}`);
-    svg.innerHTML = '';
-    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
-    pieces.forEach(p=>{ p.alive = true; p.cells.forEach(([r,c])=> occupied[r][c]=true); });
-
-    pieces.forEach((p, idx)=>{
-      if(!p.alive) return;
-      const g = document.createElementNS(svgNS,'g');
-      g.setAttribute('data-idx', idx);
-      g.style.cursor = 'pointer';
-
-      const pts = p.cells.map(([r,c])=> [(c+0.5)*U, (r+0.5)*U]);
-      // extend a bit past head cell in arrow direction to draw the arrowhead
-      const [dr,dc] = DIRV[p.dir];
-      const [hx,hy] = pts[pts.length-1];
-      const tipx = hx + dc*U*0.55, tipy = hy + dr*U*0.55;
-
-      const d = 'M ' + pts.map(pt=>pt.join(',')).join(' L ');
-      const path = document.createElementNS(svgNS,'path');
-      path.setAttribute('d', d);
-      path.setAttribute('fill','none');
-      path.setAttribute('stroke','#2b2760');
-      path.setAttribute('stroke-width', U*0.34);
-      path.setAttribute('stroke-linecap','round');
-      path.setAttribute('stroke-linejoin','round');
-      path.setAttribute('class','pz-line');
-      g.appendChild(path);
-
-      // hit area (wider, invisible)
-      const hit = document.createElementNS(svgNS,'path');
-      hit.setAttribute('d', d);
-      hit.setAttribute('fill','none');
-      hit.setAttribute('stroke','transparent');
-      hit.setAttribute('stroke-width', U*0.9);
-      g.appendChild(hit);
-
-      // arrowhead triangle
-      const perp = [-dr, dc]; // perpendicular for triangle base
-      const baseW = U*0.32;
-      const p1 = [hx + dc*U*0.18 + perp[1]*baseW, hy + dr*U*0.18 + perp[0]*baseW];
-      const p2 = [hx + dc*U*0.18 - perp[1]*baseW, hy + dr*U*0.18 - perp[0]*baseW];
-      const p3 = [tipx, tipy];
-      const tri = document.createElementNS(svgNS,'polygon');
-      tri.setAttribute('points', [p1,p2,p3].map(p=>p.join(',')).join(' '));
-      tri.setAttribute('fill', '#2b2760');
-      tri.setAttribute('class','pz-arrow');
-      g.appendChild(tri);
-
-      g.addEventListener('click', ()=> tapPiece(idx));
-      svg.appendChild(g);
-    });
-
-    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
-  }
-
-  function recomputeOccupied(){
-    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
-    pieces.forEach(p=>{ if(p.alive) p.cells.forEach(([r,c])=> occupied[r][c]=true); });
-  }
-
-  function tapPiece(idx){
-    const p = pieces[idx];
-    if(!p || !p.alive) return;
-    moves++;
-    el('puzzleMoves').textContent = moves;
-    recomputeOccupied();
-    p.cells.forEach(([r,c])=> occupied[r][c]=false); // don't block on self
-    const clear = exitPathClear(p.head, p.dir, occupied);
-    const svg = el('puzzleSvg');
-    const g = svg.querySelector('g[data-idx="'+idx+'"]');
-    if(clear){
-      p.alive = false;
-      if(g){
-        const [dr,dc] = DIRV[p.dir];
-        g.style.transition = 'transform 0.35s ease-in, opacity 0.35s ease-in';
-        g.style.transform = `translate(${dc*U*8}px, ${dr*U*8}px)`;
-        g.style.opacity = '0';
-        setTimeout(()=>{ g.remove(); checkWinOrContinue(); }, 360);
-      } else {
-        checkWinOrContinue();
-      }
-    } else {
-      loseHeart();
-      if(g){
-        g.querySelector('.pz-line').setAttribute('stroke', 'var(--cage)');
-        g.style.transition = 'transform 0.08s'; 
-        let n=0; const shake=setInterval(()=>{ n++; g.style.transform = 'translateX('+((n%2===0)?4:-4)+'px)'; if(n>4){ clearInterval(shake); g.style.transform=''; g.querySelector('.pz-line').setAttribute('stroke','#2b2760'); } },40);
-      }
-    }
-  }
-
-  function checkWinOrContinue(){
-    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
-    if(pieces.every(p=>!p.alive)){
-      el('puzzlePlay').classList.add('hidden');
-      el('puzzleWin').classList.remove('hidden');
-    }
-  }
-
-  function renderHearts(){
-    el('puzzleHearts').textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3-hearts);
-  }
-
-  function loseHeart(){
-    hearts--;
-    renderHearts();
-    if(hearts<=0){
-      setTimeout(()=>{
-        el('puzzlePlay').classList.add('hidden');
-        el('puzzleLose').classList.remove('hidden');
-      }, 300);
-    }
-  }
-
-  function hint(){
-    recomputeOccupied();
-    for(let i=0;i<pieces.length;i++){
-      const p = pieces[i];
-      if(!p.alive) continue;
-      const occ2 = occupied.map(row=>row.slice());
-      p.cells.forEach(([r,c])=> occ2[r][c]=false);
-      if(exitPathClear(p.head, p.dir, occ2)){
-        const g = el('puzzleSvg').querySelector('g[data-idx="'+i+'"]');
-        if(g){
-          const line = g.querySelector('.pz-line');
-          const arrow = g.querySelector('.pz-arrow');
-          line.setAttribute('stroke', 'var(--gold-soft)');
-          arrow.setAttribute('fill', 'var(--gold-soft)');
-          setTimeout(()=>{ if(line){line.setAttribute('stroke','#2b2760');} if(arrow){arrow.setAttribute('fill','#2b2760');} }, 1400);
-        }
-        return;
-      }
-    }
-  }
-
-  function startLevel(mode){
-    curMode = mode;
-    const cfg = MODES[mode];
-    rows = cfg.rows; cols = cfg.cols; mask = cfg.mask;
-    hearts = 3; moves = 0;
-    el('puzzleTitle').textContent = cfg.title;
-    el('puzzleMoves').textContent = '0';
-    renderHearts();
-    pieces = generatePuzzle();
-    render();
-    el('puzzleModeSelect').classList.add('hidden');
-    el('puzzleWin').classList.add('hidden');
-    el('puzzleLose').classList.add('hidden');
-    el('puzzlePlay').classList.remove('hidden');
-  }
-
-  document.querySelectorAll('.puzzleModeBtn').forEach(btn=>{
-    btn.addEventListener('click', ()=> startLevel(btn.dataset.mode));
-  });
-  el('puzzleBackToModes').addEventListener('click', ()=>{
-    el('puzzlePlay').classList.add('hidden');
-    el('puzzleModeSelect').classList.remove('hidden');
-  });
-  el('puzzleHintBtn').addEventListener('click', hint);
-  el('puzzleRestartBtn').addEventListener('click', ()=> startLevel(curMode));
-  el('puzzleNextBtn').addEventListener('click', ()=> startLevel(curMode));
-  el('puzzleWinMenuBtn').addEventListener('click', ()=>{
-    el('puzzleWin').classList.add('hidden');
-    el('puzzleModeSelect').classList.remove('hidden');
-  });
-  el('puzzleRetryBtn').addEventListener('click', ()=> startLevel(curMode));
-  el('puzzleLoseMenuBtn').addEventListener('click', ()=>{
-    el('puzzleLose').classList.add('hidden');
-    el('puzzleModeSelect').classList.remove('hidden');
-  });
-
-  window.ARROWPUZZLE = { onShow(){} };
-})();
-
-</script>
-</body>
-</html>
+    const val = p
