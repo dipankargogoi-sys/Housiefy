@@ -169,73 +169,15 @@
       </div>
     </div>
 
-    <div class="card" id="hubSnakesCard" style="cursor:pointer;">
-      <div style="display:flex;align-items:center;gap:14px;">
-        <div style="font-size:34px;">🐍</div>
-        <div style="flex:1;">
-          <div style="font-weight:800;font-size:16px;color:var(--gold-soft);">Snakes &amp; Ladders</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">2–4 players, pass &amp; play on one phone</div>
-        </div>
-        <div style="color:var(--muted);">▶</div>
-      </div>
-    </div>
-
-    <div class="card" id="hubCarromCard" style="cursor:pointer;">
-      <div style="display:flex;align-items:center;gap:14px;">
-        <div style="font-size:34px;">🥌</div>
-        <div style="flex:1;">
-          <div style="font-weight:800;font-size:16px;color:var(--gold-soft);">Carrom</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">2 players, drag &amp; flick the striker</div>
-        </div>
-        <div style="color:var(--muted);">▶</div>
-      </div>
-    </div>
-
     <div class="card" id="hubPuzzleCard" style="cursor:pointer;">
       <div style="display:flex;align-items:center;gap:14px;">
         <div style="font-size:34px;">🧩</div>
         <div style="flex:1;">
-          <div style="font-weight:800;font-size:16px;color:var(--gold-soft);">Puzzle</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Sliding number puzzle, solo</div>
+          <div style="font-weight:800;font-size:16px;color:var(--gold-soft);">Arrow Puzzle</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Tap arrows away to clear the board</div>
         </div>
         <div style="color:var(--muted);">▶</div>
       </div>
-    </div>
-  </div>
-
-  <!-- ============ SNAKES & LADDERS ============ -->
-  <div id="viewSnakes" class="hidden">
-    <div style="text-align:left;margin-bottom:10px;">
-      <span class="hubBackLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ All Games</span>
-    </div>
-
-    <div id="snlSetup" class="card" style="text-align:center;">
-      <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:14px;">🐍 Snakes &amp; Ladders</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">How many players? (pass the phone each turn)</div>
-      <div class="row" style="margin-bottom:14px;">
-        <button class="btn btn-ghost snlPlayerCountBtn" data-n="2">2</button>
-        <button class="btn btn-ghost snlPlayerCountBtn" data-n="3">3</button>
-        <button class="btn btn-ghost snlPlayerCountBtn" data-n="4">4</button>
-      </div>
-      <button class="btn btn-primary" id="snlStartBtn">Start Game</button>
-    </div>
-
-    <div id="snlPlay" class="card hidden" style="text-align:center;">
-      <div class="players" id="snlPlayers" style="justify-content:center;margin-bottom:10px;"></div>
-      <div id="snlTurnLabel" style="font-family:var(--font-display);font-weight:800;color:var(--gold-soft);font-size:15px;margin-bottom:8px;"></div>
-      <div id="snlBoard" class="board" style="grid-template-columns:repeat(10,1fr);"></div>
-      <div style="margin-top:14px;">
-        <div id="snlDiceFace" style="font-size:54px;line-height:1;margin-bottom:8px;">🎲</div>
-        <button class="btn btn-primary" id="snlRollBtn">Roll Dice</button>
-        <button class="btn btn-ghost" id="snlResetBtn" style="margin-top:8px;">Restart</button>
-      </div>
-    </div>
-
-    <div id="snlWin" class="card hidden" style="text-align:center;">
-      <div style="font-size:44px;margin-bottom:8px;">🏆</div>
-      <div id="snlWinText" style="font-family:var(--font-display);font-size:19px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;"></div>
-      <button class="btn btn-primary" id="snlPlayAgainBtn">Play Again</button>
-      <button class="btn btn-ghost" id="snlToHubBtn" style="margin-top:8px;">Back to All Games</button>
     </div>
   </div>
 
@@ -253,15 +195,16 @@
         <button class="btn btn-ghost ludoPlayerCountBtn" data-n="3">3</button>
         <button class="btn btn-ghost ludoPlayerCountBtn" data-n="4">4</button>
       </div>
-      <div class="hint" style="text-align:left;">Roll a <b>6</b> to bring a token out of your yard. Land on an opponent (off a star cell) to send them home. Get all 4 tokens to the center to win.</div>
+      <div class="hint" style="text-align:left;">Roll a <b>6</b> to bring a token out of your yard. Land on an opponent off a star cell to send them home. Get all 4 tokens to the center to win.</div>
       <button class="btn btn-primary" id="ludoStartBtn">Start Game</button>
     </div>
 
     <div id="ludoPlay" class="card hidden" style="text-align:center;">
       <div class="players" id="ludoPlayers" style="justify-content:center;margin-bottom:10px;"></div>
-      <div id="ludoTurnLabel" style="font-family:var(--font-display);font-weight:800;color:var(--gold-soft);font-size:15px;margin-bottom:8px;"></div>
-      <div id="ludoTrack" class="board" style="grid-template-columns:repeat(13,1fr);"></div>
-      <div id="ludoYards" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;"></div>
+      <div id="ludoTurnLabel" style="font-family:var(--font-display);font-weight:800;color:var(--gold-soft);font-size:15px;margin-bottom:10px;"></div>
+      <div id="ludoBoardWrap" style="display:flex;justify-content:center;">
+        <div id="ludoBoard"></div>
+      </div>
       <div style="margin-top:14px;">
         <div id="ludoDiceFace" style="font-size:54px;line-height:1;margin-bottom:8px;">🎲</div>
         <button class="btn btn-primary" id="ludoRollBtn">Roll Dice</button>
@@ -278,45 +221,49 @@
     </div>
   </div>
 
-  <!-- ============ CARROM ============ -->
-  <div id="viewCarrom" class="hidden">
-    <div style="text-align:left;margin-bottom:10px;">
-      <span class="hubBackLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ All Games</span>
-    </div>
-    <div class="card" style="text-align:center;">
-      <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:4px;">🥌 Carrom</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Casual 2-player · drag back from the striker to aim &amp; set power, release to flick</div>
-      <div id="carromTurnLabel" style="font-family:var(--font-display);font-weight:800;color:var(--gold-soft);font-size:15px;margin-bottom:8px;"></div>
-      <div style="display:flex;justify-content:center;">
-        <canvas id="carromCanvas" width="340" height="340" style="width:100%;max-width:340px;touch-action:none;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.3);"></canvas>
-      </div>
-      <div class="row" style="margin-top:12px;">
-        <div class="pool-card" style="text-align:center;"><div style="font-size:11px;color:var(--muted);">Player 1</div><div id="carromScore1" style="font-weight:800;color:var(--gold-soft);font-size:16px;">0</div></div>
-        <div class="pool-card" style="text-align:center;"><div style="font-size:11px;color:var(--muted);">Player 2</div><div id="carromScore2" style="font-weight:800;color:var(--gold-soft);font-size:16px;">0</div></div>
-      </div>
-      <button class="btn btn-ghost" id="carromResetBtn" style="margin-top:6px;">Restart</button>
-    </div>
-  </div>
-
-  <!-- ============ PUZZLE ============ -->
+  <!-- ============ ARROW PUZZLE ============ -->
   <div id="viewPuzzle" class="hidden">
     <div style="text-align:left;margin-bottom:10px;">
       <span class="hubBackLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ All Games</span>
     </div>
-    <div class="card" style="text-align:center;">
-      <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:10px;">🧩 Sliding Puzzle</div>
-      <div class="row" style="margin-bottom:12px;">
-        <button class="btn btn-ghost puzzleSizeBtn" data-n="3">Easy 3×3</button>
-        <button class="btn btn-ghost puzzleSizeBtn" data-n="4">Normal 4×4</button>
-        <button class="btn btn-ghost puzzleSizeBtn" data-n="5">Hard 5×5</button>
+
+    <div id="puzzleModeSelect" class="card" style="text-align:center;">
+      <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:14px;">🧩 Arrow Puzzle</div>
+      <div class="hint" style="text-align:left;">Tap a piece and it flies off in the direction of its arrow — but only if that path is clear. Clear the whole board to win.</div>
+      <button class="btn btn-primary puzzleModeBtn" data-mode="arrows">Tap Away Arrows</button>
+      <button class="btn btn-primary puzzleModeBtn" data-mode="clear">Clear the Board</button>
+      <button class="btn btn-primary puzzleModeBtn" data-mode="heart">Find the Free Path</button>
+    </div>
+
+    <div id="puzzlePlay" class="card hidden" style="text-align:center;">
+      <div style="text-align:left;margin-bottom:8px;">
+        <span id="puzzleBackToModes" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ Puzzle Menu</span>
       </div>
-      <div style="display:flex;justify-content:center;gap:18px;font-size:12px;color:var(--muted);margin-bottom:10px;">
-        <div>Moves: <b id="puzzleMoves" style="color:var(--gold-soft);">0</b></div>
-        <div>Time: <b id="puzzleTime" style="color:var(--gold-soft);">0:00</b></div>
+      <div id="puzzleTitle" style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:6px;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--muted);">Moves: <b id="puzzleMoves" style="color:var(--cream);">0</b></div>
+        <div id="puzzleHearts" style="font-size:16px;"></div>
+        <div style="font-size:12px;color:var(--muted);">Pieces left: <b id="puzzlePiecesLeft" style="color:var(--cream);">0</b></div>
       </div>
-      <div id="puzzleBoard" style="display:grid;gap:4px;background:rgba(0,0,0,0.15);border:1px solid var(--line);border-radius:14px;padding:8px;margin:0 auto;max-width:340px;"></div>
-      <div id="puzzleWinMsg" class="hidden" style="margin-top:14px;font-family:var(--font-display);color:var(--gold-soft);font-weight:800;font-size:16px;">🎉 Solved!</div>
-      <button class="btn btn-ghost" id="puzzleShuffleBtn" style="margin-top:12px;">New Shuffle</button>
+      <div id="puzzleBoardWrap" style="display:flex;justify-content:center;">
+        <svg id="puzzleSvg" style="width:100%;max-width:360px;touch-action:none;"></svg>
+      </div>
+      <button class="btn btn-ghost" id="puzzleHintBtn" style="margin-top:12px;">💡 Hint</button>
+      <button class="btn btn-ghost" id="puzzleRestartBtn" style="margin-top:8px;">Restart Level</button>
+    </div>
+
+    <div id="puzzleWin" class="card hidden" style="text-align:center;">
+      <div style="font-size:44px;margin-bottom:8px;">🎉</div>
+      <div style="font-family:var(--font-display);font-size:19px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;">Level Completed!</div>
+      <button class="btn btn-primary" id="puzzleNextBtn">New Puzzle</button>
+      <button class="btn btn-ghost" id="puzzleWinMenuBtn" style="margin-top:8px;">Puzzle Menu</button>
+    </div>
+
+    <div id="puzzleLose" class="card hidden" style="text-align:center;">
+      <div style="font-size:44px;margin-bottom:8px;">💔</div>
+      <div style="font-family:var(--font-display);font-size:19px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;">Out of hearts</div>
+      <button class="btn btn-primary" id="puzzleRetryBtn">Try Again</button>
+      <button class="btn btn-ghost" id="puzzleLoseMenuBtn" style="margin-top:8px;">Puzzle Menu</button>
     </div>
   </div>
 
@@ -573,7 +520,7 @@
     view.classList.remove('hidden');
   }
 
-  const APP_VERSION = "1.2.0"; // bump this + version.json together on every release
+  const APP_VERSION = "1.3.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -740,11 +687,9 @@
   el('hubBackLink').addEventListener('click', ()=> show(viewGamesHub));
 
   // ---------- other games: hub wiring ----------
-  const viewSnakes = el('viewSnakes'), viewLudo = el('viewLudo'), viewCarrom = el('viewCarrom'), viewPuzzle = el('viewPuzzle');
-  el('hubSnakesCard').addEventListener('click', ()=>{ show(viewSnakes); if(window.SNL) window.SNL.onShow(); });
+  const viewLudo = el('viewLudo'), viewPuzzle = el('viewPuzzle');
   el('hubLudoCard').addEventListener('click', ()=>{ show(viewLudo); if(window.LUDO) window.LUDO.onShow(); });
-  el('hubCarromCard').addEventListener('click', ()=>{ show(viewCarrom); if(window.CARROM) window.CARROM.onShow(); });
-  el('hubPuzzleCard').addEventListener('click', ()=>{ show(viewPuzzle); if(window.PUZZLE) window.PUZZLE.onShow(); });
+  el('hubPuzzleCard').addEventListener('click', ()=>{ show(viewPuzzle); if(window.ARROWPUZZLE) window.ARROWPUZZLE.onShow(); });
   document.querySelectorAll('.hubBackLink').forEach(link=> link.addEventListener('click', ()=> show(viewGamesHub)));
 
   // ---------- version check: notify users when a newer app is live ----------
@@ -1665,293 +1610,220 @@
 </script>
 
 <script>
-/* ============ SNAKES & LADDERS ENGINE ============ */
+/* ============ LUDO ENGINE (real cross board, verified geometry) ============ */
 (function(){
   const el = id => document.getElementById(id);
-  const COLORS = ['#e8b34c','#c1443c','#3fa796','#8aa4e8'];
-  const NAMES = ['P1','P2','P3','P4'];
-  const LADDERS = {2:38,7:14,8:31,15:26,21:42,28:84,36:44,51:67,71:91,78:98,87:94};
-  const SNAKES  = {16:6,46:25,49:11,62:19,64:60,74:53,89:68,92:88,95:75,99:80};
-  const JUMPS = Object.assign({}, LADDERS, SNAKES);
+  const COLORS = { blue:'#3f6fd6', red:'#c1443c', green:'#3fa796', yellow:'#e8b34c' };
+  const ORDER = ['blue','red','green','yellow'];
+  const NAMES = { blue:'Blue', red:'Red', green:'Green', yellow:'Yellow' };
 
-  let numPlayers = 2, positions = [], turn = 0, over = false, rolling = false;
+  // ---- verified 56-cell shared ring (see derivation) ----
+  function buildRing(){
+    const ring = [];
+    ring.push(...[0,1,2,3,4,5].map(c=>[6,c]));      // left-row6
+    ring.push([6,6]);                                 // corner
+    ring.push(...[5,4,3,2,1,0].map(r=>[r,6]));       // top-col6
+    ring.push([0,7]);                                  // cap
+    ring.push(...[0,1,2,3,4,5].map(r=>[r,8]));       // top-col8
+    ring.push([6,8]);                                  // corner
+    ring.push(...[9,10,11,12,13,14].map(c=>[6,c]));  // right-row6
+    ring.push([7,14]);                                 // cap
+    ring.push(...[14,13,12,11,10,9].map(c=>[8,c]));  // right-row8
+    ring.push([8,8]);                                  // corner
+    ring.push(...[9,10,11,12,13,14].map(r=>[r,8]));  // bottom-col8
+    ring.push([14,7]);                                 // cap
+    ring.push(...[14,13,12,11,10,9].map(r=>[r,6]));  // bottom-col6
+    ring.push([8,6]);                                  // corner
+    ring.push(...[5,4,3,2,1,0].map(c=>[8,c]));       // left-row8
+    ring.push([7,0]);                                  // cap
+    return ring;
+  }
+  const RING = buildRing(); // 56 cells
+  const RING_LEN = RING.length;
+  const START_OFFSET = { blue:0, red:14, green:28, yellow:42 };
+  const HOME_COLUMN = {
+    blue:   [[7,1],[7,2],[7,3],[7,4],[7,5]],
+    red:    [[1,7],[2,7],[3,7],[4,7],[5,7]],
+    green:  [[7,9],[7,10],[7,11],[7,12],[7,13]],
+    yellow: [[9,7],[10,7],[11,7],[12,7],[13,7]]
+  };
+  const FINISH_CELL = { blue:[7,6], red:[6,7], green:[7,8], yellow:[8,7] };
+  const BASE_ORIGIN = { blue:[0,0], red:[0,9], yellow:[9,0], green:[9,9] };
+  const DICE_FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
+  const FINISH_STEP = 61; // 1..55 ring, 56..60 home column, 61 finish
 
-  function cellCoords(num){ // num 1..100 -> {row, col} row0=bottom
-    const r = Math.floor((num-1)/10);
-    const posInRow = (num-1)%10;
-    const col = (r%2===0) ? posInRow : (9-posInRow);
-    return {row:r, col};
+  function ringCellForColor(color, step){ // step 1..55
+    return RING[(START_OFFSET[color] + step - 1) % RING_LEN];
+  }
+  function cellForStep(color, step){
+    if(step<=0) return null;
+    if(step<=55) return ringCellForColor(color, step);
+    if(step<=60) return HOME_COLUMN[color][step-56];
+    return FINISH_CELL[color];
+  }
+  function isSafeGlobalCell(r,c){
+    // the 4 start cells are safe
+    return ORDER.some(col => {
+      const s = ringCellForColor(col,1);
+      return s[0]===r && s[1]===c;
+    });
   }
 
-  function buildBoard(){
-    const board = el('snlBoard');
-    board.innerHTML = '';
-    board.style.display = 'grid';
-    board.style.gridTemplateRows = 'repeat(10,1fr)';
-    const grid = [];
-    for(let r=0;r<10;r++) grid.push(new Array(10).fill(0));
-    for(let n=1;n<=100;n++){ const c = cellCoords(n); grid[c.row][c.col] = n; }
-    for(let r=9;r>=0;r--){
-      for(let c=0;c<10;c++){
-        const num = grid[r][c];
-        const div = document.createElement('div');
-        div.className = 'cell';
-        div.id = 'snl-cell-'+num;
-        let mark = '';
-        if(LADDERS[num]) mark = '<div style="font-size:9px;color:var(--teal);">▲'+LADDERS[num]+'</div>';
-        if(SNAKES[num]) mark = '<div style="font-size:9px;color:var(--cage);">▼'+SNAKES[num]+'</div>';
-        div.innerHTML = '<div>'+num+'</div>'+mark+'<div class="snl-tokens" style="display:flex;gap:1px;"></div>';
-        board.appendChild(div);
-      }
-    }
+  let numPlayers = 2, activeColors = [], tokens = {}, turnIdx = 0, over = false, rolling = false, sixStreak = 0;
+
+  function colorsForCount(n){
+    // pick spread-out colors for fewer players so bases aren't adjacent-confusing
+    if(n===2) return ['blue','green'];
+    if(n===3) return ['blue','red','green'];
+    return ['blue','red','green','yellow'];
   }
 
-  function renderPlayers(){
-    const wrap = el('snlPlayers');
+  // ---------------- board rendering ----------------
+  function buildBoardDom(){
+    const wrap = el('ludoBoard');
     wrap.innerHTML = '';
-    for(let i=0;i<numPlayers;i++){
-      const av = document.createElement('div');
-      av.className = 'avatar' + (i===turn && !over ? ' you' : '');
-      av.innerHTML = '<div class="dot" style="background:'+COLORS[i]+';">'+(i+1)+'</div>'+NAMES[i];
-      wrap.appendChild(av);
-    }
+    wrap.style.cssText = 'display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);width:min(88vw,360px);aspect-ratio:1;background:var(--cream);border-radius:10px;overflow:hidden;border:2px solid var(--line);';
+
+    // base quadrants
+    ORDER.forEach(color=>{
+      const [r0,c0] = BASE_ORIGIN[color];
+      const base = document.createElement('div');
+      base.style.cssText = `grid-row:${r0+1}/${r0+7};grid-column:${c0+1}/${c0+7};background:${COLORS[color]};display:flex;align-items:center;justify-content:center;padding:10%;box-sizing:border-box;`;
+      const nest = document.createElement('div');
+      nest.style.cssText = 'background:rgba(255,255,255,0.85);border-radius:14%;width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6%;padding:8%;box-sizing:border-box;';
+      for(let i=0;i<4;i++){
+        const dock = document.createElement('div');
+        dock.id = 'ludo-dock-'+color+'-'+i;
+        dock.style.cssText = 'border-radius:50%;background:rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;';
+        nest.appendChild(dock);
+      }
+      base.appendChild(nest);
+      wrap.appendChild(base);
+    });
+
+    // center home (conic gradient quadrants pointing to center)
+    const center = document.createElement('div');
+    center.style.cssText = `grid-row:7/10;grid-column:7/10;background:conic-gradient(${COLORS.red} 0deg 90deg, ${COLORS.green} 90deg 180deg, ${COLORS.yellow} 180deg 270deg, ${COLORS.blue} 270deg 360deg);`;
+    wrap.appendChild(center);
+
+    // ring cells
+    RING.forEach(([r,c],idx)=>{
+      const cell = document.createElement('div');
+      cell.id = 'ludo-cell-'+r+'-'+c;
+      cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:#fff;border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;position:relative;`;
+      // is this a start cell for a color?
+      ORDER.forEach(color=>{
+        const s = ringCellForColor(color,1);
+        if(s[0]===r && s[1]===c){
+          cell.style.background = COLORS[color];
+          cell.innerHTML = '<span style="font-size:9px;color:#fff;">★</span>';
+        }
+      });
+      const dotsWrap = document.createElement('div');
+      dotsWrap.className = 'ludo-token-dots';
+      dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;';
+      cell.appendChild(dotsWrap);
+      wrap.appendChild(cell);
+    });
+
+    // home columns
+    ORDER.forEach(color=>{
+      HOME_COLUMN[color].forEach(([r,c])=>{
+        const cell = document.createElement('div');
+        cell.id = 'ludo-cell-'+r+'-'+c;
+        cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:${COLORS[color]};position:relative;`;
+        const dotsWrap = document.createElement('div');
+        dotsWrap.className = 'ludo-token-dots';
+        dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;';
+        cell.appendChild(dotsWrap);
+        wrap.appendChild(cell);
+      });
+      const [fr,fc] = FINISH_CELL[color];
+      const fcell = document.createElement('div');
+      fcell.id = 'ludo-cell-'+fr+'-'+fc;
+      fcell.style.cssText = `grid-row:${fr+1};grid-column:${fc+1};background:${COLORS[color]};position:relative;display:flex;align-items:center;justify-content:center;`;
+      fcell.innerHTML = '<span style="font-size:8px;">🏠</span>';
+      const dotsWrap = document.createElement('div');
+      dotsWrap.className = 'ludo-token-dots';
+      dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;';
+      fcell.appendChild(dotsWrap);
+      wrap.appendChild(fcell);
+    });
   }
 
   function renderTokens(){
-    document.querySelectorAll('.snl-tokens').forEach(t=>t.innerHTML='');
-    for(let i=0;i<numPlayers;i++){
-      const pos = positions[i];
-      if(pos<1) continue;
-      const cell = el('snl-cell-'+pos);
-      if(!cell) continue;
-      const t = cell.querySelector('.snl-tokens');
-      const dot = document.createElement('div');
-      dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:'+COLORS[i]+';border:1px solid rgba(0,0,0,0.3);';
-      t.appendChild(dot);
-    }
-  }
-
-  function updateTurnLabel(){
-    if(over) return;
-    el('snlTurnLabel').innerHTML = '<span style="color:'+COLORS[turn]+';">●</span> '+NAMES[turn]+"'s turn";
-  }
-
-  const DICE_FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
-
-  function roll(){
-    if(rolling || over) return;
-    rolling = true;
-    let ticks = 0;
-    const spin = setInterval(()=>{
-      el('snlDiceFace').textContent = DICE_FACES[1+Math.floor(Math.random()*6)];
-      ticks++;
-      if(ticks>6){
-        clearInterval(spin);
-        const val = 1+Math.floor(Math.random()*6);
-        el('snlDiceFace').textContent = DICE_FACES[val];
-        applyMove(val);
-      }
-    },70);
-  }
-
-  function applyMove(val){
-    const cur = positions[turn];
-    let next = cur + val;
-    if(next>100){
-      // overshoot: no move
-      rolling = false;
-      nextTurn();
-      return;
-    }
-    positions[turn] = next;
-    renderTokens();
-    setTimeout(()=>{
-      if(JUMPS[next]!==undefined){
-        positions[turn] = JUMPS[next];
-        renderTokens();
-      }
-      const finalPos = positions[turn];
-      rolling = false;
-      if(finalPos===100){
-        over = true;
-        showWin();
-      } else {
-        nextTurn();
-      }
-    }, 350);
-  }
-
-  function nextTurn(){
-    turn = (turn+1)%numPlayers;
-    renderPlayers();
-    updateTurnLabel();
-  }
-
-  function showWin(){
-    el('snlPlay').classList.add('hidden');
-    el('snlWin').classList.remove('hidden');
-    el('snlWinText').innerHTML = '<span style="color:'+COLORS[turn]+';">'+NAMES[turn]+'</span> wins! 🎉';
-  }
-
-  function startGame(){
-    positions = new Array(numPlayers).fill(0);
-    turn = 0; over = false; rolling = false;
-    el('snlSetup').classList.add('hidden');
-    el('snlWin').classList.add('hidden');
-    el('snlPlay').classList.remove('hidden');
-    buildBoard();
-    renderPlayers();
-    renderTokens();
-    updateTurnLabel();
-    el('snlDiceFace').textContent = '🎲';
-  }
-
-  document.querySelectorAll('.snlPlayerCountBtn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      numPlayers = parseInt(btn.dataset.n,10);
-      document.querySelectorAll('.snlPlayerCountBtn').forEach(b=>b.classList.remove('btn-primary'));
-      document.querySelectorAll('.snlPlayerCountBtn').forEach(b=>b.classList.add('btn-ghost'));
-      btn.classList.remove('btn-ghost'); btn.classList.add('btn-primary');
+    document.querySelectorAll('.ludo-token-dots').forEach(t=>t.innerHTML='');
+    ORDER.forEach(color=>document.querySelectorAll('[id^="ludo-dock-'+color+'"]').forEach(d=>d.innerHTML=''));
+    activeColors.forEach(color=>{
+      tokens[color].forEach((step, i)=>{
+        const dot = document.createElement('div');
+        dot.style.cssText = `width:62%;height:62%;border-radius:50%;background:${COLORS[color]};border:1.5px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,0.4);`;
+        if(step===0){
+          const dock = el('ludo-dock-'+color+'-'+i);
+          if(dock) dock.appendChild(dot);
+        } else {
+          const [r,c] = cellForStep(color, step);
+          const cell = el('ludo-cell-'+r+'-'+c);
+          if(cell){
+            const wrap2 = cell.querySelector('.ludo-token-dots');
+            const small = document.createElement('div');
+            small.style.cssText = `width:38%;height:38%;border-radius:50%;background:${COLORS[color]};border:1px solid #fff;`;
+            wrap2.appendChild(small);
+          }
+        }
+      });
     });
-  });
-  el('snlStartBtn').addEventListener('click', startGame);
-  el('snlRollBtn').addEventListener('click', roll);
-  el('snlResetBtn').addEventListener('click', ()=>{
-    el('snlPlay').classList.add('hidden');
-    el('snlSetup').classList.remove('hidden');
-  });
-  el('snlPlayAgainBtn').addEventListener('click', startGame);
-  el('snlToHubBtn').addEventListener('click', ()=>{
-    el('snlWin').classList.add('hidden');
-    el('snlSetup').classList.remove('hidden');
-  });
-
-  window.SNL = { onShow(){ /* nothing needed on show */ } };
-})();
-
-</script>
-<script>
-/* ============ LUDO ENGINE (simplified) ============ */
-(function(){
-  const el = id => document.getElementById(id);
-  const COLORS = ['#e8b34c','#c1443c','#3fa796','#8aa4e8'];
-  const NAMES = ['P1','P2','P3','P4'];
-  const RING_LEN = 52;
-  const FINISH = 57;
-  const DICE_FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
-
-  let numPlayers = 2, tokens = [], turn = 0, over = false, rolling = false, sixStreak = 0, lastRoll = 0;
-
-  function startOffset(p){ return p * Math.floor(RING_LEN/4); } // 0,13,26,39
-  function isSafeRingCell(ringCell){
-    for(let p=0;p<4;p++) if(ringCell === startOffset(p)) return true;
-    return false;
-  }
-  function ringCellFor(p, step){ // step 1..51
-    return (startOffset(p) + step - 1) % RING_LEN;
-  }
-
-  function buildTrack(){
-    const track = el('ludoTrack');
-    track.innerHTML = '';
-    track.style.gridTemplateRows = 'repeat(4,1fr)';
-    for(let c=0;c<RING_LEN;c++){
-      const div = document.createElement('div');
-      div.className = 'cell';
-      div.id = 'ludo-cell-'+c;
-      let bg = '';
-      for(let p=0;p<4;p++){ if(c===startOffset(p)) bg = COLORS[p]; }
-      if(bg){ div.style.background = bg+'33'; div.style.border='1px solid '+bg; div.innerHTML = '<div style="font-size:9px;">★</div>'; }
-      div.innerHTML += '<div class="ludo-tokens" style="display:flex;gap:1px;flex-wrap:wrap;justify-content:center;"></div>';
-      track.appendChild(div);
-    }
   }
 
   function renderPlayers(){
     const wrap = el('ludoPlayers');
     wrap.innerHTML = '';
-    for(let i=0;i<numPlayers;i++){
+    activeColors.forEach((color,i)=>{
       const av = document.createElement('div');
-      av.className = 'avatar' + (i===turn && !over ? ' you' : '');
-      av.innerHTML = '<div class="dot" style="background:'+COLORS[i]+';">'+(i+1)+'</div>'+NAMES[i];
+      av.className = 'avatar' + (i===turnIdx && !over ? ' you' : '');
+      av.innerHTML = '<div class="dot" style="background:'+COLORS[color]+';">'+(i+1)+'</div>'+NAMES[color];
       wrap.appendChild(av);
-    }
-  }
-
-  function renderBoard(){
-    document.querySelectorAll('.ludo-tokens').forEach(t=>t.innerHTML='');
-    for(let p=0;p<numPlayers;p++){
-      for(let t=0;t<4;t++){
-        const step = tokens[p][t];
-        if(step>=1 && step<=51){
-          const cellIdx = ringCellFor(p, step);
-          const cell = el('ludo-cell-'+cellIdx);
-          if(cell){
-            const dot = document.createElement('div');
-            dot.style.cssText = 'width:9px;height:9px;border-radius:50%;background:'+COLORS[p]+';border:1px solid rgba(0,0,0,0.3);';
-            cell.querySelector('.ludo-tokens').appendChild(dot);
-          }
-        }
-      }
-    }
-    // yards / home summary
-    const yardsWrap = el('ludoYards');
-    yardsWrap.innerHTML = '';
-    for(let p=0;p<numPlayers;p++){
-      const inYard = tokens[p].filter(s=>s===0).length;
-      const home = tokens[p].filter(s=>s===FINISH).length;
-      const onStretch = tokens[p].filter(s=>s>51 && s<FINISH).length;
-      const box = document.createElement('div');
-      box.className = 'pool-card';
-      box.style.cssText += 'min-width:120px;text-align:center;';
-      box.innerHTML = '<div style="font-size:11px;color:'+COLORS[p]+';font-weight:800;">'+NAMES[p]+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);">Yard: '+inYard+' · Stretch: '+onStretch+' · Home: '+home+'/4</div>';
-      yardsWrap.appendChild(box);
-    }
+    });
   }
 
   function updateTurnLabel(msg){
     if(over) return;
-    el('ludoTurnLabel').innerHTML = msg || ('<span style="color:'+COLORS[turn]+';">●</span> '+NAMES[turn]+"'s turn");
+    const color = activeColors[turnIdx];
+    el('ludoTurnLabel').innerHTML = msg || ('<span style="color:'+COLORS[color]+';">●</span> '+NAMES[color]+"'s turn");
   }
 
-  function movableTokens(p, roll){
+  function movableTokens(color, roll){
     const list = [];
-    for(let t=0;t<4;t++){
-      const step = tokens[p][t];
-      if(step===0){ if(roll===6) list.push(t); continue; }
-      if(step===FINISH) continue;
-      const next = step+roll;
-      if(next<=FINISH) list.push(t);
-    }
+    tokens[color].forEach((step,i)=>{
+      if(step===0){ if(roll===6) list.push(i); return; }
+      if(step===FINISH_STEP) return;
+      if(step+roll<=FINISH_STEP) list.push(i);
+    });
     return list;
   }
 
-  function moveToken(p, t, roll){
-    const step = tokens[p][t];
-    let next = (step===0) ? 1 : step+roll;
-    tokens[p][t] = next;
-    // capture check
-    if(next>=1 && next<=51){
-      const ringCell = ringCellFor(p, next);
-      if(!isSafeRingCell(ringCell)){
-        for(let op=0; op<numPlayers; op++){
-          if(op===p) continue;
-          for(let ot=0; ot<4; ot++){
-            const oStep = tokens[op][ot];
-            if(oStep>=1 && oStep<=51 && ringCellFor(op,oStep)===ringCell){
-              tokens[op][ot] = 0; // sent home
+  function moveToken(color, i, roll){
+    const step = tokens[color][i];
+    const next = (step===0) ? 1 : step+roll;
+    tokens[color][i] = next;
+    if(next>=1 && next<=55){
+      const [r,c] = ringCellForColor(color, next);
+      if(!isSafeGlobalCell(r,c)){
+        activeColors.forEach(op=>{
+          if(op===color) return;
+          tokens[op].forEach((oStep,oi)=>{
+            if(oStep>=1 && oStep<=55){
+              const [orr,occ] = ringCellForColor(op, oStep);
+              if(orr===r && occ===c) tokens[op][oi] = 0;
             }
-          }
-        }
+          });
+        });
       }
     }
-    renderBoard();
+    renderTokens();
   }
 
-  function checkWin(p){
-    return tokens[p].every(s=>s===FINISH);
-  }
+  function checkWin(color){ return tokens[color].every(s=>s===FINISH_STEP); }
 
   function roll(){
     if(rolling || over) return;
@@ -1964,7 +1836,6 @@
       if(ticks>6){
         clearInterval(spin);
         const val = 1+Math.floor(Math.random()*6);
-        lastRoll = val;
         el('ludoDiceFace').textContent = DICE_FACES[val];
         handleRoll(val);
       }
@@ -1972,40 +1843,40 @@
   }
 
   function handleRoll(val){
-    const movable = movableTokens(turn, val);
+    const color = activeColors[turnIdx];
+    const movable = movableTokens(color, val);
     if(movable.length===0){
       rolling = false;
       updateTurnLabel('No valid move — passing turn');
-      setTimeout(advanceAfterRoll, 700);
+      setTimeout(()=>advanceAfterRoll(false), 700);
       return;
     }
     if(movable.length===1){
       doMove(movable[0], val);
       return;
     }
-    // let player choose
-    const p = turn;
     const wrap = el('ludoTokenChoice');
     wrap.innerHTML = '';
-    movable.forEach(t=>{
-      const step = tokens[p][t];
-      const label = step===0 ? 'Token '+(t+1)+' (yard)' : 'Token '+(t+1)+' (pos '+step+')';
+    movable.forEach(i=>{
+      const step = tokens[color][i];
+      const label = step===0 ? 'Token '+(i+1)+' (yard)' : 'Token '+(i+1)+' (step '+step+')';
       const b = document.createElement('button');
       b.className = 'btn btn-ghost btn-sm';
       b.textContent = label;
-      b.addEventListener('click', ()=>{ wrap.innerHTML=''; doMove(t, val); });
+      b.addEventListener('click', ()=>{ wrap.innerHTML=''; doMove(i, val); });
       wrap.appendChild(b);
     });
     rolling = false;
     updateTurnLabel('Choose a token to move');
   }
 
-  function doMove(t, val){
+  function doMove(i, val){
     rolling = true;
-    moveToken(turn, t, val);
+    const color = activeColors[turnIdx];
+    moveToken(color, i, val);
     setTimeout(()=>{
       rolling = false;
-      if(checkWin(turn)){
+      if(checkWin(color)){
         over = true;
         showWin();
         return;
@@ -2020,7 +1891,7 @@
       if(sixStreak<3){ renderPlayers(); updateTurnLabel(); return; }
     }
     sixStreak = 0;
-    turn = (turn+1)%numPlayers;
+    turnIdx = (turnIdx+1)%activeColors.length;
     renderPlayers();
     updateTurnLabel();
   }
@@ -2028,19 +1899,21 @@
   function showWin(){
     el('ludoPlay').classList.add('hidden');
     el('ludoWin').classList.remove('hidden');
-    el('ludoWinText').innerHTML = '<span style="color:'+COLORS[turn]+';">'+NAMES[turn]+'</span> wins! 🎉';
+    const color = activeColors[turnIdx];
+    el('ludoWinText').innerHTML = '<span style="color:'+COLORS[color]+';">'+NAMES[color]+'</span> wins! 🎉';
   }
 
   function startGame(){
-    tokens = [];
-    for(let p=0;p<numPlayers;p++) tokens.push([0,0,0,0]);
-    turn = 0; over = false; rolling = false; sixStreak = 0;
+    activeColors = colorsForCount(numPlayers);
+    tokens = {};
+    activeColors.forEach(c=> tokens[c] = [0,0,0,0]);
+    turnIdx = 0; over = false; rolling = false; sixStreak = 0;
     el('ludoSetup').classList.add('hidden');
     el('ludoWin').classList.add('hidden');
     el('ludoPlay').classList.remove('hidden');
-    buildTrack();
+    buildBoardDom();
     renderPlayers();
-    renderBoard();
+    renderTokens();
     updateTurnLabel();
     el('ludoDiceFace').textContent = '🎲';
     el('ludoTokenChoice').innerHTML = '';
@@ -2070,123 +1943,225 @@
 
 </script>
 <script>
-/* ============ CARROM ENGINE (casual physics) ============ */
+/* ============ ARROW PUZZLE ENGINE ============ */
 (function(){
   const el = id => document.getElementById(id);
-  const canvas = el('carromCanvas');
-  const ctx = canvas.getContext('2d');
-  const SIZE = 340, PAD = 16, POCKET_R = 15;
-  const COIN_R = 10, STRIKER_R = 13, QUEEN_R = 10;
-  const FRICTION = 0.986, MIN_VEL = 0.045, MAX_SPEED = 17, PULL_SCALE = 0.13;
-  const pockets = [{x:PAD,y:PAD},{x:SIZE-PAD,y:PAD},{x:PAD,y:SIZE-PAD},{x:SIZE-PAD,y:SIZE-PAD}];
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const DIRV = { up:[-1,0], down:[1,0], left:[0,-1], right:[0,1] };
 
-  let coins = [], striker = null, turn = 0, scores = [0,0], animating = false;
-  let aiming = false, aimStart = null, potThisTurn = false, strikerFouled = false, gameOver = false;
+  const MODES = {
+    arrows: { title:'Tap Away Arrows', rows:9, cols:7, mask:null, pieces:14 },
+    clear:  { title:'Clear the Board',  rows:9, cols:6, mask:null, pieces:11 },
+    heart:  { title:'Find the Free Path', rows:11, cols:13, mask:heartMask, pieces:18 }
+  };
 
-  function makeCoins(){
-    const list = [];
-    const cx = SIZE/2, cy = SIZE/2, d = COIN_R*2+3;
-    // hex-packed rosette: axial coords within radius 2 => 19 points
-    const pts = [];
-    for(let q=-2;q<=2;q++){
-      for(let r=-2;r<=2;r++){
-        if(Math.abs(q+r)<=2){
-          pts.push({q,r});
+  function heartMask(r,c,rows,cols){
+    const x = (c - cols/2 + 0.5) / (cols/2) * 1.3;
+    const y = (rows/2 - 0.5 - r) / (rows/2) * 1.3;
+    const f = Math.pow(x*x+y*y-1,3) - x*x*Math.pow(y,3);
+    return f <= 0;
+  }
+
+  let curMode = null, rows=0, cols=0, mask=null, pieces=[], occupied=null, hearts=3, moves=0, U=36;
+
+  function cellPlayable(r,c){
+    if(r<0||r>=rows||c<0||c>=cols) return false;
+    if(mask && !mask(r,c,rows,cols)) return false;
+    return true;
+  }
+
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+  function exitPathClear(head, dir, occ){
+    let [r,c] = head;
+    const [dr,dc] = DIRV[dir];
+    r+=dr; c+=dc;
+    while(cellPlayable(r,c)){
+      if(occ[r][c]) return false;
+      r+=dr; c+=dc;
+    }
+    return true;
+  }
+
+  function tryPlacePiece(occ){
+    const empties = [];
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(cellPlayable(r,c) && !occ[r][c]) empties.push([r,c]);
+    if(!empties.length) return null;
+    const start = empties[Math.floor(Math.random()*empties.length)];
+    const len = 3 + Math.floor(Math.random()*4);
+    let cells = [start];
+    let visited = new Set([start[0]+','+start[1]]);
+    let cur = start;
+    for(let i=1;i<len;i++){
+      const dirs = shuffle(['up','down','left','right']);
+      let moved = false;
+      for(const d of dirs){
+        const [dr,dc] = DIRV[d];
+        const nr=cur[0]+dr, nc=cur[1]+dc;
+        if(cellPlayable(nr,nc) && !occ[nr][nc] && !visited.has(nr+','+nc)){
+          cells.push([nr,nc]); visited.add(nr+','+nc); cur=[nr,nc]; moved=true; break;
         }
       }
+      if(!moved) break;
     }
-    let wCount=0, bCount=0;
-    pts.forEach(pt=>{
-      const x = cx + d*(pt.q + pt.r/2);
-      const y = cy + d*(pt.r*Math.sqrt(3)/2);
-      if(pt.q===0 && pt.r===0){
-        list.push({x,y,vx:0,vy:0,r:QUEEN_R,color:'#c1443c',type:'queen',alive:true});
+    if(cells.length<2) return null;
+    const head = cells[cells.length-1];
+    const dirs = shuffle(['up','down','left','right']);
+    for(const dir of dirs){
+      if(exitPathClear(head, dir, occ)) return { cells, head, dir };
+    }
+    return null;
+  }
+
+  function generatePuzzle(){
+    const occ = Array.from({length:rows},()=>new Array(cols).fill(false));
+    const built = [];
+    let tries = 0;
+    while(built.length < MODES[curMode].pieces && tries < 400){
+      tries++;
+      const p = tryPlacePiece(occ);
+      if(p){ built.push(p); p.cells.forEach(([r,c])=> occ[r][c]=true); }
+    }
+    built.reverse(); // built[0] = first removable
+    return built;
+  }
+
+  // ---------------- rendering ----------------
+  function render(){
+    const svg = el('puzzleSvg');
+    svg.setAttribute('viewBox', `0 0 ${cols*U} ${rows*U}`);
+    svg.innerHTML = '';
+    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
+    pieces.forEach(p=>{ p.alive = true; p.cells.forEach(([r,c])=> occupied[r][c]=true); });
+
+    pieces.forEach((p, idx)=>{
+      if(!p.alive) return;
+      const g = document.createElementNS(svgNS,'g');
+      g.setAttribute('data-idx', idx);
+      g.style.cursor = 'pointer';
+
+      const pts = p.cells.map(([r,c])=> [(c+0.5)*U, (r+0.5)*U]);
+      // extend a bit past head cell in arrow direction to draw the arrowhead
+      const [dr,dc] = DIRV[p.dir];
+      const [hx,hy] = pts[pts.length-1];
+      const tipx = hx + dc*U*0.55, tipy = hy + dr*U*0.55;
+
+      const d = 'M ' + pts.map(pt=>pt.join(',')).join(' L ');
+      const path = document.createElementNS(svgNS,'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke','#2b2760');
+      path.setAttribute('stroke-width', U*0.34);
+      path.setAttribute('stroke-linecap','round');
+      path.setAttribute('stroke-linejoin','round');
+      path.setAttribute('class','pz-line');
+      g.appendChild(path);
+
+      // hit area (wider, invisible)
+      const hit = document.createElementNS(svgNS,'path');
+      hit.setAttribute('d', d);
+      hit.setAttribute('fill','none');
+      hit.setAttribute('stroke','transparent');
+      hit.setAttribute('stroke-width', U*0.9);
+      g.appendChild(hit);
+
+      // arrowhead triangle
+      const perp = [-dr, dc]; // perpendicular for triangle base
+      const baseW = U*0.32;
+      const p1 = [hx + dc*U*0.18 + perp[1]*baseW, hy + dr*U*0.18 + perp[0]*baseW];
+      const p2 = [hx + dc*U*0.18 - perp[1]*baseW, hy + dr*U*0.18 - perp[0]*baseW];
+      const p3 = [tipx, tipy];
+      const tri = document.createElementNS(svgNS,'polygon');
+      tri.setAttribute('points', [p1,p2,p3].map(p=>p.join(',')).join(' '));
+      tri.setAttribute('fill', '#2b2760');
+      tri.setAttribute('class','pz-arrow');
+      g.appendChild(tri);
+
+      g.addEventListener('click', ()=> tapPiece(idx));
+      svg.appendChild(g);
+    });
+
+    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
+  }
+
+  function recomputeOccupied(){
+    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
+    pieces.forEach(p=>{ if(p.alive) p.cells.forEach(([r,c])=> occupied[r][c]=true); });
+  }
+
+  function tapPiece(idx){
+    const p = pieces[idx];
+    if(!p || !p.alive) return;
+    moves++;
+    el('puzzleMoves').textContent = moves;
+    recomputeOccupied();
+    p.cells.forEach(([r,c])=> occupied[r][c]=false); // don't block on self
+    const clear = exitPathClear(p.head, p.dir, occupied);
+    const svg = el('puzzleSvg');
+    const g = svg.querySelector('g[data-idx="'+idx+'"]');
+    if(clear){
+      p.alive = false;
+      if(g){
+        const [dr,dc] = DIRV[p.dir];
+        g.style.transition = 'transform 0.35s ease-in, opacity 0.35s ease-in';
+        g.style.transform = `translate(${dc*U*8}px, ${dr*U*8}px)`;
+        g.style.opacity = '0';
+        setTimeout(()=>{ g.remove(); checkWinOrContinue(); }, 360);
       } else {
-        let color;
-        if(wCount<9 && (bCount>=9 || wCount<=bCount)){ color='#f3e9d2'; wCount++; }
-        else { color='#241f0a'; bCount++; }
-        list.push({x,y,vx:0,vy:0,r:COIN_R,color,type:(color==='#f3e9d2'?'white':'black'),alive:true});
+        checkWinOrContinue();
       }
-    });
-    return list;
-  }
-
-  function resetStriker(){
-    const y = (turn===0) ? SIZE-PAD-STRIKER_R-4 : PAD+STRIKER_R+4;
-    striker = {x:SIZE/2, y, vx:0, vy:0, r:STRIKER_R, color:'#8aa4e8', type:'striker', alive:true};
-  }
-
-  function allBodies(){ return striker ? coins.concat([striker]) : coins.slice(); }
-
-  function draw(){
-    ctx.clearRect(0,0,SIZE,SIZE);
-    // board
-    const grad = ctx.createLinearGradient(0,0,SIZE,SIZE);
-    grad.addColorStop(0,'#caa15a'); grad.addColorStop(1,'#a97f3f');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,SIZE,SIZE);
-    ctx.strokeStyle = '#5a3d1c'; ctx.lineWidth = 6;
-    ctx.strokeRect(3,3,SIZE-6,SIZE-6);
-    // center circle
-    ctx.strokeStyle = 'rgba(90,61,28,0.5)'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.arc(SIZE/2,SIZE/2,50,0,Math.PI*2); ctx.stroke();
-    // pockets
-    pockets.forEach(p=>{
-      ctx.fillStyle = '#181735';
-      ctx.beginPath(); ctx.arc(p.x,p.y,POCKET_R,0,Math.PI*2); ctx.fill();
-    });
-    // coins
-    coins.forEach(c=>{
-      if(!c.alive) return;
-      ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,Math.PI*2);
-      ctx.fillStyle = c.color; ctx.fill();
-      ctx.lineWidth=1.2; ctx.strokeStyle = c.type==='white'?'#8a7f5c':'#000'; ctx.stroke();
-    });
-    // striker
-    if(striker && striker.alive){
-      ctx.beginPath(); ctx.arc(striker.x,striker.y,striker.r,0,Math.PI*2);
-      ctx.fillStyle = striker.color; ctx.fill();
-      ctx.lineWidth=1.5; ctx.strokeStyle='#3b4a7a'; ctx.stroke();
-    }
-    // aim line
-    if(aiming && aimStart && striker){
-      ctx.strokeStyle = 'rgba(243,233,210,0.6)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5,5]);
-      const dx = striker.x-aimStart.dragX, dy = striker.y-aimStart.dragY;
-      ctx.beginPath();
-      ctx.moveTo(striker.x, striker.y);
-      ctx.lineTo(striker.x+dx*2, striker.y+dy*2);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    } else {
+      loseHeart();
+      if(g){
+        g.querySelector('.pz-line').setAttribute('stroke', 'var(--cage)');
+        g.style.transition = 'transform 0.08s'; 
+        let n=0; const shake=setInterval(()=>{ n++; g.style.transform = 'translateX('+((n%2===0)?4:-4)+'px)'; if(n>4){ clearInterval(shake); g.style.transform=''; g.querySelector('.pz-line').setAttribute('stroke','#2b2760'); } },40);
+      }
     }
   }
 
-  function step(){
-    let moving = false;
-    const bodies = allBodies();
-    bodies.forEach(b=>{
-      if(!b.alive) return;
-      if(Math.abs(b.vx)<MIN_VEL) b.vx=0;
-      if(Math.abs(b.vy)<MIN_VEL) b.vy=0;
-      if(b.vx!==0 || b.vy!==0){
-        moving = true;
-        b.x += b.vx; b.y += b.vy;
-        b.vx *= FRICTION; b.vy *= FRICTION;
-        // wall bounce
-        if(b.x-b.r<PAD){ b.x=PAD+b.r; b.vx=-b.vx; }
-        if(b.x+b.r>SIZE-PAD){ b.x=SIZE-PAD-b.r; b.vx=-b.vx; }
-        if(b.y-b.r<PAD){ b.y=PAD+b.r; b.vy=-b.vy; }
-        if(b.y+b.r>SIZE-PAD){ b.y=SIZE-PAD-b.r; b.vy=-b.vy; }
-        // pocket check
-        pockets.forEach(p=>{
-          const dx=b.x-p.x, dy=b.y-p.y;
-          if(Math.sqrt(dx*dx+dy*dy) < POCKET_R*0.8){
-            b.alive = false; b.vx=0; b.vy=0;
-            handlePot(b);
-          }
-        });
+  function checkWinOrContinue(){
+    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
+    if(pieces.every(p=>!p.alive)){
+      el('puzzlePlay').classList.add('hidden');
+      el('puzzleWin').classList.remove('hidden');
+    }
+  }
+
+  function renderHearts(){
+    el('puzzleHearts').textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3-hearts);
+  }
+
+  function loseHeart(){
+    hearts--;
+    renderHearts();
+    if(hearts<=0){
+      setTimeout(()=>{
+        el('puzzlePlay').classList.add('hidden');
+        el('puzzleLose').classList.remove('hidden');
+      }, 300);
+    }
+  }
+
+  function hint(){
+    recomputeOccupied();
+    for(let i=0;i<pieces.length;i++){
+      const p = pieces[i];
+      if(!p.alive) continue;
+      const occ2 = occupied.map(row=>row.slice());
+      p.cells.forEach(([r,c])=> occ2[r][c]=false);
+      if(exitPathClear(p.head, p.dir, occ2)){
+        const g = el('puzzleSvg').querySelector('g[data-idx="'+i+'"]');
+        if(g){
+          const line = g.querySelector('.pz-line');
+          const arrow = g.querySelector('.pz-arrow');
+          line.setAttribute('stroke', 'var(--gold-soft)');
+          arrow.setAttribute('fill', 'var(--gold-soft)');
+          setTimeout(()=>{ if(line){line.setAttribute('stroke','#2b2760');} if(arrow){arrow.setAttribute('fill','#2b2760');} }, 1400);
+        }
+        return;
       }
-    });
-    // collisions
-    for(let i=0;i<bodies.l
+    }
+  }
+
+  function star
