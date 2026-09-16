@@ -564,7 +564,7 @@
     document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo');
   }
 
-  const APP_VERSION = "1.6.0"; // bump this + version.json together on every release
+  const APP_VERSION = "1.7.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -1914,17 +1914,18 @@
 
     const ring = document.createElement('div');
     const ringW = sizePx*0.55, ringH = ringW*0.4;
-    ring.style.cssText = `position:absolute;left:50%;bottom:4%;width:${ringW}px;height:${ringH}px;border-radius:50%;background:${color};opacity:0.32;transform:translateX(-50%);`;
+    ring.style.cssText = `position:absolute;left:50%;bottom:2%;width:${ringW}px;height:${ringH}px;border-radius:50%;background:${color};opacity:0.32;transform:translateX(-50%);`;
     outer.appendChild(ring);
 
-    const pin = document.createElement('div');
-    const ps = sizePx*0.78;
-    pin.style.cssText = `position:absolute;left:50%;top:2%;width:${ps}px;height:${ps}px;background:${color};border-radius:50% 50% 50% 0;transform:translateX(-50%) rotate(-45deg);border:1.5px solid #fff;box-shadow:0 2px 3px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;`;
-    const inner = document.createElement('div');
-    const is = ps*0.44;
-    inner.style.cssText = `width:${is}px;height:${is}px;border-radius:50%;background:#fff;transform:rotate(45deg);`;
-    pin.appendChild(inner);
-    outer.appendChild(pin);
+    // chess pawn silhouette (head, tapered body, base) — colored per team
+    const pawn = document.createElement('div');
+    pawn.style.cssText = `position:absolute;left:50%;top:0;width:${sizePx*0.8}px;height:${sizePx*0.92}px;transform:translateX(-50%);filter:drop-shadow(0 2px 2px rgba(0,0,0,0.45));`;
+    pawn.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%">
+      <ellipse cx="12" cy="21" rx="7" ry="2" fill="${color}" stroke="#fff" stroke-width="0.9"/>
+      <path d="M8.1 20.2 Q12 17.2 15.9 20.2 L14.3 12.8 Q12 11.5 9.7 12.8 Z" fill="${color}" stroke="#fff" stroke-width="0.9"/>
+      <circle cx="12" cy="7.1" r="3.7" fill="${color}" stroke="#fff" stroke-width="1"/>
+    </svg>`;
+    outer.appendChild(pawn);
     return outer;
   }
 
