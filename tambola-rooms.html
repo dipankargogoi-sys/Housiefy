@@ -564,7 +564,7 @@
     document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo');
   }
 
-  const APP_VERSION = "1.5.0"; // bump this + version.json together on every release
+  const APP_VERSION = "1.6.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -1844,11 +1844,11 @@
       const base = document.createElement('div');
       base.style.cssText = `grid-row:${r0+1}/${r0+7};grid-column:${c0+1}/${c0+7};background:${COLORS[color]};display:flex;align-items:center;justify-content:center;padding:10%;box-sizing:border-box;`;
       const nest = document.createElement('div');
-      nest.style.cssText = 'background:rgba(255,255,255,0.85);border-radius:14%;width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6%;padding:8%;box-sizing:border-box;';
+      nest.style.cssText = 'background:#ffffff;border-radius:14%;width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6%;padding:8%;box-sizing:border-box;';
       for(let i=0;i<4;i++){
         const dock = document.createElement('div');
         dock.id = 'ludo-dock-'+color+'-'+i;
-        dock.style.cssText = 'border-radius:50%;background:rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;';
+        dock.style.cssText = `border-radius:50%;background:${COLORS[color]};opacity:0.55;display:flex;align-items:center;justify-content:center;`;
         nest.appendChild(dock);
       }
       base.appendChild(nest);
@@ -1869,8 +1869,7 @@
         const s = ringCellForColor(color,1);
         if(s[0]===r && s[1]===c){
           isStart = true;
-          cell.style.background = COLORS[color];
-          cell.innerHTML = '<span style="font-size:13px;font-weight:800;color:#fff;">'+DIR_ARROW[color]+'</span>';
+          cell.innerHTML = '<span style="font-size:14px;font-weight:800;color:'+COLORS[color]+';">'+DIR_ARROW[color]+'</span>';
         }
       });
       if(!isStart && EXTRA_SAFE.includes(idx)){
@@ -1887,7 +1886,7 @@
       HOME_COLUMN[color].forEach(([r,c])=>{
         const cell = document.createElement('div');
         cell.id = 'ludo-cell-'+r+'-'+c;
-        cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:${COLORS[color]};position:relative;`;
+        cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:${COLORS[color]};position:relative;border:1px solid rgba(0,0,0,0.06);`;
         const dotsWrap = document.createElement('div');
         dotsWrap.className = 'ludo-token-dots';
         dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;';
@@ -1897,8 +1896,7 @@
       const [fr,fc] = FINISH_CELL[color];
       const fcell = document.createElement('div');
       fcell.id = 'ludo-cell-'+fr+'-'+fc;
-      fcell.style.cssText = `grid-row:${fr+1};grid-column:${fc+1};background:${COLORS[color]};position:relative;display:flex;align-items:center;justify-content:center;`;
-      fcell.innerHTML = '<span style="font-size:8px;">🏠</span>';
+      fcell.style.cssText = `grid-row:${fr+1};grid-column:${fc+1};background:${COLORS[color]};position:relative;border:1px solid rgba(0,0,0,0.06);`;
       const dotsWrap = document.createElement('div');
       dotsWrap.className = 'ludo-token-dots';
       dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;';
