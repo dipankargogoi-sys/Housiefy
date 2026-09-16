@@ -564,7 +564,7 @@
     document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo');
   }
 
-  const APP_VERSION = "1.9.0"; // bump this + version.json together on every release
+  const APP_VERSION = "2.0.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -1891,7 +1891,7 @@
       }
       const dotsWrap = document.createElement('div');
       dotsWrap.className = 'ludo-token-dots';
-      dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;';
+      dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-end;justify-content:center;gap:0;z-index:5;overflow:visible;';
       cell.appendChild(dotsWrap);
       wrap.appendChild(cell);
     });
@@ -1903,7 +1903,7 @@
         cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:${COLORS[color]};position:relative;border:1px solid rgba(0,0,0,0.06);`;
         const dotsWrap = document.createElement('div');
         dotsWrap.className = 'ludo-token-dots';
-        dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;';
+        dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-end;justify-content:center;gap:0;z-index:5;overflow:visible;';
         cell.appendChild(dotsWrap);
         wrap.appendChild(cell);
       });
@@ -1913,35 +1913,33 @@
       fcell.style.cssText = `grid-row:${fr+1};grid-column:${fc+1};background:${COLORS[color]};position:relative;border:1px solid rgba(0,0,0,0.06);`;
       const dotsWrap = document.createElement('div');
       dotsWrap.className = 'ludo-token-dots';
-      dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px;';
+      dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-end;justify-content:center;gap:0;z-index:5;overflow:visible;';
       fcell.appendChild(dotsWrap);
       wrap.appendChild(fcell);
     });
   }
 
   function makePin(color, sizePx, id){
-    // contained fully within its own sizePx x sizePx box — no overflow into
-    // neighboring cells, which was causing tokens to look hidden behind other colors
+    // white map-marker pin with a colored dot, standing on a colored base disc
+    // (matches the reference board). Taller than a cell on purpose — it "stands".
     const outer = document.createElement('div');
     if(id) outer.id = id;
-    outer.style.cssText = `width:${sizePx}px;height:${sizePx}px;position:relative;`;
+    const H = sizePx*1.42;
+    outer.style.cssText = `width:${sizePx}px;height:${H}px;position:relative;flex:none;`;
 
+    const ringW = sizePx*0.72, ringH = ringW*0.52;
     const ring = document.createElement('div');
-    const ringW = sizePx*0.55, ringH = ringW*0.4;
-    ring.style.cssText = `position:absolute;left:50%;bottom:2%;width:${ringW}px;height:${ringH}px;border-radius:50%;background:${color};opacity:0.32;transform:translateX(-50%);`;
+    ring.style.cssText = `position:absolute;left:50%;bottom:0;width:${ringW}px;height:${ringH}px;border-radius:50%;background:${color};box-shadow:inset 0 0 0 ${Math.max(1.5, sizePx*0.075)}px rgba(0,0,0,0.32), 0 1px 2px rgba(0,0,0,0.3);transform:translateX(-50%);`;
     outer.appendChild(ring);
 
-    // chess pawn silhouette (head, tapered body, base) — colored per team
-    const pawn = document.createElement('div');
-    pawn.style.cssText = `position:absolute;left:50%;top:0;width:${sizePx*0.8}px;height:${sizePx*0.92}px;transform:translateX(-50%);filter:drop-shadow(0 0 1px rgba(0,0,0,0.55)) drop-shadow(0 2px 2px rgba(0,0,0,0.45));`;
-    pawn.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%">
-      <g stroke="#fff" stroke-width="1.4" stroke-linejoin="round">
-        <ellipse cx="12" cy="20.6" rx="7.6" ry="2.3" fill="${color}"/>
-        <path d="M7.6 19.8 Q12 16.6 16.4 19.8 L14.6 12.4 Q12 11 9.4 12.4 Z" fill="${color}"/>
-        <circle cx="12" cy="6.9" r="4.1" fill="${color}"/>
-      </g>
-    </svg>`;
-    outer.appendChild(pawn);
+    const ps = sizePx*0.86;
+    const pin = document.createElement('div');
+    pin.style.cssText = `position:absolute;left:50%;bottom:${ringH*0.5 + ps*0.13}px;width:${ps}px;height:${ps}px;margin-left:${-ps/2}px;background:linear-gradient(135deg,#ffffff 45%,#d6d6df);border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 3px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;`;
+    const dot = document.createElement('div');
+    const ds = ps*0.5;
+    dot.style.cssText = `width:${ds}px;height:${ds}px;border-radius:50%;background:${color};box-shadow:inset 0 -${Math.max(1,ds*0.12)}px 0 rgba(0,0,0,0.22);`;
+    pin.appendChild(dot);
+    outer.appendChild(pin);
     return outer;
   }
 
@@ -1959,13 +1957,13 @@
         let pinEl;
         if(step===0){
           const dock = el('ludo-dock-'+color+'-'+i);
-          pinEl = makePin(COLORS[color], 38, pinId);
+          pinEl = makePin(COLORS[color], 40, pinId);
           if(dock) dock.appendChild(pinEl);
         } else {
           const [r,c] = cellForStep(color, step);
           const cell = el('ludo-cell-'+r+'-'+c);
           const n = perCell[r+'-'+c] || 1;
-          const size = n===1 ? 28 : (n===2 ? 18 : 14);
+          const size = n===1 ? 27 : (n===2 ? 14 : 12);
           pinEl = makePin(COLORS[color], size, pinId);
           if(cell){ cell.querySelector('.ludo-token-dots').appendChild(pinEl); }
         }
