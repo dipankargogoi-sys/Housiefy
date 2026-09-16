@@ -564,7 +564,7 @@
     document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo');
   }
 
-  const APP_VERSION = "1.8.0"; // bump this + version.json together on every release
+  const APP_VERSION = "1.9.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -1704,12 +1704,13 @@
   }
   const RING = buildRing();
   const RING_LEN = RING.length;
-  const START_OFFSET = { red:0, green:14, yellow:28, blue:42 };
+  const START_OFFSET = { red:1, green:15, yellow:29, blue:43 }; // 2nd cell of each rail = standard start squares
+  function hexToRgba(hex, a){ const n=parseInt(hex.slice(1),16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }
   const HOME_COLUMN = {
     red:    [[7,1],[7,2],[7,3],[7,4],[7,5]],
     green:  [[1,7],[2,7],[3,7],[4,7],[5,7]],
-    yellow: [[7,9],[7,10],[7,11],[7,12],[7,13]],
-    blue:   [[9,7],[10,7],[11,7],[12,7],[13,7]]
+    yellow: [[7,13],[7,12],[7,11],[7,10],[7,9]],
+    blue:   [[13,7],[12,7],[11,7],[10,7],[9,7]]
   };
   const FINISH_CELL = { red:[7,6], green:[6,7], yellow:[7,8], blue:[8,7] };
   const BASE_ORIGIN = { red:[0,0], green:[0,9], blue:[9,0], yellow:[9,9] };
@@ -1848,7 +1849,7 @@
       for(let i=0;i<4;i++){
         const dock = document.createElement('div');
         dock.id = 'ludo-dock-'+color+'-'+i;
-        dock.style.cssText = `border-radius:50%;background:${COLORS[color]};opacity:0.55;display:flex;align-items:center;justify-content:center;`;
+        dock.style.cssText = `border-radius:50%;background:${hexToRgba(COLORS[color],0.45)};display:flex;align-items:center;justify-content:center;`;
         nest.appendChild(dock);
       }
       base.appendChild(nest);
@@ -1870,7 +1871,9 @@
     // middle line), pointing into that color's home corridor — as in the reference
     const DIR_ARROW = { red:'→', green:'↓', yellow:'←', blue:'↑' };
     const HOME_ENTRY = {};
-    ORDER.forEach(color=>{ HOME_ENTRY[(START_OFFSET[color]+55)%RING_LEN] = color; });
+    ORDER.forEach(color=>{ HOME_ENTRY[(START_OFFSET[color]+54)%RING_LEN] = color; });
+    const START_CELL = {};
+    ORDER.forEach(color=>{ START_CELL[START_OFFSET[color]] = color; });
     RING.forEach(([r,c],idx)=>{
       const cell = document.createElement('div');
       cell.id = 'ludo-cell-'+r+'-'+c;
@@ -1878,6 +1881,11 @@
       if(HOME_ENTRY[idx]){
         const color = HOME_ENTRY[idx];
         cell.innerHTML = '<span style="font-size:15px;font-weight:800;color:'+COLORS[color]+';line-height:1;">'+DIR_ARROW[color]+'</span>';
+      } else if(START_CELL[idx]){
+        // start square: colored + safe — where a pawn lands when a 6 comes
+        const color = START_CELL[idx];
+        cell.style.background = COLORS[color];
+        cell.innerHTML = '<span style="font-size:13px;color:#fff;line-height:1;opacity:0.9;">★</span>';
       } else if(EXTRA_SAFE.includes(idx)){
         cell.innerHTML = '<span style="font-size:13px;color:#b9b6cf;line-height:1;">☆</span>';
       }
@@ -1925,11 +1933,13 @@
 
     // chess pawn silhouette (head, tapered body, base) — colored per team
     const pawn = document.createElement('div');
-    pawn.style.cssText = `position:absolute;left:50%;top:0;width:${sizePx*0.8}px;height:${sizePx*0.92}px;transform:translateX(-50%);filter:drop-shadow(0 2px 2px rgba(0,0,0,0.45));`;
+    pawn.style.cssText = `position:absolute;left:50%;top:0;width:${sizePx*0.8}px;height:${sizePx*0.92}px;transform:translateX(-50%);filter:drop-shadow(0 0 1px rgba(0,0,0,0.55)) drop-shadow(0 2px 2px rgba(0,0,0,0.45));`;
     pawn.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%">
-      <ellipse cx="12" cy="21" rx="7" ry="2" fill="${color}" stroke="#fff" stroke-width="0.9"/>
-      <path d="M8.1 20.2 Q12 17.2 15.9 20.2 L14.3 12.8 Q12 11.5 9.7 12.8 Z" fill="${color}" stroke="#fff" stroke-width="0.9"/>
-      <circle cx="12" cy="7.1" r="3.7" fill="${color}" stroke="#fff" stroke-width="1"/>
+      <g stroke="#fff" stroke-width="1.4" stroke-linejoin="round">
+        <ellipse cx="12" cy="20.6" rx="7.6" ry="2.3" fill="${color}"/>
+        <path d="M7.6 19.8 Q12 16.6 16.4 19.8 L14.6 12.4 Q12 11 9.4 12.4 Z" fill="${color}"/>
+        <circle cx="12" cy="6.9" r="4.1" fill="${color}"/>
+      </g>
     </svg>`;
     outer.appendChild(pawn);
     return outer;
@@ -1938,18 +1948,25 @@
   function renderTokens(){
     document.querySelectorAll('.ludo-token-dots').forEach(t=>t.innerHTML='');
     ORDER.forEach(color=>document.querySelectorAll('[id^="ludo-dock-'+color+'"]').forEach(d=>d.innerHTML=''));
+    // count pawns per cell so a lone pawn can be drawn big, and stacked pawns shrink to fit
+    const perCell = {};
+    activeColors.forEach(color=> tokens[color].forEach(step=>{
+      if(step>0){ const [r,c]=cellForStep(color,step); const k=r+'-'+c; perCell[k]=(perCell[k]||0)+1; }
+    }));
     activeColors.forEach(color=>{
       tokens[color].forEach((step, i)=>{
         const pinId = 'ludo-pin-'+color+'-'+i;
         let pinEl;
         if(step===0){
           const dock = el('ludo-dock-'+color+'-'+i);
-          pinEl = makePin(COLORS[color], 34, pinId);
+          pinEl = makePin(COLORS[color], 38, pinId);
           if(dock) dock.appendChild(pinEl);
         } else {
           const [r,c] = cellForStep(color, step);
           const cell = el('ludo-cell-'+r+'-'+c);
-          pinEl = makePin(COLORS[color], 21, pinId);
+          const n = perCell[r+'-'+c] || 1;
+          const size = n===1 ? 28 : (n===2 ? 18 : 14);
+          pinEl = makePin(COLORS[color], size, pinId);
           if(cell){ cell.querySelector('.ludo-token-dots').appendChild(pinEl); }
         }
         pinEl.style.cursor = 'pointer';
