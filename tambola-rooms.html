@@ -1656,9 +1656,15 @@
 <script>
 /* ============ LUDO ENGINE (real cross board, tap-your-dice / tap-your-goti) ============ */
 (function(){
-  // visible on-screen error catcher — if anything on the page throws, you'll
-  // see it as a red banner instead of buttons silently doing nothing
+  // visible on-screen error catcher — if something inside the Ludo screen throws,
+  // you'll see it as a red banner instead of buttons silently doing nothing.
+  // Filters out unrelated noise (like ad-network errors) and only shows while
+  // the Ludo view is actually open, so it won't appear on other screens.
   window.addEventListener('error', function(e){
+    const msg = e.message || '';
+    if(/adsbygoogle|googlesyndication|googlesyndication\.com/i.test(msg)) return; // unrelated ad-network error, not a game bug
+    const viewLudo = document.getElementById('viewLudo');
+    if(!viewLudo || viewLudo.classList.contains('hidden')) return; // only relevant while Ludo is open
     let bar = document.getElementById('ludoErrBar');
     if(!bar){
       bar = document.createElement('div');
@@ -1666,7 +1672,7 @@
       bar.style.cssText = 'position:fixed;left:8px;right:8px;bottom:74px;z-index:9999;background:#c1443c;color:#fff;font-size:12px;padding:10px 12px;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,0.5);font-family:monospace;';
       document.body.appendChild(bar);
     }
-    bar.textContent = 'Script error: ' + e.message + ' (line ' + e.lineno + ')';
+    bar.textContent = 'Script error: ' + msg + ' (line ' + e.lineno + ')';
   });
 
   const el = id => document.getElementById(id);
