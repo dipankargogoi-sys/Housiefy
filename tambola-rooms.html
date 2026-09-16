@@ -564,7 +564,7 @@
     document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo');
   }
 
-  const APP_VERSION = "1.7.0"; // bump this + version.json together on every release
+  const APP_VERSION = "1.8.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -1713,7 +1713,7 @@
   };
   const FINISH_CELL = { red:[7,6], green:[6,7], yellow:[7,8], blue:[8,7] };
   const BASE_ORIGIN = { red:[0,0], green:[0,9], blue:[9,0], yellow:[9,9] };
-  const EXTRA_SAFE = [8,22,36,50];
+  const EXTRA_SAFE = [10,24,38,52]; // star cells — measured from the reference board
   const PIP_LAYOUTS = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
   const FINISH_STEP = 61;
 
@@ -1855,25 +1855,31 @@
       wrap.appendChild(base);
     });
 
+    // center: 4 triangles meeting at the middle, each facing its own home corridor
     const center = document.createElement('div');
-    center.style.cssText = `grid-row:7/10;grid-column:7/10;background:conic-gradient(${COLORS.green} 0deg 90deg, ${COLORS.yellow} 90deg 180deg, ${COLORS.blue} 180deg 270deg, ${COLORS.red} 270deg 360deg);`;
+    center.style.cssText = 'grid-row:7/10;grid-column:7/10;position:relative;';
+    center.innerHTML = `<svg viewBox="0 0 30 30" width="100%" height="100%" style="display:block;">
+      <polygon points="0,0 30,0 15,15" fill="${COLORS.green}"/>
+      <polygon points="30,0 30,30 15,15" fill="${COLORS.yellow}"/>
+      <polygon points="30,30 0,30 15,15" fill="${COLORS.blue}"/>
+      <polygon points="0,30 0,0 15,15" fill="${COLORS.red}"/>
+    </svg>`;
     wrap.appendChild(center);
 
+    // colored arrow on each color's home-entrance cell (the outermost cell of the
+    // middle line), pointing into that color's home corridor — as in the reference
     const DIR_ARROW = { red:'→', green:'↓', yellow:'←', blue:'↑' };
+    const HOME_ENTRY = {};
+    ORDER.forEach(color=>{ HOME_ENTRY[(START_OFFSET[color]+55)%RING_LEN] = color; });
     RING.forEach(([r,c],idx)=>{
       const cell = document.createElement('div');
       cell.id = 'ludo-cell-'+r+'-'+c;
       cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:#fff;border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;position:relative;`;
-      let isStart = false;
-      ORDER.forEach(color=>{
-        const s = ringCellForColor(color,1);
-        if(s[0]===r && s[1]===c){
-          isStart = true;
-          cell.innerHTML = '<span style="font-size:14px;font-weight:800;color:'+COLORS[color]+';">'+DIR_ARROW[color]+'</span>';
-        }
-      });
-      if(!isStart && EXTRA_SAFE.includes(idx)){
-        cell.innerHTML = '<span style="font-size:12px;color:var(--muted);">★</span>';
+      if(HOME_ENTRY[idx]){
+        const color = HOME_ENTRY[idx];
+        cell.innerHTML = '<span style="font-size:15px;font-weight:800;color:'+COLORS[color]+';line-height:1;">'+DIR_ARROW[color]+'</span>';
+      } else if(EXTRA_SAFE.includes(idx)){
+        cell.innerHTML = '<span style="font-size:13px;color:#b9b6cf;line-height:1;">☆</span>';
       }
       const dotsWrap = document.createElement('div');
       dotsWrap.className = 'ludo-token-dots';
