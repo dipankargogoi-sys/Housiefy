@@ -115,6 +115,8 @@
   @keyframes ludoHop{0%{transform:scale(1) rotate(0);}45%{transform:scale(1.45) translateY(-32%) rotate(0);}100%{transform:scale(1) rotate(0);}}
   @keyframes ludoHopL{0%{transform:scale(1) rotate(0);}45%{transform:scale(1.45) translateY(-32%) rotate(-16deg);}100%{transform:scale(1) rotate(0);}}
   @keyframes ludoHopR{0%{transform:scale(1) rotate(0);}45%{transform:scale(1.45) translateY(-32%) rotate(16deg);}100%{transform:scale(1) rotate(0);}}
+  .ludo-dance{animation:ludoDance 0.55s ease-in-out infinite;transform-origin:50% 90%;}
+  @keyframes ludoDance{0%,100%{transform:translateY(0) rotate(-12deg);}50%{transform:translateY(-38%) rotate(12deg);}}
   .ludo-token-highlight{animation:ludoPulse 0.9s ease-in-out infinite;}
   @keyframes ludoPulse{0%,100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0));transform:scale(1);}50%{filter:drop-shadow(0 0 5px rgba(255,255,255,0.9));transform:scale(1.15);}}
 
@@ -564,7 +566,7 @@
     document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo');
   }
 
-  const APP_VERSION = "2.0.0"; // bump this + version.json together on every release
+  const APP_VERSION = "2.1.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -1750,7 +1752,12 @@
   function sndRollTick(){ tone(220+Math.random()*380, 0.05, 'square', 0.07); }
   function sndStep(){ tone(480+Math.random()*90, 0.08, 'triangle', 0.16); }
   function sndCapture(){ tone(200,0.22,'sawtooth',0.18); setTimeout(()=>tone(130,0.28,'sawtooth',0.18),100); }
-  function sndWin(){ [523,659,784,1046].forEach((f,i)=> setTimeout(()=>tone(f,0.25,'triangle',0.18), i*130)); }
+  function sndWin(){
+    // short victory tune, ~3.5 s
+    const seq = [[523,.18],[659,.18],[784,.18],[1046,.36],[784,.18],[1046,.5],[0,.2],
+                 [659,.15],[784,.15],[988,.15],[1318,.45],[0,.15],[1046,.15],[1175,.15],[1318,.6]];
+    let t=0; seq.forEach(([f,d])=>{ if(f) setTimeout(()=>{ tone(f,d+0.05,'triangle',0.2); tone(f/2,d,'sine',0.08); }, t*1000); t+=d; });
+  }
 
   function ringCellForColor(color, step){ return RING[(START_OFFSET[color] + step - 1) % RING_LEN]; }
   function cellForStep(color, step){
@@ -1838,12 +1845,13 @@
   function buildBoardDom(){
     const wrap = el('ludoBoard');
     wrap.innerHTML = '';
-    wrap.style.cssText = 'display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);width:min(94vw,440px);aspect-ratio:1;background:var(--cream);border-radius:10px;overflow:hidden;border:2px solid var(--line);';
+    wrap.style.cssText = 'display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);width:min(94vw,440px);aspect-ratio:1;background:var(--cream);border-radius:10px;overflow:visible;border:2px solid var(--line);';
 
     ORDER.forEach(color=>{
       const [r0,c0] = BASE_ORIGIN[color];
       const base = document.createElement('div');
-      base.style.cssText = `grid-row:${r0+1}/${r0+7};grid-column:${c0+1}/${c0+7};background:${COLORS[color]};display:flex;align-items:center;justify-content:center;padding:10%;box-sizing:border-box;`;
+      const RAD = { red:'8px 0 0 0', green:'0 8px 0 0', blue:'0 0 0 8px', yellow:'0 0 8px 0' };
+      base.style.cssText = `grid-row:${r0+1}/${r0+7};grid-column:${c0+1}/${c0+7};background:${COLORS[color]};display:flex;align-items:center;justify-content:center;padding:10%;box-sizing:border-box;border-radius:${RAD[color]};`;
       const nest = document.createElement('div');
       nest.style.cssText = 'background:#ffffff;border-radius:14%;width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6%;padding:8%;box-sizing:border-box;';
       for(let i=0;i<4;i++){
@@ -1865,6 +1873,20 @@
       <polygon points="30,30 0,30 15,15" fill="${COLORS.blue}"/>
       <polygon points="0,30 0,0 15,15" fill="${COLORS.red}"/>
     </svg>`;
+    // finish zones inside the center house — finished pins stand here, in their own color's triangle
+    const ZONE = {
+      green:  'left:8%;right:8%;top:2%;height:38%;flex-direction:row;align-items:flex-start;',
+      blue:   'left:8%;right:8%;bottom:2%;height:38%;flex-direction:row;align-items:flex-end;',
+      red:    'top:8%;bottom:8%;left:2%;width:38%;flex-direction:column;align-items:flex-start;',
+      yellow: 'top:8%;bottom:8%;right:2%;width:38%;flex-direction:column;align-items:flex-end;'
+    };
+    ORDER.forEach(color=>{
+      const z = document.createElement('div');
+      z.id = 'ludo-finish-'+color;
+      z.style.cssText = 'position:absolute;display:flex;justify-content:center;gap:1px;z-index:6;overflow:visible;'+ZONE[color];
+      center.appendChild(z);
+    });
+    center.style.boxShadow = 'inset 0 0 0 2px rgba(255,255,255,0.9)';
     wrap.appendChild(center);
 
     // colored arrow on each color's home-entrance cell (the outermost cell of the
@@ -1946,6 +1968,9 @@
   function renderTokens(){
     document.querySelectorAll('.ludo-token-dots').forEach(t=>t.innerHTML='');
     ORDER.forEach(color=>document.querySelectorAll('[id^="ludo-dock-'+color+'"]').forEach(d=>d.innerHTML=''));
+    ORDER.forEach(color=>{ const z=el('ludo-finish-'+color); if(z) z.innerHTML=''; });
+    const boardW = (el('ludoBoard').getBoundingClientRect().width) || 440;
+    const cellPx = boardW/15;
     // count pawns per cell so a lone pawn can be drawn big, and stacked pawns shrink to fit
     const perCell = {};
     activeColors.forEach(color=> tokens[color].forEach(step=>{
@@ -1957,13 +1982,17 @@
         let pinEl;
         if(step===0){
           const dock = el('ludo-dock-'+color+'-'+i);
-          pinEl = makePin(COLORS[color], 40, pinId);
+          pinEl = makePin(COLORS[color], Math.round(cellPx*1.02), pinId); // fits inside the seat circle
           if(dock) dock.appendChild(pinEl);
+        } else if(step===FINISH_STEP){
+          const zone = el('ludo-finish-'+color);
+          pinEl = makePin(COLORS[color], Math.round(cellPx*0.66), pinId);
+          if(zone) zone.appendChild(pinEl);
         } else {
           const [r,c] = cellForStep(color, step);
           const cell = el('ludo-cell-'+r+'-'+c);
           const n = perCell[r+'-'+c] || 1;
-          const size = n===1 ? 27 : (n===2 ? 14 : 12);
+          const size = Math.round(n===1 ? cellPx*0.93 : (n===2 ? cellPx*0.48 : cellPx*0.42));
           pinEl = makePin(COLORS[color], size, pinId);
           if(cell){ cell.querySelector('.ludo-token-dots').appendChild(pinEl); }
         }
@@ -2123,10 +2152,14 @@
   }
 
   function showWin(){
-    el('ludoPlay').classList.add('hidden');
-    el('ludoWin').classList.remove('hidden');
     const color = activeColors[turnIdx];
-    el('ludoWinText').innerHTML = '<span style="color:'+COLORS[color]+';">'+NAMES[color]+'</span> wins! 🎉';
+    // keep the board visible so the winning pins can dance in the house
+    document.querySelectorAll('[id^="ludo-pin-'+color+'-"]').forEach((p,i)=>{ p.classList.add('ludo-dance'); p.style.animationDelay = (i*0.12)+'s'; });
+    const win = el('ludoWin');
+    win.classList.remove('hidden');
+    win.style.order = '-1'; // show the celebration card above the board
+    el('ludoWinText').innerHTML = '🎉 <span style="color:'+COLORS[color]+';">'+NAMES[color]+'</span> WINS! 🏆<div style="font-size:26px;margin-top:6px;letter-spacing:6px;">🎊🎈🎊🎈🎊</div>';
+    refreshDiceBoxHighlight();
   }
 
   function startGame(){
@@ -2136,7 +2169,7 @@
     turnIdx = Math.floor(Math.random()*activeColors.length); // random starting player each game — fair for everyone
     over = false; rolling = false; awaitingTap = false; animating = false; movableList = []; sixStreak = 0;
     el('ludoSetup').classList.add('hidden');
-    el('ludoWin').classList.add('hidden');
+    el('ludoWin').classList.add('hidden'); el('ludoWin').style.order='';
     el('ludoPlay').classList.remove('hidden');
     buildBoardDom();
     buildDiceBoxes();
