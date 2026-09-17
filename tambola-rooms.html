@@ -181,12 +181,28 @@
   .mj-round:disabled{opacity:0.4;}
   .mj-badge{position:absolute;top:-6px;right:-6px;background:#ffcc33;color:#241f0a;font-size:11px;font-weight:900;border-radius:10px;padding:1px 6px;border:2px solid #0b2f25;}
   #viewPuzzle .ludo-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88vw,360px);z-index:330;}
+
+  .nav-pill{font-family:var(--font-display);font-weight:800;font-size:13px;letter-spacing:.3px;color:#241f0a;background:linear-gradient(180deg,var(--gold-soft),#d99f3f);border:none;border-radius:999px;padding:8px 16px;cursor:pointer;box-shadow:0 3px 0 #a97a26,0 6px 12px rgba(0,0,0,0.35);width:auto;}
+  .nav-pill:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a26;}
+  .noselect, .noselect *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  button, .btn, .card [style*="cursor:pointer"]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;}
 </style>
 </head>
 <body>
 <div id="winnerToast"></div>
-<div id="updateBanner" class="hidden" style="position:sticky;top:0;z-index:60;background:var(--teal);color:#0d2422;font-weight:700;font-size:13px;padding:10px 16px;text-align:center;">
-  🔄 A new version is available — <span id="updateNowBtn" style="text-decoration:underline;cursor:pointer;">Update Now</span>
+<div id="updateBanner" class="hidden noselect" style="position:sticky;top:0;z-index:60;background:var(--teal);color:#0d2422;font-weight:700;font-size:13px;padding:10px 12px;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;">
+  <span>🔄 New version available</span><button type="button" id="updateNowBtn" class="nav-pill" style="font-size:12px;">Update Now</button>
+</div>
+
+<div id="updateOverlay" class="hidden noselect" style="position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 50% 30%, rgba(242,198,107,0.18), transparent 55%),#181735;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
+  <div style="font-family:var(--font-display);font-size:34px;font-weight:900;color:var(--gold-soft);letter-spacing:1px;text-shadow:0 3px 0 rgba(0,0,0,0.4);">Housiefy</div>
+  <div id="updateTitle" style="margin-top:10px;font-size:15px;color:var(--cream);font-weight:700;">Updating…</div>
+  <div style="width:min(80vw,320px);height:16px;background:rgba(255,255,255,0.10);border:1px solid var(--line);border-radius:12px;margin-top:18px;overflow:hidden;">
+    <div id="updateBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold-soft),#3fa796);border-radius:12px;transition:width .25s ease;"></div>
+  </div>
+  <div id="updatePct" style="margin-top:10px;font-family:var(--font-display);font-size:28px;font-weight:900;color:var(--cream);">0%</div>
+  <div id="updateNote" style="margin-top:6px;font-size:12px;color:var(--muted);">Downloading the latest version</div>
+  <button type="button" id="updateRetryBtn" class="btn btn-primary hidden" style="margin-top:18px;width:auto;padding:12px 28px;">Retry</button>
 </div>
 <main>
   <h1 id="appTitle">Housiefy</h1>
@@ -339,7 +355,7 @@
 
   <div id="viewModeSelect" class="card hidden" style="text-align:center;">
     <div style="text-align:left;margin-bottom:10px;">
-      <span id="hubBackLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ All Games</span>
+      <button type="button" id="hubBackLink" class="nav-pill">◀ All Games</button>
     </div>
     <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;">Tambola — How do you want to play?</div>
     <button class="btn btn-primary" id="playOnlineBtn">🌐 Play Online with Friends</button>
@@ -392,7 +408,7 @@
   <!-- HOME: create/join -->
   <div id="viewHome" class="card hidden">
     <div style="text-align:right;margin-bottom:8px;">
-      <span id="homeMenuLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ Menu</span>
+      <button type="button" id="homeMenuLink" class="nav-pill">◀ Menu</button>
     </div>
     <div id="googleSignedOut">
       <button class="btn btn-primary" id="googleSignInBtn">🔵 Continue with Google</button>
@@ -591,7 +607,7 @@
     document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo' || view.id==='viewPuzzle');
   }
 
-  const APP_VERSION = "2.2.0"; // bump this + version.json together on every release
+  const APP_VERSION = "2.3.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -774,9 +790,56 @@
       })
       .catch(()=>{ /* offline or fetch failed — just skip silently */ });
   }
-  el('updateNowBtn').addEventListener('click', ()=>{
-    window.location.href = window.location.pathname + '?_upd=' + Date.now();
-  });
+  // ---- Update flow: download the new version with a visible 0→100% progress, then launch it automatically
+  function setUpdateProgress(p, note){
+    p = Math.max(0, Math.min(100, Math.round(p)));
+    el('updateBar').style.width = p + '%';
+    el('updatePct').textContent = p + '%';
+    if(note) el('updateNote').textContent = note;
+  }
+  async function fetchWithProgress(url, from, to, weightBytes){
+    const res = await fetch(url, { cache: 'reload' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const total = parseInt(res.headers.get('content-length') || '0', 10) || weightBytes;
+    if(!res.body || !res.body.getReader){ await res.text(); setUpdateProgress(to); return; }
+    const reader = res.body.getReader();
+    let got = 0;
+    while(true){
+      const { done, value } = await reader.read();
+      if(done) break;
+      got += value.length;
+      setUpdateProgress(from + (to - from) * Math.min(1, got / total));
+    }
+    setUpdateProgress(to);
+  }
+  async function runUpdate(){
+    const ov = el('updateOverlay');
+    ov.classList.remove('hidden');
+    el('updateRetryBtn').classList.add('hidden');
+    el('updateTitle').textContent = 'Updating…';
+    setUpdateProgress(0, 'Downloading the latest version');
+    try{
+      await fetchWithProgress(window.location.pathname + '?_upd=' + Date.now(), 0, 70, 120000);
+      setUpdateProgress(70, 'Refreshing game files');
+      const extras = ['firebase-app-compat.js','firebase-database-compat.js','firebase-auth-compat.js','version.json'];
+      for(let i=0;i<extras.length;i++){
+        try{ await fetchWithProgress(extras[i] + '?_upd=' + Date.now(), 70 + i*7, 70 + (i+1)*7, 200000); }catch(e){ setUpdateProgress(70 + (i+1)*7); }
+      }
+      setUpdateProgress(100, 'Done! Launching the new version…');
+      el('updateTitle').textContent = 'Update complete ✓';
+      setTimeout(()=>{ window.location.replace(window.location.pathname + '?v=' + Date.now()); }, 700);
+    }catch(e){
+      el('updateTitle').textContent = 'Update failed';
+      el('updateNote').textContent = 'Please check your internet connection and try again.';
+      el('updateRetryBtn').classList.remove('hidden');
+    }
+  }
+  el('updateNowBtn').addEventListener('click', runUpdate);
+  el('updateRetryBtn').addEventListener('click', runUpdate);
+  // if we just launched a fresh version, make sure the banner stays hidden and drop the ?v= from the URL
+  if(/[?&]v=\d+/.test(window.location.search) && window.history && window.history.replaceState){
+    window.history.replaceState(null, '', window.location.pathname);
+  }
 
   el('agreeDisclaimerBtn').addEventListener('click', ()=>{
     localStorage.setItem('tb_disclaimer_accepted', 'yes');
