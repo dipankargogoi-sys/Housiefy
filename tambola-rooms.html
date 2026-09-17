@@ -143,6 +143,44 @@
   .ludo-menu-btn{font-family:var(--font-display);font-weight:900;font-size:16px;letter-spacing:1px;color:#241f0a;background:linear-gradient(180deg,var(--gold-soft),#d99f3f);border:none;border-radius:16px;padding:14px 40px;box-shadow:0 6px 0 #a97a26,0 10px 20px rgba(0,0,0,0.5);cursor:pointer;}
   .ludo-menu-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #a97a26,0 4px 10px rgba(0,0,0,0.5);}
   #ludoSetup .ludoPlayerCountBtn, #viewLudo .btn-primary{font-weight:900;letter-spacing:.5px;box-shadow:0 5px 0 #7a281f,0 8px 16px rgba(0,0,0,0.4);}
+
+  /* ---- Mahjong Match (fullscreen) ---- */
+  #viewPuzzle{
+    position:fixed; inset:0; z-index:300; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center;
+    padding:14px 8px calc(92px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(ellipse at 15% 10%, rgba(120,200,150,0.25), transparent 45%),
+      radial-gradient(ellipse at 90% 85%, rgba(60,160,110,0.30), transparent 50%),
+      radial-gradient(ellipse at 60% 40%, rgba(255,255,255,0.05), transparent 55%),
+      linear-gradient(160deg,#0f4d3a,#176b52 55%,#0d3f31);
+  }
+  .mj-level{font-family:var(--font-display);font-weight:900;font-size:20px;color:#f6e27a;text-shadow:0 2px 0 rgba(0,0,0,0.45);letter-spacing:1px;margin-bottom:8px;}
+  #mjTop{display:flex;flex-direction:column;align-items:center;width:100%;}
+  .mj-tray{display:flex;gap:6px;background:rgba(0,40,30,0.75);border:3px solid #e8f3ea;border-radius:12px;padding:5px;box-shadow:0 8px 20px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(0,0,0,0.4);}
+  .mj-slot{width:56px;height:70px;border-radius:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;}
+  .mj-stats{font-size:12px;color:rgba(255,255,255,0.75);margin-top:6px;}
+  #mjBoardWrap{flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow:visible;}
+  #mjBoard{position:relative;}
+  .mj-tile{position:absolute;background:linear-gradient(180deg,#ffffff,#eef3ef);border-radius:5px;display:flex;align-items:center;justify-content:center;
+    box-shadow:2px 3px 0 #9fb3ab, 3px 5px 0 #6f8a80, 4px 8px 12px rgba(0,0,0,0.45);cursor:pointer;user-select:none;-webkit-user-select:none;
+    transition:transform .12s, filter .15s;}
+  .mj-tile .sym{font-weight:900;line-height:1;font-family:var(--font-display);}
+  .mj-tile.covered{filter:brightness(0.72) saturate(0.6);cursor:default;}
+  .mj-tile.hint{box-shadow:0 0 0 3px #6ff, 0 0 18px 4px #3ee6ff, 2px 3px 0 #9fb3ab;transform:scale(1.06);z-index:999 !important;}
+  .mj-tile.shake{animation:mjShake .3s;}
+  @keyframes mjShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+  .mj-tile.pop{animation:mjPop .28s ease-out forwards;}
+  @keyframes mjPop{0%{transform:scale(1);opacity:1;}60%{transform:scale(1.25);opacity:1;}100%{transform:scale(0.2);opacity:0;}}
+  .mj-slot .mj-tile{position:static;width:48px;height:62px;box-shadow:1px 2px 0 #9fb3ab, 2px 4px 8px rgba(0,0,0,0.4);cursor:default;}
+  .mj-slot .mj-tile.pop{animation:mjPop .28s ease-out forwards;}
+  .mj-toast{position:fixed;left:50%;top:44%;transform:translateX(-50%);background:rgba(0,0,0,0.72);color:#fff;font-weight:700;font-size:15px;padding:10px 18px;border-radius:12px;z-index:320;pointer-events:none;}
+  .mj-bar{position:fixed;left:0;right:0;bottom:0;z-index:310;display:flex;justify-content:center;align-items:center;gap:10px;padding:12px 10px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(6,40,30,0.97),rgba(6,40,30,0));}
+  .mj-round{position:relative;width:52px;height:52px;border-radius:50%;border:3px solid #e8f3ea;background:#0b2f25;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 0 #04150f, 0 8px 14px rgba(0,0,0,0.5);}
+  .mj-round:active{transform:translateY(3px);box-shadow:0 1px 0 #04150f;}
+  .mj-round:disabled{opacity:0.4;}
+  .mj-badge{position:absolute;top:-6px;right:-6px;background:#ffcc33;color:#241f0a;font-size:11px;font-weight:900;border-radius:10px;padding:1px 6px;border:2px solid #0b2f25;}
+  #viewPuzzle .ludo-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88vw,360px);z-index:330;}
 </style>
 </head>
 <body>
@@ -221,10 +259,10 @@
 
     <div class="card" id="hubPuzzleCard" style="cursor:pointer;">
       <div style="display:flex;align-items:center;gap:14px;">
-        <div style="font-size:34px;">🧩</div>
+        <div style="font-size:34px;">🀄</div>
         <div style="flex:1;">
-          <div style="font-weight:800;font-size:16px;color:var(--gold-soft);">Arrow Puzzle</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Tap arrows away to clear the board</div>
+          <div style="font-weight:800;font-size:16px;color:var(--gold-soft);">Mahjong Match</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Match tile pairs · endless levels</div>
         </div>
         <div style="color:var(--muted);">▶</div>
       </div>
@@ -266,49 +304,36 @@
     </div>
   </div>
 
-  <!-- ============ ARROW PUZZLE ============ -->
+  <!-- ============ MAHJONG MATCH ============ -->
   <div id="viewPuzzle" class="hidden">
-    <div style="text-align:left;margin-bottom:10px;">
-      <span class="hubBackLink" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ All Games</span>
+    <div id="mjTop">
+      <div id="mjLevelLabel" class="mj-level">Level 1</div>
+      <div id="mjTray" class="mj-tray"><div class="mj-slot"></div><div class="mj-slot"></div><div class="mj-slot"></div><div class="mj-slot"></div></div>
+      <div id="mjStats" class="mj-stats"><span id="mjLeft">0 tiles</span></div>
     </div>
 
-    <div id="puzzleModeSelect" class="card" style="text-align:center;">
-      <div style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:14px;">🧩 Arrow Puzzle</div>
-      <div class="hint" style="text-align:left;">Tap a piece and it flies off in the direction of its arrow — but only if that path is clear. Clear the whole board to win.</div>
-      <button class="btn btn-primary puzzleModeBtn" data-mode="arrows">Tap Away Arrows</button>
-      <button class="btn btn-primary puzzleModeBtn" data-mode="clear">Clear the Board</button>
-      <button class="btn btn-primary puzzleModeBtn" data-mode="heart">Find the Free Path</button>
+    <div id="mjBoardWrap"><div id="mjBoard"></div></div>
+    <div id="mjToast" class="mj-toast hidden"></div>
+
+    <div id="mjWin" class="card ludo-panel hidden" style="text-align:center;">
+      <div style="font-size:48px;margin-bottom:6px;">🏆</div>
+      <div class="ludo-title" id="mjWinTitle">Level Completed!</div>
+      <div id="mjWinSub" style="font-size:13px;color:var(--muted);margin-bottom:14px;"></div>
+      <button type="button" class="btn btn-primary" id="mjNextBtn">Next Level ▶</button>
+    </div>
+    <div id="mjLose" class="card ludo-panel hidden" style="text-align:center;">
+      <div style="font-size:48px;margin-bottom:6px;">😵</div>
+      <div class="ludo-title" id="mjLoseTitle">Tray is full!</div>
+      <div id="mjLoseSub" style="font-size:13px;color:var(--muted);margin-bottom:14px;"></div>
+      <button type="button" class="btn btn-primary" id="mjRetryBtn">Try Again</button>
     </div>
 
-    <div id="puzzlePlay" class="card hidden" style="text-align:center;">
-      <div style="text-align:left;margin-bottom:8px;">
-        <span id="puzzleBackToModes" style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;">◀ Puzzle Menu</span>
-      </div>
-      <div id="puzzleTitle" style="font-family:var(--font-display);font-size:18px;color:var(--gold-soft);font-weight:800;margin-bottom:6px;"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-size:12px;color:var(--muted);">Moves: <b id="puzzleMoves" style="color:var(--cream);">0</b></div>
-        <div id="puzzleHearts" style="font-size:16px;"></div>
-        <div style="font-size:12px;color:var(--muted);">Pieces left: <b id="puzzlePiecesLeft" style="color:var(--cream);">0</b></div>
-      </div>
-      <div id="puzzleBoardWrap" style="display:flex;justify-content:center;">
-        <svg id="puzzleSvg" style="width:100%;max-width:360px;touch-action:none;"></svg>
-      </div>
-      <button class="btn btn-ghost" id="puzzleHintBtn" style="margin-top:12px;">💡 Hint</button>
-      <button class="btn btn-ghost" id="puzzleRestartBtn" style="margin-top:8px;">Restart Level</button>
-    </div>
-
-    <div id="puzzleWin" class="card hidden" style="text-align:center;">
-      <div style="font-size:44px;margin-bottom:8px;">🎉</div>
-      <div style="font-family:var(--font-display);font-size:19px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;">Level Completed!</div>
-      <button class="btn btn-primary" id="puzzleNextBtn">New Puzzle</button>
-      <button class="btn btn-ghost" id="puzzleWinMenuBtn" style="margin-top:8px;">Puzzle Menu</button>
-    </div>
-
-    <div id="puzzleLose" class="card hidden" style="text-align:center;">
-      <div style="font-size:44px;margin-bottom:8px;">💔</div>
-      <div style="font-family:var(--font-display);font-size:19px;color:var(--gold-soft);font-weight:800;margin-bottom:16px;">Out of hearts</div>
-      <button class="btn btn-primary" id="puzzleRetryBtn">Try Again</button>
-      <button class="btn btn-ghost" id="puzzleLoseMenuBtn" style="margin-top:8px;">Puzzle Menu</button>
+    <div class="mj-bar">
+      <button type="button" class="mj-round" id="mjShuffleBtn" title="Shuffle">🔀<span class="mj-badge" id="mjShuffleCount">3</span></button>
+      <button type="button" class="mj-round" id="mjHintBtn" title="Hint">💡<span class="mj-badge" id="mjHintCount">3</span></button>
+      <button type="button" class="mj-round" id="mjUndoBtn" title="Undo">↩️</button>
+      <button type="button" class="mj-round" id="mjMusicBtn" title="Music">🔊</button>
+      <button type="button" class="ludo-menu-btn" id="mjMenuBtn" style="padding:12px 22px;font-size:14px;">☰ Menu</button>
     </div>
   </div>
 
@@ -563,10 +588,10 @@
   function show(view){
     document.querySelectorAll('main > div[id^="view"]').forEach(v=>v.classList.add('hidden'));
     view.classList.remove('hidden');
-    document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo');
+    document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo' || view.id==='viewPuzzle');
   }
 
-  const APP_VERSION = "2.1.0"; // bump this + version.json together on every release
+  const APP_VERSION = "2.2.0"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -735,7 +760,7 @@
   // ---------- other games: hub wiring ----------
   const viewLudo = el('viewLudo'), viewPuzzle = el('viewPuzzle');
   el('hubLudoCard').addEventListener('click', ()=>{ show(viewLudo); if(window.LUDO) window.LUDO.onShow(); });
-  el('hubPuzzleCard').addEventListener('click', ()=>{ show(viewPuzzle); if(window.ARROWPUZZLE) window.ARROWPUZZLE.onShow(); });
+  el('hubPuzzleCard').addEventListener('click', ()=>{ show(viewPuzzle); if(window.MAHJONG) window.MAHJONG.onShow(); });
   document.querySelectorAll('.hubBackLink').forEach(link=> link.addEventListener('click', ()=> show(viewGamesHub)));
 
   // ---------- version check: notify users when a newer app is live ----------
@@ -2204,264 +2229,282 @@
 
 </script>
 <script>
-/* ============ ARROW PUZZLE ENGINE ============ */
+/* ============ MAHJONG MATCH ENGINE ============ */
 (function(){
   const el = id => document.getElementById(id);
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const DIRV = { up:[-1,0], down:[1,0], left:[0,-1], right:[0,1] };
+  const TRAY_MAX = 4;
 
-  const MODES = {
-    arrows: { title:'Tap Away Arrows', rows:9, cols:7, mask:null, pieces:14 },
-    clear:  { title:'Clear the Board',  rows:9, cols:6, mask:null, pieces:11 },
-    heart:  { title:'Find the Free Path', rows:11, cols:13, mask:heartMask, pieces:18 }
-  };
+  // tile kinds: numbers, dragons, and picture tiles (all render everywhere)
+  const KINDS = [
+    ...'123456789'.split('').map(n=>({s:n, c:'#1f3a7a', fs:1.05})),
+    {s:'中', c:'#c8232c', fs:0.95}, {s:'發', c:'#178a45', fs:0.95}, {s:'東', c:'#1f3a7a', fs:0.9}, {s:'白', c:'#1f3a7a', fs:0.9},
+    ...['🌸','🐟','🍀','⚓','👑','💍','🦋','🌙','🐉','🎋','🐢','🦚','🌊','🔔','🍁','🌺','🐝','🦢','🎐','☀️','🌿','🪷','🐚','🍄','🎏','🪁','🐘','🦁','🐦','🍇','🍒','🌻','⭐','🎵','🔥','💎','🐸','🦀','🌵','🎎'].map(e=>({s:e, c:'#222', fs:0.95}))
+  ];
 
-  function heartMask(r,c,rows,cols){
-    const x = (c - cols/2 + 0.5) / (cols/2) * 1.3;
-    const y = (rows/2 - 0.5 - r) / (rows/2) * 1.3;
-    const f = Math.pow(x*x+y*y-1,3) - x*x*Math.pow(y,3);
-    return f <= 0;
+  let level = parseInt(localStorage.getItem('mj_level')||'1',10) || 1;
+  let tiles = [], tray = [], history = [], shuffles = 3, hints = 3, over = false, unit = 20;
+  let musicOn = localStorage.getItem('mj_music') !== 'off';
+
+  // ---------------- sound & music (synthesized) ----------------
+  let ctx = null, musicNodes = null, musicTimer = null;
+  function ac(){ if(!ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) ctx=new AC(); } if(ctx && ctx.state==='suspended') ctx.resume(); return ctx; }
+  function tone(f, d, type, vol, when){
+    const c = ac(); if(!c) return;
+    const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.value=f;
+    const t0 = c.currentTime + (when||0);
+    g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(vol,t0+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+d);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+d+0.05);
   }
-
-  let curMode = null, rows=0, cols=0, mask=null, pieces=[], occupied=null, hearts=3, moves=0, U=36;
-
-  function cellPlayable(r,c){
-    if(r<0||r>=rows||c<0||c>=cols) return false;
-    if(mask && !mask(r,c,rows,cols)) return false;
-    return true;
+  const sndTap = ()=> tone(880,0.07,'triangle',0.12);
+  const sndLock = ()=> { tone(180,0.12,'square',0.08); };
+  const sndMatch = ()=> { tone(784,0.12,'triangle',0.18); tone(1175,0.22,'triangle',0.16,0.08); };
+  const sndWin = ()=> { [[659,.15],[784,.15],[988,.15],[1318,.5],[1175,.2],[1318,.6]].reduce((t,[f,d])=>{ tone(f,d,'triangle',0.2,t); return t+d; },0); };
+  const sndLose = ()=> { tone(300,0.3,'sawtooth',0.12); tone(220,0.5,'sawtooth',0.12,0.25); };
+  // gentle pentatonic ambient loop
+  const SCALE = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3];
+  function startMusic(){
+    if(!musicOn || musicTimer) return;
+    const c = ac(); if(!c) return;
+    let step = 0;
+    musicTimer = setInterval(()=>{
+      if(!musicOn){ return; }
+      const f = SCALE[(step*3 + Math.floor(step/4)) % SCALE.length];
+      tone(f, 0.9, 'sine', 0.045);
+      if(step%4===0) tone(f/2, 1.6, 'sine', 0.035);
+      step++;
+    }, 520);
   }
+  function stopMusic(){ if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } }
+  function updateMusicBtn(){ el('mjMusicBtn').textContent = musicOn ? '🔊' : '🔇'; }
 
-  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
-
-  function exitPathClear(head, dir, occ){
-    let [r,c] = head;
-    const [dr,dc] = DIRV[dir];
-    r+=dr; c+=dc;
-    while(cellPlayable(r,c)){
-      if(occ[r][c]) return false;
-      r+=dr; c+=dc;
-    }
-    return true;
-  }
-
-  function tryPlacePiece(occ){
-    const empties = [];
-    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(cellPlayable(r,c) && !occ[r][c]) empties.push([r,c]);
-    if(!empties.length) return null;
-    const start = empties[Math.floor(Math.random()*empties.length)];
-    const len = 3 + Math.floor(Math.random()*4);
-    let cells = [start];
-    let visited = new Set([start[0]+','+start[1]]);
-    let cur = start;
-    for(let i=1;i<len;i++){
-      const dirs = shuffle(['up','down','left','right']);
-      let moved = false;
-      for(const d of dirs){
-        const [dr,dc] = DIRV[d];
-        const nr=cur[0]+dr, nc=cur[1]+dc;
-        if(cellPlayable(nr,nc) && !occ[nr][nc] && !visited.has(nr+','+nc)){
-          cells.push([nr,nc]); visited.add(nr+','+nc); cur=[nr,nc]; moved=true; break;
+  // ---------------- layouts (x,y in half-tile units; z = layer) ----------------
+  function makeLayout(lv){
+    const pos = [];
+    const cols = Math.min(6 + Math.floor((lv-1)/2), 8);
+    const rows = Math.min(4 + Math.floor((lv-1)/3), 6);
+    const layers = Math.min(2 + Math.floor((lv-1)/2), 4);
+    const shape = (lv-1) % 4; // vary silhouettes
+    for(let z=0; z<layers; z++){
+      const w = cols - 2*z, h = rows - 2*z;
+      if(w<1 || h<1) break;
+      for(let r=0;r<h;r++){
+        for(let cc=0;cc<w;cc++){
+          let ok = true;
+          if(z===0){
+            if(shape===1 && (r===0||r===h-1) && (cc===0||cc===w-1)) ok=false;          // clipped corners
+            if(shape===2 && r===Math.floor(h/2) && (cc===0||cc===w-1)) ok=false;       // notched sides
+            if(shape===3 && (cc===0||cc===w-1) && (r<1||r>h-2)) ok=false;               // diamond-ish
+          }
+          if(ok) pos.push({x:cc*2 + z, y:r*2 + z, z});
         }
       }
-      if(!moved) break;
     }
-    if(cells.length<2) return null;
-    const head = cells[cells.length-1];
-    const dirs = shuffle(['up','down','left','right']);
-    for(const dir of dirs){
-      if(exitPathClear(head, dir, occ)) return { cells, head, dir };
+    // wings on bigger levels
+    if(lv>=4){
+      const midR = Math.floor(rows/2);
+      pos.push({x:-2, y:midR*2, z:0}); pos.push({x:cols*2, y:midR*2, z:0});
     }
-    return null;
+    // keep every level provably solvable: at most 39 pairs so each pair has a unique kind
+    while(pos.length > 78) pos.pop();
+    if(pos.length % 2 === 1) pos.pop();
+    return pos;
   }
 
-  function generatePuzzle(){
-    const occ = Array.from({length:rows},()=>new Array(cols).fill(false));
-    const built = [];
-    let tries = 0;
-    while(built.length < MODES[curMode].pieces && tries < 400){
-      tries++;
-      const p = tryPlacePiece(occ);
-      if(p){ built.push(p); p.cells.forEach(([r,c])=> occ[r][c]=true); }
+  function isCovered(t, alive){ return alive.some(o=> o!==t && o.z===t.z+1 && Math.abs(o.x-t.x)<2 && Math.abs(o.y-t.y)<2); }
+  function blockedLeft(t, alive){ return alive.some(o=> o!==t && o.z===t.z && Math.abs(o.y-t.y)<2 && o.x===t.x-2); }
+  function blockedRight(t, alive){ return alive.some(o=> o!==t && o.z===t.z && Math.abs(o.y-t.y)<2 && o.x===t.x+2); }
+  function isFree(t, alive){ return !isCovered(t,alive) && (!blockedLeft(t,alive) || !blockedRight(t,alive)); }
+
+  // assign kinds so the level is always solvable: simulate a valid removal order in reverse
+  function assignKinds(list){
+    const n = list.length;
+    // one unique kind per pair -> a free matching pair always exists, whatever order you play
+    const chosen = [...KINDS].sort(()=>Math.random()-0.5).slice(0, Math.min(n/2, KINDS.length));
+    let alive = list.slice(), pairs = [];
+    let guard = 0;
+    while(alive.length && guard++ < 5000){
+      const free = alive.filter(t=>isFree(t, alive));
+      if(free.length<2) return false;
+      const a = free[Math.floor(Math.random()*free.length)];
+      let b = free[Math.floor(Math.random()*free.length)];
+      while(b===a) b = free[Math.floor(Math.random()*free.length)];
+      pairs.push([a,b]);
+      alive = alive.filter(t=>t!==a && t!==b);
     }
-    built.reverse(); // built[0] = first removable
-    return built;
+    pairs.forEach((p,i)=>{ const k = chosen[i % chosen.length]; p[0].kind=k; p[1].kind=k; });
+    return true;
   }
 
   // ---------------- rendering ----------------
+  function computeUnit(){
+    const wrap = el('mjBoardWrap');
+    const W = wrap.clientWidth || 360, H = wrap.clientHeight || 420;
+    const xs = tiles.map(t=>t.x), ys = tiles.map(t=>t.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs)+2, minY = Math.min(...ys), maxY = Math.max(...ys)+2;
+    const spanX = maxX-minX, spanY = maxY-minY;
+    unit = Math.floor(Math.min((W-24)/spanX, (H-24)/(spanY*1.3)));
+    unit = Math.max(12, Math.min(unit, 34));
+    return {minX, minY, spanX, spanY};
+  }
+  function tileEl(t, small){
+    const d = document.createElement('div');
+    d.className = 'mj-tile';
+    const k = t.kind;
+    const size = small ? 26 : Math.round(unit*1.15*(k.fs||1));
+    d.innerHTML = '<span class="sym" style="font-size:'+size+'px;color:'+k.c+';">'+k.s+'</span>';
+    return d;
+  }
   function render(){
-    const svg = el('puzzleSvg');
-    svg.setAttribute('viewBox', `0 0 ${cols*U} ${rows*U}`);
-    svg.innerHTML = '';
-    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
-    pieces.forEach(p=>{ p.alive = true; p.cells.forEach(([r,c])=> occupied[r][c]=true); });
-
-    pieces.forEach((p, idx)=>{
-      if(!p.alive) return;
-      const g = document.createElementNS(svgNS,'g');
-      g.setAttribute('data-idx', idx);
-      g.style.cursor = 'pointer';
-
-      const pts = p.cells.map(([r,c])=> [(c+0.5)*U, (r+0.5)*U]);
-      // extend a bit past head cell in arrow direction to draw the arrowhead
-      const [dr,dc] = DIRV[p.dir];
-      const [hx,hy] = pts[pts.length-1];
-      const tipx = hx + dc*U*0.55, tipy = hy + dr*U*0.55;
-
-      const d = 'M ' + pts.map(pt=>pt.join(',')).join(' L ');
-      const path = document.createElementNS(svgNS,'path');
-      path.setAttribute('d', d);
-      path.setAttribute('fill','none');
-      path.setAttribute('stroke','#2b2760');
-      path.setAttribute('stroke-width', U*0.34);
-      path.setAttribute('stroke-linecap','round');
-      path.setAttribute('stroke-linejoin','round');
-      path.setAttribute('class','pz-line');
-      g.appendChild(path);
-
-      // hit area (wider, invisible)
-      const hit = document.createElementNS(svgNS,'path');
-      hit.setAttribute('d', d);
-      hit.setAttribute('fill','none');
-      hit.setAttribute('stroke','transparent');
-      hit.setAttribute('stroke-width', U*0.9);
-      g.appendChild(hit);
-
-      // arrowhead triangle
-      const perp = [-dr, dc]; // perpendicular for triangle base
-      const baseW = U*0.32;
-      const p1 = [hx + dc*U*0.18 + perp[1]*baseW, hy + dr*U*0.18 + perp[0]*baseW];
-      const p2 = [hx + dc*U*0.18 - perp[1]*baseW, hy + dr*U*0.18 - perp[0]*baseW];
-      const p3 = [tipx, tipy];
-      const tri = document.createElementNS(svgNS,'polygon');
-      tri.setAttribute('points', [p1,p2,p3].map(p=>p.join(',')).join(' '));
-      tri.setAttribute('fill', '#2b2760');
-      tri.setAttribute('class','pz-arrow');
-      g.appendChild(tri);
-
-      g.addEventListener('click', ()=> tapPiece(idx));
-      svg.appendChild(g);
+    const board = el('mjBoard');
+    board.innerHTML = '';
+    const alive = tiles.filter(t=>t.alive);
+    if(!alive.length){ return; }
+    const {minX, minY, spanX, spanY} = computeUnit();
+    const tw = unit*2, th = unit*2.6;
+    board.style.width = (spanX*unit + 16)+'px';
+    board.style.height = (spanY*unit*1.3 + 16)+'px';
+    alive.sort((a,b)=> a.z-b.z || a.y-b.y || a.x-b.x).forEach(t=>{
+      const d = tileEl(t);
+      d.style.width = tw+'px'; d.style.height = th+'px';
+      d.style.left = ((t.x-minX)*unit - t.z*3)+'px';
+      d.style.top  = ((t.y-minY)*unit*1.3 - t.z*4)+'px';
+      d.style.zIndex = t.z*100 + t.y;
+      if(isCovered(t, alive)) d.classList.add('covered');
+      d.addEventListener('click', ()=> tapTile(t));
+      t.el = d;
+      board.appendChild(d);
     });
-
-    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
+    el('mjLeft').textContent = alive.length + ' tiles';
+  }
+  function renderTray(){
+    const slots = el('mjTray').querySelectorAll('.mj-slot');
+    slots.forEach((s,i)=>{ s.innerHTML=''; if(tray[i]){ const d=tileEl(tray[i], true); s.appendChild(d); tray[i].trayEl = d; } });
   }
 
-  function recomputeOccupied(){
-    occupied = Array.from({length:rows},()=>new Array(cols).fill(false));
-    pieces.forEach(p=>{ if(p.alive) p.cells.forEach(([r,c])=> occupied[r][c]=true); });
+  function toast(msg){
+    const t = el('mjToast'); t.textContent = msg; t.classList.remove('hidden');
+    clearTimeout(t._t); t._t = setTimeout(()=>t.classList.add('hidden'), 1100);
   }
 
-  function tapPiece(idx){
-    const p = pieces[idx];
-    if(!p || !p.alive) return;
-    moves++;
-    el('puzzleMoves').textContent = moves;
-    recomputeOccupied();
-    p.cells.forEach(([r,c])=> occupied[r][c]=false); // don't block on self
-    const clear = exitPathClear(p.head, p.dir, occupied);
-    const svg = el('puzzleSvg');
-    const g = svg.querySelector('g[data-idx="'+idx+'"]');
-    if(clear){
-      p.alive = false;
-      if(g){
-        const [dr,dc] = DIRV[p.dir];
-        g.style.transition = 'transform 0.35s ease-in, opacity 0.35s ease-in';
-        g.style.transform = `translate(${dc*U*8}px, ${dr*U*8}px)`;
-        g.style.opacity = '0';
-        setTimeout(()=>{ g.remove(); checkWinOrContinue(); }, 360);
-      } else {
-        checkWinOrContinue();
-      }
-    } else {
-      loseHeart();
-      if(g){
-        g.querySelector('.pz-line').setAttribute('stroke', 'var(--cage)');
-        g.style.transition = 'transform 0.08s'; 
-        let n=0; const shake=setInterval(()=>{ n++; g.style.transform = 'translateX('+((n%2===0)?4:-4)+'px)'; if(n>4){ clearInterval(shake); g.style.transform=''; g.querySelector('.pz-line').setAttribute('stroke','#2b2760'); } },40);
-      }
-    }
-  }
-
-  function checkWinOrContinue(){
-    el('puzzlePiecesLeft').textContent = pieces.filter(p=>p.alive).length;
-    if(pieces.every(p=>!p.alive)){
-      el('puzzlePlay').classList.add('hidden');
-      el('puzzleWin').classList.remove('hidden');
-    }
-  }
-
-  function renderHearts(){
-    el('puzzleHearts').textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3-hearts);
-  }
-
-  function loseHeart(){
-    hearts--;
-    renderHearts();
-    if(hearts<=0){
-      setTimeout(()=>{
-        el('puzzlePlay').classList.add('hidden');
-        el('puzzleLose').classList.remove('hidden');
-      }, 300);
-    }
-  }
-
-  function hint(){
-    recomputeOccupied();
-    for(let i=0;i<pieces.length;i++){
-      const p = pieces[i];
-      if(!p.alive) continue;
-      const occ2 = occupied.map(row=>row.slice());
-      p.cells.forEach(([r,c])=> occ2[r][c]=false);
-      if(exitPathClear(p.head, p.dir, occ2)){
-        const g = el('puzzleSvg').querySelector('g[data-idx="'+i+'"]');
-        if(g){
-          const line = g.querySelector('.pz-line');
-          const arrow = g.querySelector('.pz-arrow');
-          line.setAttribute('stroke', 'var(--gold-soft)');
-          arrow.setAttribute('fill', 'var(--gold-soft)');
-          setTimeout(()=>{ if(line){line.setAttribute('stroke','#2b2760');} if(arrow){arrow.setAttribute('fill','#2b2760');} }, 1400);
-        }
-        return;
-      }
-    }
-  }
-
-  function startLevel(mode){
-    curMode = mode;
-    const cfg = MODES[mode];
-    rows = cfg.rows; cols = cfg.cols; mask = cfg.mask;
-    hearts = 3; moves = 0;
-    el('puzzleTitle').textContent = cfg.title;
-    el('puzzleMoves').textContent = '0';
-    renderHearts();
-    pieces = generatePuzzle();
+  // ---------------- gameplay ----------------
+  function tapTile(t){
+    if(over || !t.alive) return;
+    startMusic();
+    const alive = tiles.filter(x=>x.alive);
+    if(isCovered(t, alive)){ sndLock(); t.el.classList.add('shake'); toast('locked by above tiles'); setTimeout(()=>t.el.classList.remove('shake'),300); return; }
+    if(blockedLeft(t,alive) && blockedRight(t,alive)){ sndLock(); t.el.classList.add('shake'); toast('locked by left and right'); setTimeout(()=>t.el.classList.remove('shake'),300); return; }
+    sndTap();
+    t.alive = false;
+    tray.push(t);
+    history.push(t);
+    const match = tray.findIndex((x,i)=> i<tray.length-1 && x.kind===t.kind);
     render();
-    el('puzzleModeSelect').classList.add('hidden');
-    el('puzzleWin').classList.add('hidden');
-    el('puzzleLose').classList.add('hidden');
-    el('puzzlePlay').classList.remove('hidden');
+    renderTray();
+    if(match>=0){
+      const a = tray[match], b = t;
+      setTimeout(()=>{
+        if(a.trayEl) a.trayEl.classList.add('pop'); if(b.trayEl) b.trayEl.classList.add('pop');
+        sndMatch();
+        setTimeout(()=>{
+          tray = tray.filter(x=>x!==a && x!==b);
+          history = history.filter(x=>x!==a && x!==b);
+          renderTray();
+          checkEnd();
+        }, 280);
+      }, 120);
+    } else {
+      checkEnd();
+    }
   }
 
-  document.querySelectorAll('.puzzleModeBtn').forEach(btn=>{
-    btn.addEventListener('click', ()=> startLevel(btn.dataset.mode));
-  });
-  el('puzzleBackToModes').addEventListener('click', ()=>{
-    el('puzzlePlay').classList.add('hidden');
-    el('puzzleModeSelect').classList.remove('hidden');
-  });
-  el('puzzleHintBtn').addEventListener('click', hint);
-  el('puzzleRestartBtn').addEventListener('click', ()=> startLevel(curMode));
-  el('puzzleNextBtn').addEventListener('click', ()=> startLevel(curMode));
-  el('puzzleWinMenuBtn').addEventListener('click', ()=>{
-    el('puzzleWin').classList.add('hidden');
-    el('puzzleModeSelect').classList.remove('hidden');
-  });
-  el('puzzleRetryBtn').addEventListener('click', ()=> startLevel(curMode));
-  el('puzzleLoseMenuBtn').addEventListener('click', ()=>{
-    el('puzzleLose').classList.add('hidden');
-    el('puzzleModeSelect').classList.remove('hidden');
-  });
+  function checkEnd(){
+    const alive = tiles.filter(t=>t.alive);
+    if(!alive.length && !tray.length){ over = true; sndWin(); showWin(); return; }
+    if(tray.length >= TRAY_MAX){ over = true; sndLose(); showLose('Tray is full!','Match pairs before the tray fills up (max '+TRAY_MAX+').'); return; }
+    // any playable move left?
+    const free = alive.filter(t=>isFree(t, alive));
+    const trayKinds = new Set(tray.map(t=>t.kind));
+    const possible = free.some(t=> trayKinds.has(t.kind)) || free.some((t,i)=> free.some((u,j)=> j>i && u.kind===t.kind));
+    if(!possible){
+      if(shuffles>0) toast('No matches — use Shuffle 🔀');
+      else { over = true; sndLose(); showLose('No moves left','No matching pairs remain and no shuffles left.'); }
+    }
+  }
 
-  window.ARROWPUZZLE = { onShow(){} };
+  function findHint(){
+    const alive = tiles.filter(t=>t.alive);
+    const free = alive.filter(t=>isFree(t, alive));
+    for(const tr of tray){ const m = free.find(t=>t.kind===tr.kind); if(m) return [m]; }
+    for(let i=0;i<free.length;i++) for(let j=i+1;j<free.length;j++) if(free[i].kind===free[j].kind) return [free[i],free[j]];
+    return null;
+  }
+  function hint(){
+    if(over) return;
+    if(hints<=0){ toast('No hints left'); return; }
+    const h = findHint();
+    if(!h){ toast('No free pair — try Shuffle'); return; }
+    hints--; el('mjHintCount').textContent = hints;
+    h.forEach(t=> t.el && t.el.classList.add('hint'));
+    setTimeout(()=> h.forEach(t=> t.el && t.el.classList.remove('hint')), 1500);
+  }
+  function shuffle(){
+    if(over) return;
+    if(shuffles<=0){ toast('No shuffles left'); return; }
+    tray.forEach(t=> t.alive = true); tray = []; history = [];
+    const alive = tiles.filter(t=>t.alive);
+    if(alive.length<2) return;
+    let ok=false, att=0;
+    while(!ok && att++<20) ok = assignKinds(alive);
+    shuffles--; el('mjShuffleCount').textContent = shuffles;
+    sndTap(); render(); renderTray(); toast('Shuffled');
+  }
+  function undo(){
+    if(over || !history.length) return;
+    const t = history.pop();
+    tray = tray.filter(x=>x!==t);
+    t.alive = true;
+    sndTap(); render(); renderTray();
+  }
+
+  function showWin(){
+    el('mjWinTitle').textContent = 'Level '+level+' Completed!';
+    el('mjWinSub').textContent = 'Great memory! Ready for Level '+(level+1)+'?';
+    el('mjWin').classList.remove('hidden');
+  }
+  function showLose(title, sub){
+    el('mjLoseTitle').textContent = title; el('mjLoseSub').textContent = sub;
+    el('mjLose').classList.remove('hidden');
+  }
+
+  function startLevel(){
+    over = false; tray = []; history = [];
+    shuffles = level>=13 ? 1 : (level>=8 ? 2 : 3); hints = shuffles;
+    el('mjShuffleCount').textContent = shuffles; el('mjHintCount').textContent = hints;
+    el('mjWin').classList.add('hidden'); el('mjLose').classList.add('hidden');
+    el('mjLevelLabel').textContent = 'Level '+level + (level<4?' · Easy':level<8?' · Normal':level<13?' · Hard':' · Expert');
+    let attempt = 0;
+    do {
+      tiles = makeLayout(level).map(p=>({...p, alive:true}));
+    } while(!assignKinds(tiles) && ++attempt < 20);
+    renderTray();
+    render();
+  }
+
+  el('mjNextBtn').addEventListener('click', ()=>{ level++; localStorage.setItem('mj_level', String(level)); startLevel(); });
+  el('mjRetryBtn').addEventListener('click', startLevel);
+  el('mjHintBtn').addEventListener('click', hint);
+  el('mjShuffleBtn').addEventListener('click', shuffle);
+  el('mjUndoBtn').addEventListener('click', undo);
+  el('mjMusicBtn').addEventListener('click', ()=>{ musicOn=!musicOn; localStorage.setItem('mj_music', musicOn?'on':'off'); updateMusicBtn(); if(musicOn) startMusic(); else stopMusic(); });
+  el('mjMenuBtn').addEventListener('click', ()=>{
+    stopMusic();
+    document.querySelectorAll('main > div[id^="view"]').forEach(v=>v.classList.add('hidden'));
+    const hub = document.getElementById('viewGamesHub'); if(hub) hub.classList.remove('hidden');
+    document.body.classList.remove('ludo-fullscreen');
+  });
+  window.addEventListener('resize', ()=>{ if(!el('viewPuzzle').classList.contains('hidden') && tiles.length) render(); });
+
+  window.MAHJONG = { onShow(){ updateMusicBtn(); startLevel(); setTimeout(render, 60); } };
 })();
 
 </script>
