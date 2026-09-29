@@ -192,6 +192,7 @@
   .ludo-sec{font-size:12px;color:var(--gold-soft);font-weight:800;letter-spacing:.5px;margin:6px 0;text-transform:uppercase;}
   .ludo-inp{width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:2px solid rgba(255,255,255,0.15);background:var(--bg-deep);color:var(--cream);font-size:15px;}
   #viewLudo .card .btn{padding:12px 6px;}
+  #viewLudo .card .btn small{font-size:11px;font-weight:600;opacity:.85;}
   .ludo-stage{width:min(96vw,calc(100vh - 250px),480px);width:min(96vw,calc(100dvh - 250px),480px);margin:0 auto;}
   #ludoSvg{width:100%;height:auto;display:block;border-radius:14px;box-shadow:0 14px 30px rgba(0,0,0,0.55),0 0 0 3px rgba(242,198,107,0.4);touch-action:manipulation;}
   .ludo-turn-label{margin-bottom:4px !important;font-size:15px !important;min-height:20px;}
@@ -308,19 +309,20 @@
   <div id="viewLudo" class="hidden">
     <div id="ludoSetup" class="card ludo-panel" style="text-align:center;">
       <div class="ludo-title">🎲 LUDO</div>
-      <div class="ludo-sec">Play vs Computer</div>
+      <div class="ludo-sec">📴 Offline: friends on 1 phone</div>
+      <div style="font-size:11px;color:var(--muted);margin:-2px 0 6px;">No internet needed. Every player gets their own dice on their own side.</div>
       <div class="row" style="margin-bottom:12px;">
-        <button type="button" class="btn btn-primary ludoModeBtn" data-m="c1">1 CPU</button>
-        <button type="button" class="btn btn-primary ludoModeBtn" data-m="c2">2 CPU</button>
-        <button type="button" class="btn btn-primary ludoModeBtn" data-m="c3">3 CPU</button>
+        <button type="button" class="btn btn-primary ludoModeBtn" data-m="p2">2 Players<br><small>2 dice</small></button>
+        <button type="button" class="btn btn-primary ludoModeBtn" data-m="p3">3 Players<br><small>3 dice</small></button>
+        <button type="button" class="btn btn-primary ludoModeBtn" data-m="p4">4 Players<br><small>4 dice</small></button>
       </div>
-      <div class="ludo-sec">Friends on this phone (each has own dice)</div>
+      <div class="ludo-sec">🤖 Play vs Computer</div>
       <div class="row" style="margin-bottom:12px;">
-        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="p2">2 players</button>
-        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="p3">3 players</button>
-        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="p4">4 players</button>
+        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="c1">1 CPU</button>
+        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="c2">2 CPU</button>
+        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="c3">3 CPU</button>
       </div>
-      <div class="ludo-sec">Online with friends</div>
+      <div class="ludo-sec">🌐 Online with friends</div>
       <input id="ludoName" class="ludo-inp" maxlength="12" placeholder="Your name" autocomplete="off">
       <button type="button" class="btn btn-primary" id="ludoCreateBtn" style="margin:8px 0;">Create room &amp; invite friends</button>
       <div style="display:flex;gap:8px;">
@@ -1841,7 +1843,4 @@ function person(col,fat,girl){const g=document.createElementNS(NS,'g');
  if(girl)el('path',{d:`M${-w} ${sy-2} L${w} ${sy-2} L${w+5} -12 L${-w-5} -12Z`,fill:col,stroke:K,'stroke-width':1.5,'stroke-linejoin':'round'},g);
  else if(fat)el('ellipse',{cx:0,cy:-19,rx:13,ry:11,fill:col,stroke:K,'stroke-width':1.5},g);
  else el('rect',{x:-6,y:-28,width:12,height:17,rx:5,fill:col,stroke:K,'stroke-width':1.5},g);
- g._a=[-1,1].map(d=>{const ag=el('g',{},g);el('path',{d:`M${d*(w-1)} ${sy} Q${d*(w+7)} ${sy+6} ${d*(w+5)} ${sy+13}`,fill:'none',stroke:col,'stroke-width':4.5,'stroke-linecap':'round'},ag);
-  el('circle',{cx:d*(w+5),cy:sy+14,r:2.8,fill:SK,stroke:K,'stroke-width':.8},ag);ag._p=[d*(w-1),sy];return ag});
- el('circle',{cx:0,cy:hy,r:8.5,fill:SK,stroke:K,'stroke-width':1.2},g);
- if(girl){[-1,1].forEach(d=>{el('circle',{cx:d*10,cy:hy+2,r:3.8,fill:K},g);
+ g._a=[-1,1].map(d=>{const ag=el('g',{},g);el('path',{d:`M${d*(w-1)} ${sy} Q${d*(w+7)} ${sy+6} ${d*(w+5)} ${sy+13}`,fill:'none',stroke:col,'stroke-width':4
