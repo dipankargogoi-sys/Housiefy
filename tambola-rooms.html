@@ -120,6 +120,13 @@
   .ludo-token-highlight{animation:ludoPulse 0.9s ease-in-out infinite;}
   @keyframes ludoPulse{0%,100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0));transform:scale(1);}50%{filter:drop-shadow(0 0 5px rgba(255,255,255,0.9));transform:scale(1.15);}}
 
+  /* ---- Goti Ludo fun edition ---- */
+  #ludoSvg{width:min(94vw,calc(100dvh - 320px),460px);height:auto;display:block;margin:0 auto;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,0.55),0 0 0 4px rgba(242,198,107,0.4);}
+  #ludoDie{font-size:52px;line-height:1;padding:2px 18px;background:linear-gradient(145deg,#fff,#d8d8e0);border:4px solid var(--gold-soft);border-radius:18px;color:#1a1730;cursor:pointer;box-shadow:0 5px 0 #a8a8b8,0 8px 14px rgba(0,0,0,0.4);}
+  #ludoDie.on{animation:ludoP .6s infinite alternate;}
+  @keyframes ludoP{to{transform:scale(1.14);box-shadow:0 0 18px #ffb300;}}
+  .ludo-react{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
+  .ludo-react button{font-size:22px;padding:6px 10px;border-radius:12px;border:2px solid rgba(255,255,255,0.15);background:var(--bg-panel-2);cursor:pointer;}
   /* ---- Ludo fullscreen mode ---- */
   body.ludo-fullscreen h1#appTitle, body.ludo-fullscreen .sub, body.ludo-fullscreen #updateBanner{display:none !important;}
   body.ludo-fullscreen main{max-width:none;padding:0;margin:0;}
@@ -267,7 +274,7 @@
         <div style="font-size:34px;">🎲</div>
         <div style="flex:1;">
           <div style="font-weight:800;font-size:16px;color:var(--gold-soft);">Ludo</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">2–4 players, pass &amp; play on one phone</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Talking gotis · punch, cry &amp; laugh · vs computer or friends</div>
         </div>
         <div style="color:var(--muted);">▶</div>
       </div>
@@ -289,30 +296,27 @@
   <div id="viewLudo" class="hidden">
     <div id="ludoSetup" class="card ludo-panel" style="text-align:center;">
       <div class="ludo-title">🎲 LUDO</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">How many players? (pass the phone each turn)</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Funny gotis that talk, punch, cry and laugh!</div>
+      <button type="button" class="btn btn-primary ludoModeBtn" data-m="cpu" style="margin-bottom:10px;">You vs 3 Computers</button>
+      <div style="font-size:12px;color:var(--muted);margin:6px 0;">or pass the phone with friends</div>
       <div class="row" style="margin-bottom:14px;">
-        <button type="button" class="btn btn-ghost ludoPlayerCountBtn" data-n="2">2</button>
-        <button type="button" class="btn btn-ghost ludoPlayerCountBtn" data-n="3">3</button>
-        <button type="button" class="btn btn-ghost ludoPlayerCountBtn" data-n="4">4</button>
+        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="2">2</button>
+        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="3">3</button>
+        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="4">4</button>
       </div>
-      <div class="hint" style="text-align:left;">Roll a <b>6</b> to bring a token out of your yard. Land on an opponent off a star cell to send them home. Get all 4 tokens to the center to win.</div>
-      <button type="button" class="btn btn-primary" id="ludoStartBtn">Start Game</button>
+      <div class="hint" style="text-align:left;">Roll a <b>6</b> to bring a goti out. Land on another goti (not on a &#9733; safe cell) to punch it back home. A 6 or a capture gives another turn. Get all 4 gotis to the centre to win. Free family game, no money.</div>
     </div>
 
-    <div id="ludoPlay" class="hidden" style="text-align:center;">
+    <div id="ludoPlay" class="hidden" style="text-align:center;width:100%;">
       <div id="ludoTurnLabel" class="ludo-turn-label"></div>
-
-      <div id="ludoDiceRowTop" style="display:flex;justify-content:space-between;margin-bottom:6px;"></div>
-      <div id="ludoBoardWrap" style="display:flex;justify-content:center;">
-        <div id="ludoBoard"></div>
+      <svg id="ludoSvg" viewBox="0 0 600 600"></svg>
+      <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;">
+        <button type="button" id="ludoDie">🎲</button>
+        <button type="button" class="btn btn-ghost" id="ludoNewBtn" style="width:auto;padding:10px 14px;">New game</button>
       </div>
-      <div id="ludoDiceRowBottom" style="display:flex;justify-content:space-between;margin-top:6px;"></div>
-    </div>
-
-    <div id="ludoWin" class="card ludo-panel hidden" style="text-align:center;">
-      <div style="font-size:52px;margin-bottom:8px;">🏆</div>
-      <div id="ludoWinText" class="ludo-title" style="margin-bottom:16px;"></div>
-      <button type="button" class="btn btn-primary" id="ludoPlayAgainBtn">Play Again</button>
+      <div class="ludo-react">
+        <button type="button" class="ludoReact" data-t="laugh">😂</button><button type="button" class="ludoReact" data-t="cheer">🎉</button><button type="button" class="ludoReact" data-t="angry">😡</button><button type="button" class="ludoReact" data-t="cry">😭</button><button type="button" class="ludoReact" data-t="punch">👊</button><button type="button" class="ludoReact" data-t="trip">🍌</button><button type="button" id="ludoVoice">🔊</button>
+      </div>
     </div>
 
     <div class="ludo-menubar">
@@ -320,7 +324,8 @@
     </div>
   </div>
 
-  <!-- ============ MAHJONG MATCH ============ -->
+  
+<!-- ============ MAHJONG MATCH ============ -->
   <div id="viewPuzzle" class="hidden">
     <div id="mjTop">
       <div id="mjLevelLabel" class="mj-level">Level 1</div>
@@ -1744,7 +1749,7 @@
 </script>
 
 <script>
-/* ============ LUDO ENGINE (real cross board, tap-your-dice / tap-your-goti) ============ */
+/* ============ LUDO: Goti Ludo Fun Edition (cartoon gotis, voices, punch / cry / laugh reactions) ============ */
 (function(){
   // visible on-screen error catcher — if something inside the Ludo screen throws,
   // you'll see it as a red banner instead of buttons silently doing nothing.
@@ -1765,811 +1770,80 @@
     bar.textContent = 'Script error: ' + msg + ' (line ' + e.lineno + ')';
   });
 
-  const el = id => document.getElementById(id);
-  const COLORS = { red:'#e0453c', green:'#3fae4a', blue:'#3f6fd6', yellow:'#f0c531' };
-  const ORDER = ['blue','red','green','yellow'];
-  const NAMES = { blue:'Blue', red:'Red', green:'Green', yellow:'Yellow' };
-  const CORNER = { red:'top-left', green:'top-right', blue:'bottom-left', yellow:'bottom-right' };
-
-  // ---- verified 56-cell shared ring ----
-  function buildRing(){
-    const ring = [];
-    ring.push(...[0,1,2,3,4,5].map(c=>[6,c]));
-    ring.push([6,6]);
-    ring.push(...[5,4,3,2,1,0].map(r=>[r,6]));
-    ring.push([0,7]);
-    ring.push(...[0,1,2,3,4,5].map(r=>[r,8]));
-    ring.push([6,8]);
-    ring.push(...[9,10,11,12,13,14].map(c=>[6,c]));
-    ring.push([7,14]);
-    ring.push(...[14,13,12,11,10,9].map(c=>[8,c]));
-    ring.push([8,8]);
-    ring.push(...[9,10,11,12,13,14].map(r=>[r,8]));
-    ring.push([14,7]);
-    ring.push(...[14,13,12,11,10,9].map(r=>[r,6]));
-    ring.push([8,6]);
-    ring.push(...[5,4,3,2,1,0].map(c=>[8,c]));
-    ring.push([7,0]);
-    return ring;
-  }
-  const RING = buildRing();
-  const RING_LEN = RING.length;
-  const START_OFFSET = { red:1, green:15, yellow:29, blue:43 }; // 2nd cell of each rail = standard start squares
-  function hexToRgba(hex, a){ const n=parseInt(hex.slice(1),16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }
-  const HOME_COLUMN = {
-    red:    [[7,1],[7,2],[7,3],[7,4],[7,5]],
-    green:  [[1,7],[2,7],[3,7],[4,7],[5,7]],
-    yellow: [[7,13],[7,12],[7,11],[7,10],[7,9]],
-    blue:   [[13,7],[12,7],[11,7],[10,7],[9,7]]
-  };
-  const FINISH_CELL = { red:[7,6], green:[6,7], yellow:[7,8], blue:[8,7] };
-  const BASE_ORIGIN = { red:[0,0], green:[0,9], blue:[9,0], yellow:[9,9] };
-  const EXTRA_SAFE = [10,24,38,52]; // star cells — measured from the reference board
-  const PIP_LAYOUTS = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
-  const FINISH_STEP = 61;
-
-  function renderDiceFace(boxEl, val){
-    boxEl.innerHTML = '';
-    const active = new Set(PIP_LAYOUTS[val] || []);
-    for(let i=1;i<=9;i++){
-      const p = document.createElement('div');
-      if(active.has(i)) p.className = 'pip';
-      boxEl.appendChild(p);
-    }
-  }
-
-  // ---------------- sound (synthesized, no external assets) ----------------
-  let audioCtx = null;
-  function ac(){
-    if(!audioCtx){
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if(AC) audioCtx = new AC();
-    }
-    if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
-    return audioCtx;
-  }
-  function tone(freq, dur, type, vol){
-    const ctx = ac(); if(!ctx) return;
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.setValueAtTime(vol, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
-    o.connect(g); g.connect(ctx.destination);
-    o.start(); o.stop(ctx.currentTime+dur);
-  }
-  function sndRollTick(){ tone(220+Math.random()*380, 0.05, 'square', 0.07); }
-  function sndStep(){ tone(480+Math.random()*90, 0.08, 'triangle', 0.16); }
-  function sndCapture(){ tone(200,0.22,'sawtooth',0.18); setTimeout(()=>tone(130,0.28,'sawtooth',0.18),100); }
-  function sndWin(){
-    // short victory tune, ~3.5 s
-    const seq = [[523,.18],[659,.18],[784,.18],[1046,.36],[784,.18],[1046,.5],[0,.2],
-                 [659,.15],[784,.15],[988,.15],[1318,.45],[0,.15],[1046,.15],[1175,.15],[1318,.6]];
-    let t=0; seq.forEach(([f,d])=>{ if(f) setTimeout(()=>{ tone(f,d+0.05,'triangle',0.2); tone(f/2,d,'sine',0.08); }, t*1000); t+=d; });
-  }
-
-  function ringCellForColor(color, step){ return RING[(START_OFFSET[color] + step - 1) % RING_LEN]; }
-  function cellForStep(color, step){
-    if(step<=0) return null;
-    if(step<=55) return ringCellForColor(color, step);
-    if(step<=60) return HOME_COLUMN[color][step-56];
-    return FINISH_CELL[color];
-  }
-  function isSafeGlobalCell(r,c){
-    if(ORDER.some(col => { const s = ringCellForColor(col,1); return s[0]===r && s[1]===c; })) return true;
-    return EXTRA_SAFE.some(idx => RING[idx][0]===r && RING[idx][1]===c);
-  }
-
-  let numPlayers = 2, activeColors = [], tokens = {}, turnIdx = 0, over = false;
-  let rolling = false, awaitingTap = false, animating = false, movableList = [], pendingRoll = 0, sixStreak = 0;
-
-  function colorsForCount(n){
-    if(n===2) return ['red','blue'];
-    if(n===3) return ['red','green','blue'];
-    return ['red','green','blue','yellow'];
-  }
-
-  // ---------------- dice boxes (one per corner, matching board layout) ----------------
-  function buildDiceBoxes(){
-    el('ludoDiceRowTop').innerHTML = '';
-    el('ludoDiceRowBottom').innerHTML = '';
-    ['red','green'].forEach(color=> el('ludoDiceRowTop').appendChild(makeDiceBox(color)));
-    ['blue','yellow'].forEach(color=> el('ludoDiceRowBottom').appendChild(makeDiceBox(color)));
-    activeColors.forEach(color=>{
-      const box = el('ludo-dicebox-'+color);
-      box.classList.add('active');
-      box.addEventListener('click', ()=> onDiceBoxTap(color));
-      renderDiceFace(el('ludo-dicebox-face-'+color), 1);
-    });
-  }
-  function makeDiceBox(color){
-    const box = document.createElement('div');
-    box.className = 'ludo-dicebox';
-    box.id = 'ludo-dicebox-'+color;
-    box.style.display = activeColors.includes(color) ? 'flex' : 'none';
-    const pin = document.createElement('div');
-    pin.style.cssText = `width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${COLORS[color]};border:1.5px solid #fff;flex:none;`;
-    const right = document.createElement('div');
-    right.style.cssText = 'text-align:left;flex:1;';
-    const label = document.createElement('div');
-    label.style.cssText = 'font-size:12px;color:var(--cream);font-weight:700;';
-    label.textContent = NAMES[color];
-    const face = document.createElement('div');
-    face.className = 'ludo-dice-flat';
-    face.id = 'ludo-dicebox-face-'+color;
-    right.appendChild(label); right.appendChild(face);
-    box.appendChild(pin); box.appendChild(right);
-    return box;
-  }
-
-  function rollDiceVisual(color, finalVal, onDone){
-    const face = el('ludo-dicebox-face-'+color);
-    face.classList.add('rolling');
-    let ticks = 0;
-    const totalTicks = 10;
-    const tickInt = setInterval(()=>{
-      renderDiceFace(face, 1+Math.floor(Math.random()*6));
-      sndRollTick();
-      ticks++;
-      if(ticks>=totalTicks){
-        clearInterval(tickInt);
-        face.classList.remove('rolling');
-        renderDiceFace(face, finalVal); // always settles flat, showing exactly one clean face
-        onDone();
-      }
-    }, 70);
-  }
-
-  function refreshDiceBoxHighlight(){
-    activeColors.forEach(color=>{
-      const box = el('ludo-dicebox-'+color);
-      const isTurn = color===activeColors[turnIdx] && !over;
-      box.classList.toggle('myturn', isTurn);
-      box.style.pointerEvents = (isTurn && !rolling && !awaitingTap && !animating) ? 'auto' : 'none';
-      box.style.opacity = isTurn ? '1' : '0.4';
-    });
-  }
-
-  // ---------------- board rendering ----------------
-  function buildBoardDom(){
-    const wrap = el('ludoBoard');
-    wrap.innerHTML = '';
-    wrap.style.cssText = 'display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);width:min(94vw,440px);aspect-ratio:1;background:var(--cream);border-radius:10px;overflow:visible;border:2px solid var(--line);';
-
-    ORDER.forEach(color=>{
-      const [r0,c0] = BASE_ORIGIN[color];
-      const base = document.createElement('div');
-      const RAD = { red:'8px 0 0 0', green:'0 8px 0 0', blue:'0 0 0 8px', yellow:'0 0 8px 0' };
-      base.style.cssText = `grid-row:${r0+1}/${r0+7};grid-column:${c0+1}/${c0+7};background:${COLORS[color]};display:flex;align-items:center;justify-content:center;padding:10%;box-sizing:border-box;border-radius:${RAD[color]};`;
-      const nest = document.createElement('div');
-      nest.style.cssText = 'background:#ffffff;border-radius:14%;width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6%;padding:8%;box-sizing:border-box;';
-      for(let i=0;i<4;i++){
-        const dock = document.createElement('div');
-        dock.id = 'ludo-dock-'+color+'-'+i;
-        dock.style.cssText = `border-radius:50%;background:${hexToRgba(COLORS[color],0.45)};display:flex;align-items:center;justify-content:center;`;
-        nest.appendChild(dock);
-      }
-      base.appendChild(nest);
-      wrap.appendChild(base);
-    });
-
-    // center: 4 triangles meeting at the middle, each facing its own home corridor
-    const center = document.createElement('div');
-    center.style.cssText = 'grid-row:7/10;grid-column:7/10;position:relative;';
-    center.innerHTML = `<svg viewBox="0 0 30 30" width="100%" height="100%" style="display:block;">
-      <polygon points="0,0 30,0 15,15" fill="${COLORS.green}"/>
-      <polygon points="30,0 30,30 15,15" fill="${COLORS.yellow}"/>
-      <polygon points="30,30 0,30 15,15" fill="${COLORS.blue}"/>
-      <polygon points="0,30 0,0 15,15" fill="${COLORS.red}"/>
-    </svg>`;
-    // finish zones inside the center house — finished pins stand here, in their own color's triangle
-    const ZONE = {
-      green:  'left:8%;right:8%;top:2%;height:38%;flex-direction:row;align-items:flex-start;',
-      blue:   'left:8%;right:8%;bottom:2%;height:38%;flex-direction:row;align-items:flex-end;',
-      red:    'top:8%;bottom:8%;left:2%;width:38%;flex-direction:column;align-items:flex-start;',
-      yellow: 'top:8%;bottom:8%;right:2%;width:38%;flex-direction:column;align-items:flex-end;'
-    };
-    ORDER.forEach(color=>{
-      const z = document.createElement('div');
-      z.id = 'ludo-finish-'+color;
-      z.style.cssText = 'position:absolute;display:flex;justify-content:center;gap:1px;z-index:6;overflow:visible;'+ZONE[color];
-      center.appendChild(z);
-    });
-    center.style.boxShadow = 'inset 0 0 0 2px rgba(255,255,255,0.9)';
-    wrap.appendChild(center);
-
-    // colored arrow on each color's home-entrance cell (the outermost cell of the
-    // middle line), pointing into that color's home corridor — as in the reference
-    const DIR_ARROW = { red:'→', green:'↓', yellow:'←', blue:'↑' };
-    const HOME_ENTRY = {};
-    ORDER.forEach(color=>{ HOME_ENTRY[(START_OFFSET[color]+54)%RING_LEN] = color; });
-    const START_CELL = {};
-    ORDER.forEach(color=>{ START_CELL[START_OFFSET[color]] = color; });
-    RING.forEach(([r,c],idx)=>{
-      const cell = document.createElement('div');
-      cell.id = 'ludo-cell-'+r+'-'+c;
-      cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:#fff;border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;position:relative;`;
-      if(HOME_ENTRY[idx]){
-        const color = HOME_ENTRY[idx];
-        cell.innerHTML = '<span style="font-size:15px;font-weight:800;color:'+COLORS[color]+';line-height:1;">'+DIR_ARROW[color]+'</span>';
-      } else if(START_CELL[idx]){
-        // start square: colored + safe — where a pawn lands when a 6 comes
-        const color = START_CELL[idx];
-        cell.style.background = COLORS[color];
-        cell.innerHTML = '<span style="font-size:13px;color:#fff;line-height:1;opacity:0.9;">★</span>';
-      } else if(EXTRA_SAFE.includes(idx)){
-        cell.innerHTML = '<span style="font-size:13px;color:#b9b6cf;line-height:1;">☆</span>';
-      }
-      const dotsWrap = document.createElement('div');
-      dotsWrap.className = 'ludo-token-dots';
-      dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-end;justify-content:center;gap:0;z-index:5;overflow:visible;';
-      cell.appendChild(dotsWrap);
-      wrap.appendChild(cell);
-    });
-
-    ORDER.forEach(color=>{
-      HOME_COLUMN[color].forEach(([r,c])=>{
-        const cell = document.createElement('div');
-        cell.id = 'ludo-cell-'+r+'-'+c;
-        cell.style.cssText = `grid-row:${r+1};grid-column:${c+1};background:${COLORS[color]};position:relative;border:1px solid rgba(0,0,0,0.06);`;
-        const dotsWrap = document.createElement('div');
-        dotsWrap.className = 'ludo-token-dots';
-        dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-end;justify-content:center;gap:0;z-index:5;overflow:visible;';
-        cell.appendChild(dotsWrap);
-        wrap.appendChild(cell);
-      });
-      const [fr,fc] = FINISH_CELL[color];
-      const fcell = document.createElement('div');
-      fcell.id = 'ludo-cell-'+fr+'-'+fc;
-      fcell.style.cssText = `grid-row:${fr+1};grid-column:${fc+1};background:${COLORS[color]};position:relative;border:1px solid rgba(0,0,0,0.06);`;
-      const dotsWrap = document.createElement('div');
-      dotsWrap.className = 'ludo-token-dots';
-      dotsWrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-end;justify-content:center;gap:0;z-index:5;overflow:visible;';
-      fcell.appendChild(dotsWrap);
-      wrap.appendChild(fcell);
-    });
-  }
-
-  function makePin(color, sizePx, id){
-    // white map-marker pin with a colored dot, standing on a colored base disc
-    // (matches the reference board). Taller than a cell on purpose — it "stands".
-    const outer = document.createElement('div');
-    if(id) outer.id = id;
-    const H = sizePx*1.42;
-    outer.style.cssText = `width:${sizePx}px;height:${H}px;position:relative;flex:none;`;
-
-    const ringW = sizePx*0.72, ringH = ringW*0.52;
-    const ring = document.createElement('div');
-    ring.style.cssText = `position:absolute;left:50%;bottom:0;width:${ringW}px;height:${ringH}px;border-radius:50%;background:${color};box-shadow:inset 0 0 0 ${Math.max(1.5, sizePx*0.075)}px rgba(0,0,0,0.32), 0 1px 2px rgba(0,0,0,0.3);transform:translateX(-50%);`;
-    outer.appendChild(ring);
-
-    const ps = sizePx*0.86;
-    const pin = document.createElement('div');
-    pin.style.cssText = `position:absolute;left:50%;bottom:${ringH*0.5 + ps*0.13}px;width:${ps}px;height:${ps}px;margin-left:${-ps/2}px;background:linear-gradient(135deg,#ffffff 45%,#d6d6df);border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 3px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;`;
-    const dot = document.createElement('div');
-    const ds = ps*0.5;
-    dot.style.cssText = `width:${ds}px;height:${ds}px;border-radius:50%;background:${color};box-shadow:inset 0 -${Math.max(1,ds*0.12)}px 0 rgba(0,0,0,0.22);`;
-    pin.appendChild(dot);
-    outer.appendChild(pin);
-    return outer;
-  }
-
-  function renderTokens(){
-    document.querySelectorAll('.ludo-token-dots').forEach(t=>t.innerHTML='');
-    ORDER.forEach(color=>document.querySelectorAll('[id^="ludo-dock-'+color+'"]').forEach(d=>d.innerHTML=''));
-    ORDER.forEach(color=>{ const z=el('ludo-finish-'+color); if(z) z.innerHTML=''; });
-    const boardW = (el('ludoBoard').getBoundingClientRect().width) || 440;
-    const cellPx = boardW/15;
-    // count pawns per cell so a lone pawn can be drawn big, and stacked pawns shrink to fit
-    const perCell = {};
-    activeColors.forEach(color=> tokens[color].forEach(step=>{
-      if(step>0){ const [r,c]=cellForStep(color,step); const k=r+'-'+c; perCell[k]=(perCell[k]||0)+1; }
-    }));
-    activeColors.forEach(color=>{
-      tokens[color].forEach((step, i)=>{
-        const pinId = 'ludo-pin-'+color+'-'+i;
-        let pinEl;
-        if(step===0){
-          const dock = el('ludo-dock-'+color+'-'+i);
-          pinEl = makePin(COLORS[color], Math.round(cellPx*1.02), pinId); // fits inside the seat circle
-          if(dock) dock.appendChild(pinEl);
-        } else if(step===FINISH_STEP){
-          const zone = el('ludo-finish-'+color);
-          pinEl = makePin(COLORS[color], Math.round(cellPx*0.66), pinId);
-          if(zone) zone.appendChild(pinEl);
-        } else {
-          const [r,c] = cellForStep(color, step);
-          const cell = el('ludo-cell-'+r+'-'+c);
-          const n = perCell[r+'-'+c] || 1;
-          const size = Math.round(n===1 ? cellPx*0.93 : (n===2 ? cellPx*0.48 : cellPx*0.42));
-          pinEl = makePin(COLORS[color], size, pinId);
-          if(cell){ cell.querySelector('.ludo-token-dots').appendChild(pinEl); }
-        }
-        pinEl.style.cursor = 'pointer';
-        pinEl.addEventListener('click', (e)=>{ e.stopPropagation(); onTokenTap(color, i); });
-      });
-    });
-    applyHighlights();
-  }
-
-  function applyHighlights(){
-    document.querySelectorAll('.ludo-token-highlight').forEach(p=>p.classList.remove('ludo-token-highlight'));
-    if(!awaitingTap) return;
-    const color = activeColors[turnIdx];
-    movableList.forEach(i=>{
-      const p = el('ludo-pin-'+color+'-'+i);
-      if(p) p.classList.add('ludo-token-highlight');
-    });
-  }
-
-  function updateTurnLabel(msg){
-    if(over) return;
-    const color = activeColors[turnIdx];
-    el('ludoTurnLabel').innerHTML = msg || ('<span style="color:'+COLORS[color]+';">●</span> '+NAMES[color]+"'s turn — tap your dice");
-  }
-
-  function movableTokens(color, rollVal){
-    const list = [];
-    tokens[color].forEach((step,i)=>{
-      if(step===0){ if(rollVal===6) list.push(i); return; }
-      if(step===FINISH_STEP) return;
-      if(step+rollVal<=FINISH_STEP) list.push(i);
-    });
-    return list;
-  }
-
-  function moveTokenAnimated(color, i, rollVal, callback){
-    animating = true;
-    refreshDiceBoxHighlight();
-    const startStep = tokens[color][i];
-    if(startStep===0){
-      tokens[color][i] = 1;
-      renderTokens();
-      sndStep();
-      bounceToken(color, i);
-      setTimeout(()=> finalizeLanding(color, i, callback), 200);
-      return;
-    }
-    const endStep = startStep + rollVal;
-    let cur = startStep;
-    function hop(){
-      cur++;
-      tokens[color][i] = cur;
-      renderTokens();
-      sndStep();
-      bounceToken(color, i);
-      if(cur < endStep){
-        setTimeout(hop, 170);
-      } else {
-        setTimeout(()=> finalizeLanding(color, i, callback), 170);
-      }
-    }
-    setTimeout(hop, 170);
-  }
-
-  const walkStepCounter = {};
-  function bounceToken(color, i){
-    const p = el('ludo-pin-'+color+'-'+i);
-    if(!p) return;
-    const key = color+'-'+i;
-    walkStepCounter[key] = (walkStepCounter[key]||0) + 1;
-    const cls = (walkStepCounter[key]%2===0) ? 'ludo-token-hop-l' : 'ludo-token-hop-r';
-    p.classList.remove('ludo-token-hop','ludo-token-hop-l','ludo-token-hop-r');
-    void p.offsetWidth; // restart animation
-    p.classList.add(cls);
-  }
-
-  function finalizeLanding(color, i, callback){
-    animating = false;
-    const step = tokens[color][i];
-    if(step>=1 && step<=55){
-      const [r,c] = ringCellForColor(color, step);
-      if(!isSafeGlobalCell(r,c)){
-        let captured = false;
-        activeColors.forEach(op=>{
-          if(op===color) return;
-          tokens[op].forEach((oStep,oi)=>{
-            if(oStep>=1 && oStep<=55){
-              const [orr,occ] = ringCellForColor(op, oStep);
-              if(orr===r && occ===c){ tokens[op][oi] = 0; captured = true; }
-            }
-          });
-        });
-        if(captured){ renderTokens(); sndCapture(); }
-      }
-    }
-    refreshDiceBoxHighlight();
-    callback();
-  }
-
-  function checkWin(color){ return tokens[color].every(s=>s===FINISH_STEP); }
-
-  function onDiceBoxTap(color){
-    if(rolling || awaitingTap || animating || over) return;
-    if(color !== activeColors[turnIdx]) return; // not your dice — opponents can't touch it
-    rolling = true;
-    refreshDiceBoxHighlight();
-    const val = 1+Math.floor(Math.random()*6);
-    rollDiceVisual(color, val, ()=> handleRoll(val));
-  }
-
-  function handleRoll(val){
-    const color = activeColors[turnIdx];
-    const movable = movableTokens(color, val);
-    rolling = false;
-    if(movable.length===0){
-      updateTurnLabel('No valid move — passing turn');
-      refreshDiceBoxHighlight();
-      setTimeout(()=>advanceAfterRoll(false), 700);
-      return;
-    }
-    pendingRoll = val;
-    movableList = movable;
-    awaitingTap = true;
-    updateTurnLabel('Rolled '+val+' — tap the goti you want to move');
-    refreshDiceBoxHighlight();
-    applyHighlights();
-  }
-
-  function onTokenTap(color, i){
-    if(!awaitingTap || animating) return;
-    if(color !== activeColors[turnIdx]) return; // can't touch opponents' tokens
-    if(!movableList.includes(i)) return;
-    awaitingTap = false;
-    const val = pendingRoll;
-    document.querySelectorAll('.ludo-token-highlight').forEach(p=>p.classList.remove('ludo-token-highlight'));
-    moveTokenAnimated(color, i, val, ()=>{
-      if(checkWin(color)){
-        over = true;
-        sndWin();
-        showWin();
-        return;
-      }
-      advanceAfterRoll(val===6);
-    });
-  }
-
-  function advanceAfterRoll(bonusTurn){
-    if(bonusTurn){
-      sixStreak++;
-      if(sixStreak<3){ updateTurnLabel(); refreshDiceBoxHighlight(); return; }
-    }
-    sixStreak = 0;
-    turnIdx = (turnIdx+1)%activeColors.length;
-    updateTurnLabel();
-    refreshDiceBoxHighlight();
-  }
-
-  function showWin(){
-    const color = activeColors[turnIdx];
-    // keep the board visible so the winning pins can dance in the house
-    document.querySelectorAll('[id^="ludo-pin-'+color+'-"]').forEach((p,i)=>{ p.classList.add('ludo-dance'); p.style.animationDelay = (i*0.12)+'s'; });
-    const win = el('ludoWin');
-    win.classList.remove('hidden');
-    win.style.order = '-1'; // show the celebration card above the board
-    el('ludoWinText').innerHTML = '🎉 <span style="color:'+COLORS[color]+';">'+NAMES[color]+'</span> WINS! 🏆<div style="font-size:26px;margin-top:6px;letter-spacing:6px;">🎊🎈🎊🎈🎊</div>';
-    refreshDiceBoxHighlight();
-  }
-
-  function startGame(){
-    activeColors = colorsForCount(numPlayers);
-    tokens = {};
-    activeColors.forEach(c=> tokens[c] = [0,0,0,0]);
-    turnIdx = Math.floor(Math.random()*activeColors.length); // random starting player each game — fair for everyone
-    over = false; rolling = false; awaitingTap = false; animating = false; movableList = []; sixStreak = 0;
-    el('ludoSetup').classList.add('hidden');
-    el('ludoWin').classList.add('hidden'); el('ludoWin').style.order='';
-    el('ludoPlay').classList.remove('hidden');
-    buildBoardDom();
-    buildDiceBoxes();
-    renderTokens();
-    updateTurnLabel();
-    refreshDiceBoxHighlight();
-  }
-
-  document.querySelectorAll('.ludoPlayerCountBtn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      numPlayers = parseInt(btn.dataset.n,10);
-      document.querySelectorAll('.ludoPlayerCountBtn').forEach(b=>{b.classList.remove('btn-primary');b.classList.add('btn-ghost');});
-      btn.classList.remove('btn-ghost'); btn.classList.add('btn-primary');
-    });
-  });
-  el('ludoStartBtn').addEventListener('click', startGame);
-  el('ludoPlayAgainBtn').addEventListener('click', startGame);
-  el('ludoMenuBtn').addEventListener('click', ()=>{
-    document.querySelectorAll('main > div[id^="view"]').forEach(v=>v.classList.add('hidden'));
-    const hub = document.getElementById('viewGamesHub');
-    if(hub) hub.classList.remove('hidden');
-    document.body.classList.remove('ludo-fullscreen');
-  });
-
-  window.LUDO = { onShow(){
-    // re-entering from the hub always returns to the setup screen
-    el('ludoPlay').classList.add('hidden');
-    el('ludoWin').classList.add('hidden');
-    el('ludoSetup').classList.remove('hidden');
-  } };
-})();
-
-</script>
-<script>
-/* ============ MAHJONG MATCH ENGINE ============ */
-(function(){
-  const el = id => document.getElementById(id);
-  const TRAY_MAX = 4;
-
-  // tile kinds: numbers, dragons, and picture tiles (all render everywhere)
-  const KINDS = [
-    ...'123456789'.split('').map(n=>({s:n, c:'#1f3a7a', fs:1.05})),
-    {s:'中', c:'#c8232c', fs:0.95}, {s:'發', c:'#178a45', fs:0.95}, {s:'東', c:'#1f3a7a', fs:0.9}, {s:'白', c:'#1f3a7a', fs:0.9},
-    ...['🌸','🐟','🍀','⚓','👑','💍','🦋','🌙','🐉','🎋','🐢','🦚','🌊','🔔','🍁','🌺','🐝','🦢','🎐','☀️','🌿','🪷','🐚','🍄','🎏','🪁','🐘','🦁','🐦','🍇','🍒','🌻','⭐','🎵','🔥','💎','🐸','🦀','🌵','🎎'].map(e=>({s:e, c:'#222', fs:0.95}))
-  ];
-
-  let level = parseInt(localStorage.getItem('mj_level')||'1',10) || 1;
-  let tiles = [], tray = [], history = [], shuffles = 3, hints = 3, over = false, unit = 20;
-  let musicOn = localStorage.getItem('mj_music') !== 'off';
-
-  // ---------------- sound & music (synthesized) ----------------
-  let ctx = null, musicNodes = null, musicTimer = null;
-  function ac(){ if(!ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) ctx=new AC(); } if(ctx && ctx.state==='suspended') ctx.resume(); return ctx; }
-  function tone(f, d, type, vol, when){
-    const c = ac(); if(!c) return;
-    const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.value=f;
-    const t0 = c.currentTime + (when||0);
-    g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(vol,t0+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+d);
-    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+d+0.05);
-  }
-  const sndTap = ()=> tone(880,0.07,'triangle',0.12);
-  const sndLock = ()=> { tone(180,0.12,'square',0.08); };
-  const sndMatch = ()=> { tone(784,0.12,'triangle',0.18); tone(1175,0.22,'triangle',0.16,0.08); };
-  const sndWin = ()=> { [[659,.15],[784,.15],[988,.15],[1318,.5],[1175,.2],[1318,.6]].reduce((t,[f,d])=>{ tone(f,d,'triangle',0.2,t); return t+d; },0); };
-  const sndLose = ()=> { tone(300,0.3,'sawtooth',0.12); tone(220,0.5,'sawtooth',0.12,0.25); };
-  // gentle pentatonic ambient loop
-  const SCALE = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3];
-  function startMusic(){
-    if(!musicOn || musicTimer) return;
-    const c = ac(); if(!c) return;
-    let step = 0;
-    musicTimer = setInterval(()=>{
-      if(!musicOn){ return; }
-      const f = SCALE[(step*3 + Math.floor(step/4)) % SCALE.length];
-      tone(f, 0.9, 'sine', 0.045);
-      if(step%4===0) tone(f/2, 1.6, 'sine', 0.035);
-      step++;
-    }, 520);
-  }
-  function stopMusic(){ if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } }
-  function updateMusicBtn(){ el('mjMusicBtn').textContent = musicOn ? '🔊' : '🔇'; }
-
-  // ---------------- layouts (x,y in half-tile units; z = layer) ----------------
-  function makeLayout(lv){
-    const pos = [];
-    const cols = Math.min(6 + Math.floor((lv-1)/2), 8);
-    const rows = Math.min(4 + Math.floor((lv-1)/3), 6);
-    const layers = Math.min(2 + Math.floor((lv-1)/2), 4);
-    const shape = (lv-1) % 4; // vary silhouettes
-    for(let z=0; z<layers; z++){
-      const w = cols - 2*z, h = rows - 2*z;
-      if(w<1 || h<1) break;
-      for(let r=0;r<h;r++){
-        for(let cc=0;cc<w;cc++){
-          let ok = true;
-          if(z===0){
-            if(shape===1 && (r===0||r===h-1) && (cc===0||cc===w-1)) ok=false;          // clipped corners
-            if(shape===2 && r===Math.floor(h/2) && (cc===0||cc===w-1)) ok=false;       // notched sides
-            if(shape===3 && (cc===0||cc===w-1) && (r<1||r>h-2)) ok=false;               // diamond-ish
-          }
-          if(ok) pos.push({x:cc*2 + z, y:r*2 + z, z});
-        }
-      }
-    }
-    // wings on bigger levels
-    if(lv>=4){
-      const midR = Math.floor(rows/2);
-      pos.push({x:-2, y:midR*2, z:0}); pos.push({x:cols*2, y:midR*2, z:0});
-    }
-    // keep every level provably solvable: at most 39 pairs so each pair has a unique kind
-    while(pos.length > 78) pos.pop();
-    if(pos.length % 2 === 1) pos.pop();
-    return pos;
-  }
-
-  function isCovered(t, alive){ return alive.some(o=> o!==t && o.z===t.z+1 && Math.abs(o.x-t.x)<2 && Math.abs(o.y-t.y)<2); }
-  function blockedLeft(t, alive){ return alive.some(o=> o!==t && o.z===t.z && Math.abs(o.y-t.y)<2 && o.x===t.x-2); }
-  function blockedRight(t, alive){ return alive.some(o=> o!==t && o.z===t.z && Math.abs(o.y-t.y)<2 && o.x===t.x+2); }
-  function isFree(t, alive){ return !isCovered(t,alive) && (!blockedLeft(t,alive) || !blockedRight(t,alive)); }
-
-  // assign kinds so the level is always solvable: simulate a valid removal order in reverse
-  function assignKinds(list){
-    const n = list.length;
-    // one unique kind per pair -> a free matching pair always exists, whatever order you play
-    const chosen = [...KINDS].sort(()=>Math.random()-0.5).slice(0, Math.min(n/2, KINDS.length));
-    let alive = list.slice(), pairs = [];
-    let guard = 0;
-    while(alive.length && guard++ < 5000){
-      const free = alive.filter(t=>isFree(t, alive));
-      if(free.length<2) return false;
-      const a = free[Math.floor(Math.random()*free.length)];
-      let b = free[Math.floor(Math.random()*free.length)];
-      while(b===a) b = free[Math.floor(Math.random()*free.length)];
-      pairs.push([a,b]);
-      alive = alive.filter(t=>t!==a && t!==b);
-    }
-    pairs.forEach((p,i)=>{ const k = chosen[i % chosen.length]; p[0].kind=k; p[1].kind=k; });
-    return true;
-  }
-
-  // ---------------- rendering ----------------
-  function computeUnit(){
-    const wrap = el('mjBoardWrap');
-    const W = wrap.clientWidth || 360, H = wrap.clientHeight || 420;
-    const xs = tiles.map(t=>t.x), ys = tiles.map(t=>t.y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs)+2, minY = Math.min(...ys), maxY = Math.max(...ys)+2;
-    const spanX = maxX-minX, spanY = maxY-minY;
-    unit = Math.floor(Math.min((W-24)/spanX, (H-24)/(spanY*1.3)));
-    unit = Math.max(12, Math.min(unit, 34));
-    return {minX, minY, spanX, spanY};
-  }
-  function tileEl(t, small){
-    const d = document.createElement('div');
-    d.className = 'mj-tile';
-    const k = t.kind;
-    const size = small ? 26 : Math.round(unit*1.15*(k.fs||1));
-    d.innerHTML = '<span class="sym" style="font-size:'+size+'px;color:'+k.c+';">'+k.s+'</span>';
-    return d;
-  }
-  function render(){
-    const board = el('mjBoard');
-    board.innerHTML = '';
-    const alive = tiles.filter(t=>t.alive);
-    if(!alive.length){ return; }
-    const {minX, minY, spanX, spanY} = computeUnit();
-    const tw = unit*2, th = unit*2.6;
-    board.style.width = (spanX*unit + 16)+'px';
-    board.style.height = (spanY*unit*1.3 + 16)+'px';
-    alive.sort((a,b)=> a.z-b.z || a.y-b.y || a.x-b.x).forEach(t=>{
-      const d = tileEl(t);
-      d.style.width = tw+'px'; d.style.height = th+'px';
-      d.style.left = ((t.x-minX)*unit - t.z*3)+'px';
-      d.style.top  = ((t.y-minY)*unit*1.3 - t.z*4)+'px';
-      d.style.zIndex = t.z*100 + t.y;
-      if(isCovered(t, alive)) d.classList.add('covered');
-      d.addEventListener('click', ()=> tapTile(t));
-      t.el = d;
-      board.appendChild(d);
-    });
-    el('mjLeft').textContent = alive.length + ' tiles';
-  }
-  function renderTray(){
-    const slots = el('mjTray').querySelectorAll('.mj-slot');
-    slots.forEach((s,i)=>{ s.innerHTML=''; if(tray[i]){ const d=tileEl(tray[i], true); s.appendChild(d); tray[i].trayEl = d; } });
-  }
-
-  function toast(msg){
-    const t = el('mjToast'); t.textContent = msg; t.classList.remove('hidden');
-    clearTimeout(t._t); t._t = setTimeout(()=>t.classList.add('hidden'), 1100);
-  }
-
-  // ---------------- gameplay ----------------
-  function tapTile(t){
-    if(over || !t.alive) return;
-    startMusic();
-    const alive = tiles.filter(x=>x.alive);
-    if(isCovered(t, alive)){ sndLock(); t.el.classList.add('shake'); toast('locked by above tiles'); setTimeout(()=>t.el.classList.remove('shake'),300); return; }
-    if(blockedLeft(t,alive) && blockedRight(t,alive)){ sndLock(); t.el.classList.add('shake'); toast('locked by left and right'); setTimeout(()=>t.el.classList.remove('shake'),300); return; }
-    sndTap();
-    t.alive = false;
-    tray.push(t);
-    history.push(t);
-    const match = tray.findIndex((x,i)=> i<tray.length-1 && x.kind===t.kind);
-    render();
-    renderTray();
-    if(match>=0){
-      const a = tray[match], b = t;
-      setTimeout(()=>{
-        if(a.trayEl) a.trayEl.classList.add('pop'); if(b.trayEl) b.trayEl.classList.add('pop');
-        sndMatch();
-        setTimeout(()=>{
-          tray = tray.filter(x=>x!==a && x!==b);
-          history = history.filter(x=>x!==a && x!==b);
-          renderTray();
-          checkEnd();
-        }, 280);
-      }, 120);
-    } else {
-      checkEnd();
-    }
-  }
-
-  function checkEnd(){
-    const alive = tiles.filter(t=>t.alive);
-    if(!alive.length && !tray.length){ over = true; sndWin(); showWin(); return; }
-    if(tray.length >= TRAY_MAX){ over = true; sndLose(); showLose('Tray is full!','Match pairs before the tray fills up (max '+TRAY_MAX+').'); return; }
-    // any playable move left?
-    const free = alive.filter(t=>isFree(t, alive));
-    const trayKinds = new Set(tray.map(t=>t.kind));
-    const possible = free.some(t=> trayKinds.has(t.kind)) || free.some((t,i)=> free.some((u,j)=> j>i && u.kind===t.kind));
-    if(!possible){
-      if(shuffles>0) toast('No matches — use Shuffle 🔀');
-      else { over = true; sndLose(); showLose('No moves left','No matching pairs remain and no shuffles left.'); }
-    }
-  }
-
-  function findHint(){
-    const alive = tiles.filter(t=>t.alive);
-    const free = alive.filter(t=>isFree(t, alive));
-    for(const tr of tray){ const m = free.find(t=>t.kind===tr.kind); if(m) return [m]; }
-    for(let i=0;i<free.length;i++) for(let j=i+1;j<free.length;j++) if(free[i].kind===free[j].kind) return [free[i],free[j]];
-    return null;
-  }
-  function hint(){
-    if(over) return;
-    if(hints<=0){ toast('No hints left'); return; }
-    const h = findHint();
-    if(!h){ toast('No free pair — try Shuffle'); return; }
-    hints--; el('mjHintCount').textContent = hints;
-    h.forEach(t=> t.el && t.el.classList.add('hint'));
-    setTimeout(()=> h.forEach(t=> t.el && t.el.classList.remove('hint')), 1500);
-  }
-  function shuffle(){
-    if(over) return;
-    if(shuffles<=0){ toast('No shuffles left'); return; }
-    tray.forEach(t=> t.alive = true); tray = []; history = [];
-    const alive = tiles.filter(t=>t.alive);
-    if(alive.length<2) return;
-    let ok=false, att=0;
-    while(!ok && att++<20) ok = assignKinds(alive);
-    shuffles--; el('mjShuffleCount').textContent = shuffles;
-    sndTap(); render(); renderTray(); toast('Shuffled');
-  }
-  function undo(){
-    if(over || !history.length) return;
-    const t = history.pop();
-    tray = tray.filter(x=>x!==t);
-    t.alive = true;
-    sndTap(); render(); renderTray();
-  }
-
-  function showWin(){
-    el('mjWinTitle').textContent = 'Level '+level+' Completed!';
-    el('mjWinSub').textContent = 'Great memory! Ready for Level '+(level+1)+'?';
-    el('mjWin').classList.remove('hidden');
-  }
-  function showLose(title, sub){
-    el('mjLoseTitle').textContent = title; el('mjLoseSub').textContent = sub;
-    el('mjLose').classList.remove('hidden');
-  }
-
-  function startLevel(){
-    over = false; tray = []; history = [];
-    shuffles = level>=13 ? 1 : (level>=8 ? 2 : 3); hints = shuffles;
-    el('mjShuffleCount').textContent = shuffles; el('mjHintCount').textContent = hints;
-    el('mjWin').classList.add('hidden'); el('mjLose').classList.add('hidden');
-    el('mjLevelLabel').textContent = 'Level '+level + (level<4?' · Easy':level<8?' · Normal':level<13?' · Hard':' · Expert');
-    let attempt = 0;
-    do {
-      tiles = makeLayout(level).map(p=>({...p, alive:true}));
-    } while(!assignKinds(tiles) && ++attempt < 20);
-    renderTray();
-    render();
-  }
-
-  el('mjNextBtn').addEventListener('click', ()=>{ level++; localStorage.setItem('mj_level', String(level)); startLevel(); });
-  el('mjRetryBtn').addEventListener('click', startLevel);
-  el('mjHintBtn').addEventListener('click', hint);
-  el('mjShuffleBtn').addEventListener('click', shuffle);
-  el('mjUndoBtn').addEventListener('click', undo);
-  el('mjMusicBtn').addEventListener('click', ()=>{ musicOn=!musicOn; localStorage.setItem('mj_music', musicOn?'on':'off'); updateMusicBtn(); if(musicOn) startMusic(); else stopMusic(); });
-  el('mjMenuBtn').addEventListener('click', ()=>{
-    stopMusic();
-    document.querySelectorAll('main > div[id^="view"]').forEach(v=>v.classList.add('hidden'));
-    const hub = document.getElementById('viewGamesHub'); if(hub) hub.classList.remove('hidden');
-    document.body.classList.remove('ludo-fullscreen');
-  });
-  window.addEventListener('resize', ()=>{ if(!el('viewPuzzle').classList.contains('hidden') && tiles.length) render(); });
-
-  window.MAHJONG = { onShow(){ updateMusicBtn(); startLevel(); setTimeout(render, 60); } };
-})();
-
-</script>
-</body>
-</html>
+const NS="http://www.w3.org/2000/svg",S=40,s=document.getElementById('ludoSvg');
+const C={r:'#e63946',g:'#2a9d4f',b:'#2b6fdc',y:'#f4c20d'};
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||s).appendChild(e);return e}
+const T=[[1,6],[2,6],[3,6],[4,6],[5,6],[6,5],[6,4],[6,3],[6,2],[6,1],[6,0],[7,0],[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[9,6],[10,6],[11,6],[12,6],[13,6],[14,6],[14,7],[14,8],[13,8],[12,8],[11,8],[10,8],[9,8],[8,9],[8,10],[8,11],[8,12],[8,13],[8,14],[7,14],[6,14],[6,13],[6,12],[6,11],[6,10],[6,9],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8],[0,7],[0,6]];
+const H=[[1,7],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7]];
+const rot=(p,k)=>{for(let i=0;i<k;i++)p=[14-p[1],p[0]];return p};
+const P=[['r',0],['g',1],['b',2],['y',3]]; // clockwise order
+// board
+el('rect',{x:0,y:0,width:600,height:600,rx:10,fill:'#fff',stroke:'#3a2e22','stroke-width':3});
+P.forEach(([k,r])=>{
+ const q=rot([0,0],r), x=[0,9,9,0][r]*S,y=[0,0,9,9][r]*S;
+ el('rect',{x,y,width:6*S,height:6*S,fill:C[k]});
+ el('rect',{x:x+S,y:y+S,width:4*S,height:4*S,rx:14,fill:'#fff'});
+ [[2,2],[4,2],[2,4],[4,4]].forEach(([a,b])=>el('circle',{cx:x+a*S+0,cy:y+b*S,r:16,fill:C[k],opacity:.35}));
+});
+const tr=[];for(let c=0;c<15;c++)for(let r=0;r<15;r++){if((c>=6&&c<=8)||(r>=6&&r<=8))if(!(c>=6&&c<=8&&r>=6&&r<=8))tr.push([c,r])}
+const hm={},st={};
+P.forEach(([k,r])=>{H.slice(0,6).forEach(h=>{const q=rot(h,r);hm[q]=k});st[rot([1,6],r)]=k});
+tr.forEach(([c,r])=>{const k=hm[[c,r]]||st[[c,r]];el('rect',{x:c*S,y:r*S,width:S,height:S,fill:k?C[k]:'#fff',stroke:'#3a2e22','stroke-width':1})});
+[[6,6],[8,6],[8,8],[6,8]].forEach(([c,r],i)=>{});
+// centre triangles
+const cx=300,cy=300,q=[[240,240],[360,240],[360,360],[240,360]];
+[['r',[240,240],[240,360]],['g',[240,240],[360,240]],['b',[360,240],[360,360]],['y',[240,360],[360,360]]].forEach(([k,a,b])=>el('polygon',{points:`${a} ${b} 300,300`,fill:C[k],stroke:'#3a2e22','stroke-width':1}));
+// stars on start cells
+P.forEach(([k,r])=>{const p=rot([1,6],r);el('text',{x:p[0]*S+20,y:p[1]*S+27,'text-anchor':'middle','font-size':22,fill:'#fff'}).textContent='★'});
+for(let i=0;i<4;i++){const p=T[(13*i+8)%52];el('text',{x:p[0]*S+20,y:p[1]*S+27,'text-anchor':'middle','font-size':22,fill:'#3a2e22',opacity:.55}).textContent='★'}
+// tokens
+const K='#3a2e22',SK='#f2c6a0';
+function person(col,fat,girl){const g=document.createElementNS(NS,'g');
+ const w=fat?13:7,hy=fat?-38:-36,sy=fat?-27:-25;
+ el('ellipse',{cx:0,cy:-2,rx:w+3,ry:3,fill:'#000',opacity:.25},g);
+ g._l=[-1,1].map(d=>{const lg=el('g',{},g);el('rect',{x:d*(fat?5:3)-2.5,y:-14,width:5,height:12,rx:2.5,fill:girl?SK:K,stroke:K,'stroke-width':1},lg);el('ellipse',{cx:d*(fat?5:3)+d,cy:-2,rx:4.5,ry:2.5,fill:K},lg);lg._p=[d*(fat?5:3),-14];return lg});
+ if(girl)el('path',{d:`M${-w} ${sy-2} L${w} ${sy-2} L${w+5} -12 L${-w-5} -12Z`,fill:col,stroke:K,'stroke-width':1.5,'stroke-linejoin':'round'},g);
+ else if(fat)el('ellipse',{cx:0,cy:-19,rx:13,ry:11,fill:col,stroke:K,'stroke-width':1.5},g);
+ else el('rect',{x:-6,y:-28,width:12,height:17,rx:5,fill:col,stroke:K,'stroke-width':1.5},g);
+ g._a=[-1,1].map(d=>{const ag=el('g',{},g);el('path',{d:`M${d*(w-1)} ${sy} Q${d*(w+7)} ${sy+6} ${d*(w+5)} ${sy+13}`,fill:'none',stroke:col,'stroke-width':4.5,'stroke-linecap':'round'},ag);
+  el('circle',{cx:d*(w+5),cy:sy+14,r:2.8,fill:SK,stroke:K,'stroke-width':.8},ag);ag._p=[d*(w-1),sy];return ag});
+ el('circle',{cx:0,cy:hy,r:8.5,fill:SK,stroke:K,'stroke-width':1.2},g);
+ if(girl){[-1,1].forEach(d=>{el('circle',{cx:d*10,cy:hy+2,r:3.8,fill:K},g);el('circle',{cx:d*8,cy:hy-6,r:2.6,fill:col,stroke:K,'stroke-width':.6},g)});
+  el('path',{d:`M-8.5 ${hy} Q0 ${hy-16} 8.5 ${hy} Q0 ${hy-6} -8.5 ${hy}Z`,fill:K},g);
+  el('path',{d:`M-4.5 ${hy+1} l-1.6 -1.6 M4.5 ${hy+1} l1.6 -1.6`,stroke:'#222','stroke-width':.9},g)}
+ else if(fat)el('path',{d:`M-9 ${hy-4} Q0 ${hy-15} 9 ${hy-4}Z`,fill:K},g);
+ else el('path',{d:`M-2 ${hy-8} Q2 ${hy-15} 6 ${hy-8}`,fill:'none',stroke:K,'stroke-width':2},g);
+ if(!fat||girl){}
+ if(!girl&&!fat){[-3.2,3.2].forEach(x=>{el('circle',{cx:x,cy:hy+1,r:3,fill:'#fff',stroke:'#222','stroke-width':1},g)})}
+ [-3.2,3.2].forEach(x=>el('circle',{cx:x,cy:hy+1,r:1.1,fill:'#222'},g));
+ if(fat&&!girl)el('path',{d:`M-6 ${hy+5} Q0 ${hy+8} 6 ${hy+5} Q0 ${hy+3} -6 ${hy+5}Z`,fill:'#222'},g);
+ else el('path',{d:`M-3 ${hy+5} Q0 ${hy+7.5} 3 ${hy+5}`,fill:'none',stroke:'#222','stroke-width':1},g);
+ return g}
+const SP=[[2,2],[4,2],[2,4],[4,4]],Q0=[[0,0],[360,0],[360,360],[0,360]],DIR=[[-1,0],[0,-1],[1,0],[0,1]];
+const NAMES=['Red','Green','Blue','Yellow'],COL=['#ff6b62','#4fd15a','#6c98ff','#f0c531'],F='⚀⚁⚂⚃⚄⚅',CE=T.slice(0,51).concat(H);
+const SAFE=new Set();for(let i=0;i<4;i++){SAFE.add(13*i);SAFE.add(13*i+8)}
+const $=id=>document.getElementById(id);
+const G={id:0,cur:0,sixes:0,over:false,active:[1,1,1,1],hum:[1,0,0,0],mode:'cpu',pick:null};
+const nxt=p=>{let n=p;do{n=(n+1)%4}while(!G.active[n]);return n};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const sleep=ms=>new Promise(r=>{const w=G.id;setTimeout(()=>{if(w===G.id)r()},ms)});
+function pt(o,pos){const i=o.i;if(pos<0)return[Q0[i][0]+SP[o.j][0]*S,Q0[i][1]+SP[o.j][1]*S+14];
+ if(pos==57){const d=DIR[i];return[300+d[0]*20-d[1]*(o.j-1.5)*9,306+d[1]*20+d[0]*(o.j-1.5)*9]}
+ const c=rot(CE[pos],i);return[c[0]*S+20,c[1]*S+30]}
+const toks=[];
+P.forEach(([k,r],i)=>{for(let j=0;j<4;j++){const g=person(C[k],j%2==0,j>=2);s.appendChild(g);
+ const o={g,i,j,pos:-1,anim:null,re:null,face:1,hl:false};
+ o.ring=el('ellipse',{cx:0,cy:-2,rx:20,ry:8,fill:'none',stroke:'#ffb300','stroke-width':3.5},g);o.ring.style.display='none';
+ el('circle',{cx:0,cy:-20,r:24,fill:'transparent'},g);
+ g.onclick=()=>{if(G.pick&&o.hl){const f=G.pick;G.pick=null;f(o)}};
+ [o.x,o.y]=pt(o,-1);toks.push(o)}});
+const L={laugh:['Ha ha ha ha!','Hehe, maza aa gaya!'],cry:['Waaah! Mera number gaya!','Hu hu hu!'],angry:['Oye! Side hato!','Grrr! Gussa aa gaya!'],
+cheer:['Yaaay! Wah wah!','Zabardast!'],trip:['Aiyo! Kela!','Arre arre! Gir gaya!'],tired:['Uff, pair dukh gaye!'],
+six:['Chhakka! Six aaya!','Yaaay! Six!'],one:['Sirf ek?! Hai re!','Uff, ek aaya!'],tsix:['Teen six?! Turn gaya, hu hu!'],
+out:['Nikal gaya bahar!','Chalo chalo!'],home:['Ghar aa gaya! Yaaay!','Pahunch gaye, party!'],
+punch:['Le! Ek punch!','Dhishoom!','Hatt, meri jagah!'],cryv:['Waaah! Mujhe maara!','Hu hu hu, ghar wapas!'],lol:['Ha ha! Kat gaya!','Hehe, badhiya hua!']};
+let bub=null,fxs=null,voiceOn=true;
+const fx=el('text',{'font-size':26,'font-weight':900,fill:'#e63946',stroke:'#fff','stroke-width':3,'paint-order':'stroke','text-anchor':'middle'},s);fx.style.display='none';
+const bg=el('g',{},s),bp=el('polygon',{fill:'#fff',stroke:K,'stroke-width':2},bg),br=el('rect',{rx:10,height:30,fill:'#fff',stroke:K,'stroke-width':2},bg),
+bt=el('text',{'font-size':17,'font-weight':700,fill:'#222','text-anchor':'middle'},bg);bg.style.display='none';
+functio
