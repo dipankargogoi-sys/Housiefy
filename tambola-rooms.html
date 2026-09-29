@@ -120,13 +120,6 @@
   .ludo-token-highlight{animation:ludoPulse 0.9s ease-in-out infinite;}
   @keyframes ludoPulse{0%,100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0));transform:scale(1);}50%{filter:drop-shadow(0 0 5px rgba(255,255,255,0.9));transform:scale(1.15);}}
 
-  /* ---- Goti Ludo fun edition ---- */
-  #ludoSvg{width:min(94vw,calc(100dvh - 320px),460px);height:auto;display:block;margin:0 auto;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,0.55),0 0 0 4px rgba(242,198,107,0.4);}
-  #ludoDie{font-size:52px;line-height:1;padding:2px 18px;background:linear-gradient(145deg,#fff,#d8d8e0);border:4px solid var(--gold-soft);border-radius:18px;color:#1a1730;cursor:pointer;box-shadow:0 5px 0 #a8a8b8,0 8px 14px rgba(0,0,0,0.4);}
-  #ludoDie.on{animation:ludoP .6s infinite alternate;}
-  @keyframes ludoP{to{transform:scale(1.14);box-shadow:0 0 18px #ffb300;}}
-  .ludo-react{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
-  .ludo-react button{font-size:22px;padding:6px 10px;border-radius:12px;border:2px solid rgba(255,255,255,0.15);background:var(--bg-panel-2);cursor:pointer;}
   /* ---- Ludo fullscreen mode ---- */
   body.ludo-fullscreen h1#appTitle, body.ludo-fullscreen .sub, body.ludo-fullscreen #updateBanner{display:none !important;}
   body.ludo-fullscreen main{max-width:none;padding:0;margin:0;}
@@ -193,6 +186,25 @@
   .nav-pill:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a26;}
   .noselect, .noselect *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
   button, .btn, .card [style*="cursor:pointer"]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;}
+  /* ---- Goti Ludo fun edition ---- */
+  #viewLudo{justify-content:flex-start !important;padding:8px 6px calc(8px + env(safe-area-inset-bottom)) !important;}
+  #viewLudo > *{margin-top:auto;margin-bottom:auto;}
+  .ludo-sec{font-size:12px;color:var(--gold-soft);font-weight:800;letter-spacing:.5px;margin:6px 0;text-transform:uppercase;}
+  .ludo-inp{width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:2px solid rgba(255,255,255,0.15);background:var(--bg-deep);color:var(--cream);font-size:15px;}
+  #viewLudo .card .btn{padding:12px 6px;}
+  .ludo-stage{width:min(96vw,calc(100vh - 250px),480px);width:min(96vw,calc(100dvh - 250px),480px);margin:0 auto;}
+  #ludoSvg{width:100%;height:auto;display:block;border-radius:14px;box-shadow:0 14px 30px rgba(0,0,0,0.55),0 0 0 3px rgba(242,198,107,0.4);touch-action:manipulation;}
+  .ludo-turn-label{margin-bottom:4px !important;font-size:15px !important;min-height:20px;}
+  .ludo-drow{display:flex;justify-content:space-between;margin:6px 0;}
+  .dw.rot{transform:rotate(180deg);}
+  .dbox{display:flex;align-items:center;gap:8px;padding:2px 12px;border-radius:16px;background:linear-gradient(180deg,var(--bg-panel-2),var(--bg-panel));border:3px solid var(--c);color:var(--cream);opacity:.4;cursor:default;font-family:var(--font-display);}
+  .dbox .dn{font-size:12px;font-weight:800;color:var(--c);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dbox .df{font-size:42px;line-height:1.1;color:#fff;}
+  .dbox.cur{opacity:1;box-shadow:0 0 12px var(--c);}
+  .dbox.on{opacity:1;cursor:pointer;animation:ludoP .6s infinite alternate;}
+  @keyframes ludoP{to{transform:scale(1.1);box-shadow:0 0 20px var(--c);}}
+  .ludo-react{display:flex;gap:5px;justify-content:center;margin-top:8px;flex-wrap:wrap;}
+  .ludo-react button{font-size:20px;padding:5px 9px;border-radius:12px;border:2px solid rgba(255,255,255,0.15);background:var(--bg-panel-2);color:var(--cream);cursor:pointer;}
 </style>
 </head>
 <body>
@@ -274,7 +286,7 @@
         <div style="font-size:34px;">🎲</div>
         <div style="flex:1;">
           <div style="font-weight:800;font-size:16px;color:var(--gold-soft);">Ludo</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Talking gotis · punch, cry &amp; laugh · vs computer or friends</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Talking gotis · vs computer, friends on one phone, or online</div>
         </div>
         <div style="color:var(--muted);">▶</div>
       </div>
@@ -296,31 +308,55 @@
   <div id="viewLudo" class="hidden">
     <div id="ludoSetup" class="card ludo-panel" style="text-align:center;">
       <div class="ludo-title">🎲 LUDO</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Funny gotis that talk, punch, cry and laugh!</div>
-      <button type="button" class="btn btn-primary ludoModeBtn" data-m="cpu" style="margin-bottom:10px;">You vs 3 Computers</button>
-      <div style="font-size:12px;color:var(--muted);margin:6px 0;">or pass the phone with friends</div>
-      <div class="row" style="margin-bottom:14px;">
-        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="2">2</button>
-        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="3">3</button>
-        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="4">4</button>
+      <div class="ludo-sec">Play vs Computer</div>
+      <div class="row" style="margin-bottom:12px;">
+        <button type="button" class="btn btn-primary ludoModeBtn" data-m="c1">1 CPU</button>
+        <button type="button" class="btn btn-primary ludoModeBtn" data-m="c2">2 CPU</button>
+        <button type="button" class="btn btn-primary ludoModeBtn" data-m="c3">3 CPU</button>
       </div>
-      <div class="hint" style="text-align:left;">Roll a <b>6</b> to bring a goti out. Land on another goti (not on a &#9733; safe cell) to punch it back home. A 6 or a capture gives another turn. Get all 4 gotis to the centre to win. Free family game, no money.</div>
+      <div class="ludo-sec">Friends on this phone (each has own dice)</div>
+      <div class="row" style="margin-bottom:12px;">
+        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="p2">2 players</button>
+        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="p3">3 players</button>
+        <button type="button" class="btn btn-ghost ludoModeBtn" data-m="p4">4 players</button>
+      </div>
+      <div class="ludo-sec">Online with friends</div>
+      <input id="ludoName" class="ludo-inp" maxlength="12" placeholder="Your name" autocomplete="off">
+      <button type="button" class="btn btn-primary" id="ludoCreateBtn" style="margin:8px 0;">Create room &amp; invite friends</button>
+      <div style="display:flex;gap:8px;">
+        <input id="ludoJoinCode" class="ludo-inp" maxlength="6" placeholder="Room code" autocomplete="off" style="text-transform:uppercase;">
+        <button type="button" class="btn btn-ghost" id="ludoJoinBtn" style="width:auto;padding:10px 18px;">Join</button>
+      </div>
+      <div id="ludoOnErr" style="color:#ff8a80;font-size:12px;min-height:16px;margin-top:6px;"></div>
+      <div class="hint" style="text-align:left;">Roll a <b>6</b> to bring a goti out. Land on another goti (not on a &#9733; safe cell) to punch it home. A 6 or a capture gives another turn. Free family game, no money.</div>
+    </div>
+
+    <div id="ludoLobby" class="card ludo-panel hidden" style="text-align:center;">
+      <div class="ludo-title">Room <span id="ludoCode" style="letter-spacing:4px;"></span></div>
+      <div id="ludoSeats" style="text-align:left;margin-bottom:12px;"></div>
+      <button type="button" class="btn btn-primary" id="ludoInvite" style="margin-bottom:8px;">📤 Invite friends (Facebook / WhatsApp)</button>
+      <button type="button" class="btn btn-primary hidden" id="ludoStartOn" style="margin-bottom:8px;">Start game</button>
+      <div id="ludoLobbyMsg" class="hint">Waiting for friends to join...</div>
+      <button type="button" class="btn btn-ghost" id="ludoLeaveBtn">Leave room</button>
     </div>
 
     <div id="ludoPlay" class="hidden" style="text-align:center;width:100%;">
-      <div id="ludoTurnLabel" class="ludo-turn-label"></div>
-      <svg id="ludoSvg" viewBox="0 0 600 600"></svg>
-      <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;">
-        <button type="button" id="ludoDie">🎲</button>
-        <button type="button" class="btn btn-ghost" id="ludoNewBtn" style="width:auto;padding:10px 14px;">New game</button>
+      <div class="ludo-stage">
+        <div id="ludoTurnLabel" class="ludo-turn-label"></div>
+        <div class="ludo-drow">
+          <div class="dw" id="ludoW0"><button type="button" class="dbox" id="ludoDice0" style="--c:#ff6b62"><span class="dn" id="ludoDn0">Red</span><span class="df" id="ludoFace0">🎲</span></button></div>
+          <div class="dw" id="ludoW1"><button type="button" class="dbox" id="ludoDice1" style="--c:#4fd15a"><span class="dn" id="ludoDn1">Green</span><span class="df" id="ludoFace1">🎲</span></button></div>
+        </div>
+        <svg id="ludoSvg" viewBox="0 0 600 600"></svg>
+        <div class="ludo-drow">
+          <div class="dw" id="ludoW3"><button type="button" class="dbox" id="ludoDice3" style="--c:#f0c531"><span class="dn" id="ludoDn3">Yellow</span><span class="df" id="ludoFace3">🎲</span></button></div>
+          <div class="dw" id="ludoW2"><button type="button" class="dbox" id="ludoDice2" style="--c:#6c98ff"><span class="dn" id="ludoDn2">Blue</span><span class="df" id="ludoFace2">🎲</span></button></div>
+        </div>
+        <div class="ludo-react">
+          <button type="button" id="ludoMenuBtn">☰</button><button type="button" id="ludoNewBtn" style="font-size:14px;font-weight:800;">New game</button>
+          <button type="button" class="ludoReact" data-t="laugh">😂</button><button type="button" class="ludoReact" data-t="cheer">🎉</button><button type="button" class="ludoReact" data-t="angry">😡</button><button type="button" class="ludoReact" data-t="cry">😭</button><button type="button" class="ludoReact" data-t="punch">👊</button><button type="button" class="ludoReact" data-t="trip">🍌</button><button type="button" id="ludoVoice">🔊</button>
+        </div>
       </div>
-      <div class="ludo-react">
-        <button type="button" class="ludoReact" data-t="laugh">😂</button><button type="button" class="ludoReact" data-t="cheer">🎉</button><button type="button" class="ludoReact" data-t="angry">😡</button><button type="button" class="ludoReact" data-t="cry">😭</button><button type="button" class="ludoReact" data-t="punch">👊</button><button type="button" class="ludoReact" data-t="trip">🍌</button><button type="button" id="ludoVoice">🔊</button>
-      </div>
-    </div>
-
-    <div class="ludo-menubar">
-      <button type="button" id="ludoMenuBtn" class="ludo-menu-btn">☰ Menu</button>
     </div>
   </div>
 
@@ -1749,7 +1785,7 @@
 </script>
 
 <script>
-/* ============ LUDO: Goti Ludo Fun Edition (cartoon gotis, voices, punch / cry / laugh reactions) ============ */
+/* ============ LUDO: Goti Ludo Fun Edition v2 (cartoon gotis, voices, CPU / pass-and-play / online rooms) ============ */
 (function(){
   // visible on-screen error catcher — if something inside the Ludo screen throws,
   // you'll see it as a red banner instead of buttons silently doing nothing.
@@ -1808,42 +1844,4 @@ function person(col,fat,girl){const g=document.createElementNS(NS,'g');
  g._a=[-1,1].map(d=>{const ag=el('g',{},g);el('path',{d:`M${d*(w-1)} ${sy} Q${d*(w+7)} ${sy+6} ${d*(w+5)} ${sy+13}`,fill:'none',stroke:col,'stroke-width':4.5,'stroke-linecap':'round'},ag);
   el('circle',{cx:d*(w+5),cy:sy+14,r:2.8,fill:SK,stroke:K,'stroke-width':.8},ag);ag._p=[d*(w-1),sy];return ag});
  el('circle',{cx:0,cy:hy,r:8.5,fill:SK,stroke:K,'stroke-width':1.2},g);
- if(girl){[-1,1].forEach(d=>{el('circle',{cx:d*10,cy:hy+2,r:3.8,fill:K},g);el('circle',{cx:d*8,cy:hy-6,r:2.6,fill:col,stroke:K,'stroke-width':.6},g)});
-  el('path',{d:`M-8.5 ${hy} Q0 ${hy-16} 8.5 ${hy} Q0 ${hy-6} -8.5 ${hy}Z`,fill:K},g);
-  el('path',{d:`M-4.5 ${hy+1} l-1.6 -1.6 M4.5 ${hy+1} l1.6 -1.6`,stroke:'#222','stroke-width':.9},g)}
- else if(fat)el('path',{d:`M-9 ${hy-4} Q0 ${hy-15} 9 ${hy-4}Z`,fill:K},g);
- else el('path',{d:`M-2 ${hy-8} Q2 ${hy-15} 6 ${hy-8}`,fill:'none',stroke:K,'stroke-width':2},g);
- if(!fat||girl){}
- if(!girl&&!fat){[-3.2,3.2].forEach(x=>{el('circle',{cx:x,cy:hy+1,r:3,fill:'#fff',stroke:'#222','stroke-width':1},g)})}
- [-3.2,3.2].forEach(x=>el('circle',{cx:x,cy:hy+1,r:1.1,fill:'#222'},g));
- if(fat&&!girl)el('path',{d:`M-6 ${hy+5} Q0 ${hy+8} 6 ${hy+5} Q0 ${hy+3} -6 ${hy+5}Z`,fill:'#222'},g);
- else el('path',{d:`M-3 ${hy+5} Q0 ${hy+7.5} 3 ${hy+5}`,fill:'none',stroke:'#222','stroke-width':1},g);
- return g}
-const SP=[[2,2],[4,2],[2,4],[4,4]],Q0=[[0,0],[360,0],[360,360],[0,360]],DIR=[[-1,0],[0,-1],[1,0],[0,1]];
-const NAMES=['Red','Green','Blue','Yellow'],COL=['#ff6b62','#4fd15a','#6c98ff','#f0c531'],F='⚀⚁⚂⚃⚄⚅',CE=T.slice(0,51).concat(H);
-const SAFE=new Set();for(let i=0;i<4;i++){SAFE.add(13*i);SAFE.add(13*i+8)}
-const $=id=>document.getElementById(id);
-const G={id:0,cur:0,sixes:0,over:false,active:[1,1,1,1],hum:[1,0,0,0],mode:'cpu',pick:null};
-const nxt=p=>{let n=p;do{n=(n+1)%4}while(!G.active[n]);return n};
-const pick=a=>a[Math.floor(Math.random()*a.length)];
-const sleep=ms=>new Promise(r=>{const w=G.id;setTimeout(()=>{if(w===G.id)r()},ms)});
-function pt(o,pos){const i=o.i;if(pos<0)return[Q0[i][0]+SP[o.j][0]*S,Q0[i][1]+SP[o.j][1]*S+14];
- if(pos==57){const d=DIR[i];return[300+d[0]*20-d[1]*(o.j-1.5)*9,306+d[1]*20+d[0]*(o.j-1.5)*9]}
- const c=rot(CE[pos],i);return[c[0]*S+20,c[1]*S+30]}
-const toks=[];
-P.forEach(([k,r],i)=>{for(let j=0;j<4;j++){const g=person(C[k],j%2==0,j>=2);s.appendChild(g);
- const o={g,i,j,pos:-1,anim:null,re:null,face:1,hl:false};
- o.ring=el('ellipse',{cx:0,cy:-2,rx:20,ry:8,fill:'none',stroke:'#ffb300','stroke-width':3.5},g);o.ring.style.display='none';
- el('circle',{cx:0,cy:-20,r:24,fill:'transparent'},g);
- g.onclick=()=>{if(G.pick&&o.hl){const f=G.pick;G.pick=null;f(o)}};
- [o.x,o.y]=pt(o,-1);toks.push(o)}});
-const L={laugh:['Ha ha ha ha!','Hehe, maza aa gaya!'],cry:['Waaah! Mera number gaya!','Hu hu hu!'],angry:['Oye! Side hato!','Grrr! Gussa aa gaya!'],
-cheer:['Yaaay! Wah wah!','Zabardast!'],trip:['Aiyo! Kela!','Arre arre! Gir gaya!'],tired:['Uff, pair dukh gaye!'],
-six:['Chhakka! Six aaya!','Yaaay! Six!'],one:['Sirf ek?! Hai re!','Uff, ek aaya!'],tsix:['Teen six?! Turn gaya, hu hu!'],
-out:['Nikal gaya bahar!','Chalo chalo!'],home:['Ghar aa gaya! Yaaay!','Pahunch gaye, party!'],
-punch:['Le! Ek punch!','Dhishoom!','Hatt, meri jagah!'],cryv:['Waaah! Mujhe maara!','Hu hu hu, ghar wapas!'],lol:['Ha ha! Kat gaya!','Hehe, badhiya hua!']};
-let bub=null,fxs=null,voiceOn=true;
-const fx=el('text',{'font-size':26,'font-weight':900,fill:'#e63946',stroke:'#fff','stroke-width':3,'paint-order':'stroke','text-anchor':'middle'},s);fx.style.display='none';
-const bg=el('g',{},s),bp=el('polygon',{fill:'#fff',stroke:K,'stroke-width':2},bg),br=el('rect',{rx:10,height:30,fill:'#fff',stroke:K,'stroke-width':2},bg),
-bt=el('text',{'font-size':17,'font-weight':700,fill:'#222','text-anchor':'middle'},bg);bg.style.display='none';
-functio
+ if(girl){[-1,1].forEach(d=>{el('circle',{cx:d*10,cy:hy+2,r:3.8,fill:K},g);
