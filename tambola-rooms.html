@@ -348,6 +348,11 @@
         <button type="button" class="btn btn-ghost" id="ludoJoinBtn" style="width:auto;padding:10px 18px;">Join</button>
       </div>
       <div id="ludoOnErr" style="color:#ff8a80;font-size:12px;min-height:16px;margin-top:6px;"></div>
+      <div class="ludo-sec">😂 Comedy voice</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <button type="button" class="btn btn-ghost" id="ludoCvBtn" style="width:auto;padding:10px 12px;white-space:nowrap;">😂 ON</button>
+        <span>🔉</span><input type="range" id="ludoCvVol" min="0" max="100" step="5" style="flex:1;accent-color:#f2c66b;"><span id="ludoCvPct" style="min-width:38px;font-size:12px;color:var(--muted);">90%</span>
+      </div>
       <div class="hint" style="text-align:left;">Roll a <b>6</b> to bring a goti out. Land on another goti (not on a &#9733; safe cell) to punch it home. A 6 or a capture gives another turn. Free family game, no money.</div>
     </div>
 
@@ -668,7 +673,7 @@
     document.body.classList.toggle('ludo-fullscreen', view.id==='viewLudo' || view.id==='viewPuzzle');
   }
 
-  const APP_VERSION = "2.4.2"; // bump this + version.json together on every release
+  const APP_VERSION = "2.4.4"; // bump this + version.json together on every release
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyB1HOoYe40wTg3uiorJCChb6MbNahnf6qM",
@@ -1905,11 +1910,15 @@ L.rofl=L.lol;L.spin=L.home;
 const fx=el('text',{'font-size':26,'font-weight':900,fill:'#e63946',stroke:'#fff','stroke-width':3,'paint-order':'stroke','text-anchor':'middle'},s);fx.style.display='none';
 const bg=el('g',{},s),bp=el('polygon',{fill:'#fff',stroke:K,'stroke-width':2},bg),br=el('rect',{rx:10,height:30,fill:'#fff',stroke:K,'stroke-width':2},bg),
 bt=el('text',{'font-size':17,'font-weight':700,fill:'#222','text-anchor':'middle'},bg);bg.style.display='none';
-function speak(o,text){const sy=SY();if(!voiceOn||!sy||$('viewLudo').classList.contains('hidden'))return;
- try{sy.cancel();const u=new SpeechSynthesisUtterance(text),v=(sy.getVoices()||[]).find(x=>/en-IN|hi-IN/i.test(x.lang));
- if(v){u.voice=v;u.lang=v.lang}else u.lang='en-IN';u.pitch=[0.5,0.9,1.5,1.9][o.j];sy.speak(u)}catch(e){}}
-function say(o,type,text){const now=performance.now();o.re={type,t0:now,dur:type=='trip'?2:type=='cry'?2.8:type=='spin'?2.4:type=='rofl'?2.6:2.2};
- text=text||pick(L[type]);bub={o,until:now+2400,w:text.length*8.8+24};bt.textContent=text;speak(o,text)}
+function pv(sy,c){const vs=sy.getVoices()||[];let a=vs.filter(x=>/^en[-_]IN/i.test(x.lang));if(!a.length)a=vs.filter(x=>/^hi[-_]IN/i.test(x.lang));return a.length?a[c%a.length]:null}
+function speak(o,text){const sy=SY();if(!voiceOn||!CV.on||CV.vol<=0||!sy||$('viewLudo').classList.contains('hidden'))return;
+ try{const clean=String(text).replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF\uFE0F]/gu,'').trim();if(!clean)return;sy.cancel();
+ const u=new SpeechSynthesisUtterance(clean),v=pv(sy,o.i);
+ if(v){u.voice=v;u.lang=v.lang}else u.lang='en-IN';
+ const P=PERS[o.i]||PERS[0];u.pitch=Math.max(.1,Math.min(2,P.p+(Math.random()-.5)*.12));u.rate=P.r*(0.97+Math.random()*.06);u.volume=CV.vol;
+ CV.busyUntil=performance.now()+Math.min(3800,500+clean.length*65);sy.speak(u)}catch(e){}}
+function say(o,type,text,mute){const now=performance.now();o.re={type,t0:now,dur:type=='trip'?2:type=='cry'?2.8:type=='spin'?2.4:type=='rofl'?2.6:2.2};
+ text=text||pick(L[type]);bub={o,until:now+Math.max(2400,text.length*75),w:Math.min(590,text.length*8.8+24)};bt.textContent=text;if(!mute)speak(o,text)}
 function walkTo(o,np,fly){const from=o.pos;let seq;
  if(fly)seq=[[o.x,o.y],pt(o,-1)];else if(from<0)seq=[pt(o,-1),pt(o,0)];
  else{seq=[pt(o,from)];for(let p=from+1;p<=np;p++)seq.push(pt(o,p))}
@@ -1975,22 +1984,24 @@ async function showRoll(pl,r){const d=dice[pl],f=d.f;d.w3.classList.add('rolling
 function score(o,r){const np=o.pos<0?0:o.pos+r;let v=np;if(np==57)v+=100;else if(o.pos<0)v+=40;
  if(np<=50){const ab=(np+13*o.i)%52;if(SAFE.has(ab))v+=8;else if(toks.some(x=>x.i!=o.i&&x.pos>=0&&x.pos<=50&&(x.pos+13*x.i)%52==ab))v+=80}
  return v+Math.random()*3}
-async function capture(o,vs){const v0=vs[0];say(o,'punch',pick(L.punch));await sleep(550);
+async function capture(o,vs){const v0=vs[0];act(o,'punch');await sleep(550);
  fxs={x:v0.x,y:v0.y-50,t0:performance.now()};fx.textContent='👊 POW!';burst(v0.x,v0.y-30,['💥','⭐','✨','💫']);await sleep(300);
- for(const v of vs){say(v,'cry',pick(L.cryv));await sleep(500);await walkTo(v,-1,true);v.re={type:'cry',t0:performance.now(),dur:2.8}}
+ cv('kill',o);
+ for(const v of vs){act(v,'cry');{const gid=G.id,wt=Math.max(0,CV.busyUntil-performance.now())+350;setTimeout(()=>{if(G.id===gid&&v.pos<0)cv('killed',v,{pair:true})},wt)}await sleep(500);await walkTo(v,-1,true);v.re={type:'cry',t0:performance.now(),dur:2.8}}
  const now=performance.now(),happy=toks.filter(x=>G.active[x.i]&&!vs.includes(x)&&x!==o);
  happy.forEach((x,k)=>{x.re={type:k%2?'cheer':'rofl',t0:now+k*40,dur:2.6}});
  o.re={type:'spin',t0:now,dur:2.4};burst(o.x,o.y-30,['🎉','🎊','✨']);
- const talk=happy.filter(x=>x.pos>=0);if(talk.length){const t=pick(talk);say(t,'rofl',pick(L.lol))}
  await sleep(2200)}
 async function doMove(o,r){const np=o.pos<0?0:o.pos+r,yard=o.pos<0;await walkTo(o,np);let extra=false;
- if(yard){say(o,'cheer',pick(L.out));await sleep(600)}
+ if(np>=51&&np<57&&!o.near){o.near=1;cv('near',o)}
+ if(yard){CV.fail[o.i]=0;if(!cv('out',o))act(o,'cheer');await sleep(600)}
  if(np<=50){const ab=(np+13*o.i)%52;if(!SAFE.has(ab)){const vs=toks.filter(v=>v.i!=o.i&&v.pos>=0&&v.pos<=50&&(v.pos+13*v.i)%52==ab);
   if(vs.length){await capture(o,vs);extra=true}}}
- if(np==57){say(o,'spin',pick(L.home));burst(o.x,o.y-25,['🎉','🎊','✨','⭐','🥳']);extra=true;await sleep(2000)}
+ if(np==57){act(o,'spin');burst(o.x,o.y-25,['🎉','🎊','✨','⭐','🥳']);extra=true;await sleep(2000)}
  return extra}
 function win(pl){G.over=true;status('🏆 '+pname[pl]+' wins!',pl);dice[pl].n.textContent='🏆 '+pname[pl];const n=performance.now();
- toks.forEach(o=>{if(o.i!=pl&&G.active[o.i])o.re={type:'cry',t0:n,dur:8}});say(toks[pl*4],'cheer','Hum jeet gaye! Party!');
+ toks.forEach(o=>{if(o.i!=pl&&G.active[o.i])o.re={type:'cry',t0:n,dur:8}});{const gid=G.id,mw=toks.filter(x=>x.i==pl),wp=pick(mw),est=cv('win',wp,{force:true});if(!est)act(wp,'cheer');
+  setTimeout(()=>{if(G.id!==gid)return;const ot=[0,1,2,3].filter(i=>G.active[i]&&i!=pl);if(ot.length){const oc=pick(ot);cv('lose',pick(toks.filter(x=>x.i==oc)),{force:true})}},(est||0)+500)}
  if(!G.online){dice[pl].b.classList.add('on');dice[pl].b.onclick=()=>newGame();msg.textContent+='  (tap 🏆 to play again)'}}
 async function play(){const id=G.id;
  while(G.id===id&&!G.over){
@@ -2005,11 +2016,11 @@ async function play(){const id=G.id;
    r=1+Math.floor(Math.random()*6)}
   await showRoll(pl,r);
   G.sixes=r==6?G.sixes+1:0;
-  if(r==6){say(pick(mine),'cheer',pick(L.six));await sleep(700)}
-  else if(r==1&&Math.random()<.35){say(pick(mine),'tired',pick(L.one));await sleep(700)}
-  if(G.sixes==3){status('Three sixes in a row: turn lost!',pl);say(pick(mine),'cry',pick(L.tsix));G.sixes=0;await sleep(1400);G.cur=nxt(pl);continue}
+  if(r==6){act(pick(mine),'cheer');await sleep(700)}
+  else if(r==1&&Math.random()<.35){act(pick(mine),'tired');await sleep(700)}
+  if(G.sixes==3){status('Three sixes in a row: turn lost!',pl);act(pick(mine),'cry');G.sixes=0;await sleep(1400);G.cur=nxt(pl);continue}
   const mv=mine.filter(o=>o.pos<0?r==6:o.pos+r<=57);
-  if(!mv.length){status('No move for '+who,pl);await sleep(900);G.sixes=0;G.cur=nxt(pl);continue}
+  if(!mv.length){status('No move for '+who,pl);{const st=mine.filter(x=>x.pos!=57);if(st.length&&st.every(x=>x.pos<0)){CV.fail[pl]++;cv('needSix',pick(st))}}await sleep(900);G.sixes=0;G.cur=nxt(pl);continue}
   let o;
   if(mv.length==1)o=mv[0];
   else if(G.online){
@@ -2022,7 +2033,7 @@ async function play(){const id=G.id;
   if(!(r==6||extra)){G.cur=nxt(pl);G.sixes=0}
   await sleep(300)}}
 function newGame(){G.id++;const act=[0,1,2,3].filter(i=>G.active[i]);G.cur=G.online?act[0]:pick(act);G.sixes=0;G.over=false;G.pick=null;bub=null;fxs=null;QW=null;if(!G.online)Q=[];
- toks.forEach(o=>{o.pos=-1;o.anim=null;o.re=null;o.hl=false;o.g.style.display=G.active[o.i]?'':'none';[o.x,o.y]=pt(o,-1)});
+ CV.fail=[0,0,0,0];toks.forEach(o=>{o.near=0;o.pos=-1;o.anim=null;o.re=null;o.hl=false;o.g.style.display=G.active[o.i]?'':'none';[o.x,o.y]=pt(o,-1)});
  const sy=SY();if(sy)try{sy.cancel()}catch(e){}
  layoutDice();play()}
 function stop(){G.id++;G.pick=null;const sy=SY();if(sy)try{sy.cancel()}catch(e){}}
@@ -2032,6 +2043,40 @@ const PART=[];for(let i=0;i<40;i++){const t=el('text',{'font-size':22,'text-anch
 function burst(x,y,em){let n=0;for(const p of PART){if(p.on)continue;p.on=true;p.x=x;p.y=y;p.vx=(Math.random()-.5)*300;p.vy=-(110+Math.random()*190);p.t0=performance.now();p.t.textContent=pick(em);p.t.style.display='';if(++n>=14)break}}
 function drawParts(now){for(const p of PART){if(!p.on)continue;const a=(now-p.t0)/1000;if(a>1.5){p.on=false;p.t.style.display='none';continue}
  p.t.setAttribute('x',p.x+p.vx*a);p.t.setAttribute('y',p.y+p.vy*a+230*a*a);p.t.setAttribute('opacity',Math.min(1,(1.5-a)*1.6))}}
+// ===== Comedy voice system (occasional, one voice at a time, own on/off + volume) =====
+const CV={on:true,vol:.9,last:0,busyUntil:0,byC:[0,0,0,0],lastLine:{},fail:[0,0,0,0]};
+try{const a=localStorage.getItem('ludoCV');if(a!==null)CV.on=a!=='0';const b=parseFloat(localStorage.getItem('ludoCVvol'));if(b>=0&&b<=1)CV.vol=b}catch(e){}
+const PERS=[{p:.72,r:1.03},{p:1.5,r:.97},{p:1.12,r:1.0},{p:.95,r:1.2}]; // Red: dramatic bhai, Green: whiny yaar, Blue: cheerful, Yellow: fast & excited
+const CVP={needSix:{p:.3,gap:7000},out:{p:.65,gap:6000},kill:{p:.8,gap:6000},killed:{p:.75,gap:0},near:{p:.45,gap:8000},win:{p:1,gap:0},lose:{p:.85,gap:0}};
+const ANIM={needSix:'tired',out:'cheer',kill:'cheer',killed:'cry',near:'cheer',win:'spin',lose:'cry'};
+const SHARED={
+ out:['Ahaaa! Six aa gaya! Chalo bhai, bahar!','Finally! Ghar se azaadi!','Yeh hui na baat! Chalo bahar!','Akhir six mil hi gaya! Shukriya dice!'],
+ kill:['Hahaha! Tu andar reh, tera bahar koi kaam nahi hai!','Aaja bhai, ghar wapas! 😄','Arey wah! Ek aur ghar bhej diya!','Chalo chalo, ghar jao, chai pee lo!'],
+ killed:['Ruk bhai! Ek baar bahar nikalne de, phir dekh!','Arey yaar! Abhi toh nikla tha!','Bhai, itni jaldi ghar kyun bhej diya?','Yeh kya baat hui yaar!'],
+ near:['Bas bas! Ab jeet meri!','Ab toh koi rok nahi sakta!','Bhai log, trophy ready rakho!'],
+ win:['Hahaha! Khel khatam bhai, winner main!','Bhai log, paisa nahi toh taali hi baja do! 😂','Champion aaya champion! Taali bajao!'],
+ lose:['Aaj luck hi kharab tha yaar!','Dice ne dhokha de diya yaar!','Chalo chalo, agli baar main jeetunga!']};
+const BYC={
+ needSix:[['Arey bhai, ek six de de yaar, ghar mein bore ho raha hoon!','Yaar six kab aayega? Ghar ki deewarein gin li maine!','Bhai ek chhakka toh maar de, please!'],
+  ['Arey yaar, kab tak ghar mein baitha rahun? Six de!','Yaar mera number kab aayega? Six de na!','Uff, ghar mein baithe baithe thak gaya! Six de!'],
+  ['Arey mujhe blue motu, ek six toh de bhai!','Six de na bhai, andar bahut garmi hai!','Arey dice bhaiya, thoda pyaar dikha, six de!'],
+  ['Bhai please six de, bahar jaana hai!','Please please please, ek six! Bahar ghumna hai!','Arre yaar, ek six de, main ready hoon!']],
+ kill:[['Kaise kaata! Maza aa gaya!'],['Sorry bhai, par rasta mera tha!'],['Hehe, pakad liya na!'],['Yeh lo! Seedha ghar!']],
+ killed:[['Arey bhai, thoda toh rehem kar!'],['Hai re meri kismat!'],['Mera dil toot gaya bhai!'],['Oho! Phir se ghar? Kya yaar!']]};
+function cv(ev,o,opt){opt=opt||{};if(!o||!CV.on||!voiceOn||!CVP[ev])return 0;const cfg=CVP[ev],now=performance.now(),c=o.i;
+ if(!opt.force){if(now<CV.busyUntil)return 0;if(!opt.pair&&now-CV.last<cfg.gap)return 0;if(now-CV.byC[c]<10000)return 0;
+  let p=cfg.p;if(ev=='needSix')p=Math.min(.7,p+CV.fail[c]*.1);if(Math.random()>p)return 0}
+ const pool=((BYC[ev]&&BYC[ev][c])||[]).concat(SHARED[ev]||[]);if(!pool.length)return 0;
+ let line,t=0;do{line=pick(pool)}while(line===CV.lastLine[ev+c]&&pool.length>1&&++t<8);CV.lastLine[ev+c]=line;CV.last=now;CV.byC[c]=now;
+ const clips=(window.LUDO_CLIPS||{})[c+'_'+ev];let mute=false;   // optional real voice clips: window.LUDO_CLIPS={'0_kill':['red_kill1.mp3']}; missing/failed files are just skipped
+ if(clips&&clips.length&&CV.vol>0){mute=true;try{const a=new Audio(pick(clips));a.volume=CV.vol;const fb=()=>{CV.busyUntil=0;speak(o,line)};a.onerror=fb;const pr=a.play();if(pr&&pr.catch)pr.catch(fb);CV.busyUntil=now+3000}catch(e){}}
+ say(o,ANIM[ev]||'cheer',line,mute);return Math.min(3800,500+line.length*65)}
+function act(o,type){if(o)o.re={type,t0:performance.now(),dur:({trip:2,cry:2.8,spin:2.4,rofl:2.6})[type]||2.2}}
+function cvUI(){$('ludoCvBtn').textContent=CV.on?'😂 ON':'🔇 OFF';$('ludoCvVol').value=Math.round(CV.vol*100);$('ludoCvPct').textContent=Math.round(CV.vol*100)+'%'}
+$('ludoCvBtn').onclick=()=>{CV.on=!CV.on;try{localStorage.setItem('ludoCV',CV.on?'1':'0')}catch(e){}if(!CV.on){const sy=SY();if(sy)try{sy.cancel()}catch(x){}}cvUI()};
+$('ludoCvVol').oninput=e=>{CV.vol=e.target.value/100;try{localStorage.setItem('ludoCVvol',String(CV.vol))}catch(x){}$('ludoCvPct').textContent=e.target.value+'%'};
+$('ludoCvVol').onchange=()=>{if(CV.on&&voiceOn&&CV.vol>0)speak(toks[Math.floor(Math.random()*16)],'Chalo bhai, volume check!')};
+cvUI();
 // ---- offline modes ----
 const CFG={c1:[[0,1,0,1],[0,0,0,1]],c2:[[1,1,0,1],[0,0,0,1]],c3:[[1,1,1,1],[0,0,0,1]],p2:[[1,0,1,0]],p3:[[1,1,1,0]],p4:[[1,1,1,1]]};
 document.querySelectorAll('.ludoModeBtn').forEach(b=>b.onclick=()=>{G.mode=b.dataset.m;G.online=false;const c=CFG[G.mode];
@@ -2084,7 +2129,7 @@ $('ludoMenuBtn').addEventListener('click',()=>{leave();document.querySelectorAll
  v.addEventListener('pointerdown',e=>{st={x:e.clientX,y:e.clientY}},true);
  v.addEventListener('pointerup',e=>{if(!st)return;const p=st;st=null;if(Math.abs(e.clientX-p.x)>12||Math.abs(e.clientY-p.y)>12)return;const t=e.target,at=Date.now();
   setTimeout(()=>{if(last<at&&!t.closest('input')){try{t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))}catch(x){}}},350)},true)})();
-window.LUDO={dbg:{toks,say,burst,pt,G},onShow(){leave();scr('ludoSetup');onErr('');try{const n=localStorage.getItem('ludoName');if(n&&!$('ludoName').value)$('ludoName').value=n}catch(e){}
+window.LUDO={dbg:{toks,say,burst,pt,G,cv,CV},onShow(){leave();cvUI();scr('ludoSetup');onErr('');try{const n=localStorage.getItem('ludoName');if(n&&!$('ludoName').value)$('ludoName').value=n}catch(e){}
  const m=/ludo=([A-Za-z0-9]{3,6})/.exec(location.hash||'');if(m)$('ludoJoinCode').value=m[1].toUpperCase()}};
 
 })();
